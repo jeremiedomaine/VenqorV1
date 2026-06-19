@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { notifyPaymentConfirmed, notifyPaymentRejected } from "@/actions/payment-emails";
 import { createClient } from "@/lib/supabase/server";
+import { runInBackground } from "@/lib/run-in-background";
 import { buildTransferReference } from "@/lib/payment-utils";
 import type { PaymentStatus } from "@/lib/types";
 
@@ -90,7 +91,7 @@ export async function updatePaymentStatus(
 
   if (error) return;
   if (statut === "paye") {
-    await notifyPaymentConfirmed(paymentId, eventId);
+    runInBackground(notifyPaymentConfirmed(paymentId, eventId));
   }
   revalidatePath(`/evenements/${eventId}`);
 }
@@ -122,7 +123,7 @@ export async function confirmDeclaredPayment(
     .eq("statut", "declare_paye");
 
   if (error) return;
-  await notifyPaymentConfirmed(paymentId, eventId);
+  runInBackground(notifyPaymentConfirmed(paymentId, eventId));
   revalidatePath(`/evenements/${eventId}`);
   revalidatePath("/");
 }
@@ -147,7 +148,7 @@ export async function rejectDeclaredPayment(
     .eq("statut", "declare_paye");
 
   if (error) return;
-  await notifyPaymentRejected(paymentId, eventId);
+  runInBackground(notifyPaymentRejected(paymentId, eventId));
   revalidatePath(`/evenements/${eventId}`);
   revalidatePath("/");
 }

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { Mail } from "lucide-react";
 import { sendPaymentRequestEmail } from "@/actions/payment-emails";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAsyncAction } from "@/hooks/use-async-action";
 
 export function SendPaymentRequestButton({
   eventId,
@@ -17,7 +18,7 @@ export function SendPaymentRequestButton({
   hasPendingPayment: boolean;
   sentAt: string | null;
 }) {
-  const [pending, startTransition] = useTransition();
+  const { pending, run } = useAsyncAction();
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,7 +53,7 @@ export function SendPaymentRequestButton({
           variant="outline"
           disabled={pending || !coupleEmail}
           onClick={() =>
-            startTransition(async () => {
+            void run(async () => {
               setMessage(null);
               setError(null);
               const result = await sendPaymentRequestEmail(eventId);

@@ -61,20 +61,23 @@ export function NewLeadButton({
             <form
               ref={formRef}
               action={async (formData) => {
+                if (pending) return;
                 setPending(true);
                 setError(null);
                 const result = await createEvent(formData);
-                setPending(false);
                 if (result.error) {
                   setError(result.error);
+                  setPending(false);
                   return;
                 }
                 if (result.eventId) {
+                  setOpen(false);
                   router.push(`/evenements/${result.eventId}`);
                   return;
                 }
                 formRef.current?.reset();
                 setOpen(false);
+                setPending(false);
                 router.refresh();
               }}
               className="space-y-6"

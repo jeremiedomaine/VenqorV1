@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { updatePaymentAutomationSettings } from "@/actions/automations";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAsyncAction } from "@/hooks/use-async-action";
 import {
   DEFAULT_PAYMENT_EMAIL_INTRO,
   DEFAULT_PAYMENT_EMAIL_SUBJECT,
@@ -41,7 +42,7 @@ export function PaymentAutomationForm({
     settings.email_paiement_intro || DEFAULT_PAYMENT_EMAIL_INTRO,
   );
   const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const { pending, run } = useAsyncAction();
 
   const previewSubject = interpolateEmailTemplate(subject, {
     ...PREVIEW_VARS,
@@ -58,7 +59,7 @@ export function PaymentAutomationForm({
 
   function handleSubmit(formData: FormData) {
     setError(null);
-    startTransition(async () => {
+    void run(async () => {
       const result = await updatePaymentAutomationSettings(formData);
       if (result.error) setError(result.error);
     });

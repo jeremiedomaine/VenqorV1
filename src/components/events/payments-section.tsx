@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { regenerateEventPayments } from "@/actions/events";
 import {
   confirmDeclaredPayment,
@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAsyncActionByKey } from "@/hooks/use-async-action";
 import type { Payment } from "@/lib/types";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -29,12 +30,18 @@ export function PaymentsSection({
   prixTotal: number;
   readOnly?: boolean;
 }) {
-  const [pending, startTransition] = useTransition();
+  const router = useRouter();
+  const { isPending, run } = useAsyncActionByKey();
 
   const total = payments.reduce((sum, p) => sum + Number(p.montant), 0);
   const paid = payments
     .filter((p) => p.statut === "paye")
     .reduce((sum, p) => sum + Number(p.montant), 0);
+
+  async function refreshAfter(action: () => Promise<void>) {
+    await action();
+    router.refresh();
+  }
 
   return (
     <Card>
@@ -60,12 +67,18 @@ export function PaymentsSection({
               type="button"
               size="sm"
               variant="outline"
-              disabled={pending}
+              disabled={isPending("regenerate")}
               onClick={() =>
-                startTransition(() => regenerateEventPayments(eventId))
+                void run("regenerate", () =>
+                  refreshAfter(() => regenerateEventPayments(eventId)),
+                )
               }
             >
-              {payments.length > 0 ? "Recalculer l'échéancier" : "Générer l'échéancier"}
+              {isPending("regenerate")
+                ? "Génération…"
+                : payments.length > 0
+                  ? "Recalculer l'échéancier"
+                  : "Générer l'échéancier"}
             </Button>
           </div>
         )}
@@ -74,118 +87,137 @@ export function PaymentsSection({
           {payments.length === 0 ? (
             <p className="text-sm text-slate-500">Aucun acompte défini.</p>
           ) : (
-            payments.map((payment) => (
-              <div
-                key={payment.id}
-                className="flex flex-col gap-3 rounded-md border border-slate-100 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <p className="font-medium text-slate-900">{payment.label}</p>
-                  <p className="text-sm text-slate-600">
-                    {formatCurrency(Number(payment.montant))}
-                    {payment.date_echeance && (
-                      <span className="text-slate-400">
-                        {" "}
-                        · échéance {formatDate(payment.date_echeance)}
-                      </span>
+            payments.map((payment) => {
+              const key = payment.id;
+              const pending = isPending(key);
+
+              return (
+                <div
+                  key={payment.id}
+                  className="flex flex-col gap-3 rounded-md border border-slate-100 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div>
+                    <p className="font-medium text-slate-900">{payment.label}</p>
+                    <p className="text-sm text-slate-600">
+                      {formatCurrency(Number(payment.montant))}
+                      {payment.date_echeance && (
+                        <span className="text-slate-400">
+                          {" "}
+                          · échéance {formatDate(payment.date_echeance)}
+                        </span>
+                      )}
+                    </p>
+                    {payment.reference_virement && (
+                      <p className="mt-1 text-xs text-slate-500">
+                        Réf. virement : {payment.reference_virement}
+                      </p>
                     )}
-                  </p>
-                  {payment.reference_virement && (
-                    <p className="mt-1 text-xs text-slate-500">
-                      Réf. virement : {payment.reference_virement}
-                    </p>
-                  )}
-                  {payment.statut === "declare_paye" && payment.declared_at && (
-                    <p className="mt-1 text-xs text-sky-700">
-                      Déclaré par le couple le {formatDate(payment.declared_at)}
-                    </p>
-                  )}
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <PaymentStatusBadge status={payment.statut} />
-                  {!readOnly && (
-                    <>
-                      {payment.statut === "declare_paye" && (
-                        <>
-                          <Button
-                            size="sm"
-                            disabled={pending}
-                            onClick={() =>
-                              startTransition(() =>
-                                confirmDeclaredPayment(payment.id, eventId),
-                              )
-                            }
-                          >
-                            Confirmer
-                          </Button>
+                    {payment.statut === "declare_paye" && payment.declared_at && (
+                      <p className="mt-1 text-xs text-sky-700">
+                        Déclaré par le couple le {formatDate(payment.declared_at)}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <PaymentStatusBadge status={payment.statut} />
+                    {!readOnly && (
+                      <>
+                        {payment.statut === "declare_paye" && (
+                          <>
+                            <Button
+                              size="sm"
+                              disabled={pending}
+                              onClick={() =>
+                                void run(key, () =>
+                                  refreshAfter(() =>
+                                    confirmDeclaredPayment(payment.id, eventId),
+                                  ),
+                                )
+                              }
+                            >
+                              {pending ? "…" : "Confirmer"}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={pending}
+                              onClick={() =>
+                                void run(key, () =>
+                                  refreshAfter(() =>
+                                    rejectDeclaredPayment(payment.id, eventId),
+                                  ),
+                                )
+                              }
+                            >
+                              {pending ? "…" : "Non reçu"}
+                            </Button>
+                          </>
+                        )}
+                        {payment.statut === "en_attente" && (
                           <Button
                             size="sm"
                             variant="outline"
                             disabled={pending}
                             onClick={() =>
-                              startTransition(() =>
-                                rejectDeclaredPayment(payment.id, eventId),
+                              void run(key, () =>
+                                refreshAfter(() =>
+                                  markPaymentPaid(payment.id, eventId),
+                                ),
                               )
                             }
                           >
-                            Non reçu
+                            {pending ? "…" : "Marquer payé"}
                           </Button>
-                        </>
-                      )}
-                      {payment.statut === "en_attente" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={pending}
-                          onClick={() =>
-                            startTransition(() =>
-                              markPaymentPaid(payment.id, eventId),
-                            )
-                          }
-                        >
-                          Marquer payé
-                        </Button>
-                      )}
-                      {payment.statut === "paye" && (
+                        )}
+                        {payment.statut === "paye" && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            disabled={pending}
+                            onClick={() =>
+                              void run(key, () =>
+                                refreshAfter(() =>
+                                  updatePaymentStatus(
+                                    payment.id,
+                                    eventId,
+                                    "en_attente",
+                                  ),
+                                ),
+                              )
+                            }
+                          >
+                            {pending ? "…" : "Annuler"}
+                          </Button>
+                        )}
                         <Button
                           size="sm"
                           variant="ghost"
+                          className="text-red-600 hover:text-red-700"
                           disabled={pending}
                           onClick={() =>
-                            startTransition(() =>
-                              updatePaymentStatus(
-                                payment.id,
-                                eventId,
-                                "en_attente",
+                            void run(key, () =>
+                              refreshAfter(() =>
+                                deletePayment(payment.id, eventId),
                               ),
                             )
                           }
                         >
-                          Annuler
+                          {pending ? "…" : "Supprimer"}
                         </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-red-600 hover:text-red-700"
-                        disabled={pending}
-                        onClick={() =>
-                          startTransition(() => deletePayment(payment.id, eventId))
-                        }
-                      >
-                        Supprimer
-                      </Button>
-                    </>
-                  )}
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
         {!readOnly && (
         <form
-          action={(fd) => startTransition(() => createPayment(fd))}
+          action={(fd) =>
+            void run("add", () => refreshAfter(() => createPayment(fd)))
+          }
           className="space-y-3 border-t border-slate-200 pt-6"
         >
           <input type="hidden" name="event_id" value={eventId} />
@@ -216,8 +248,8 @@ export function PaymentsSection({
               <Input id="date_echeance" name="date_echeance" type="date" />
             </div>
           </div>
-          <Button type="submit" size="sm" disabled={pending}>
-            Ajouter
+          <Button type="submit" size="sm" disabled={isPending("add")}>
+            {isPending("add") ? "Ajout…" : "Ajouter"}
           </Button>
         </form>
         )}

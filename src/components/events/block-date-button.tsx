@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarCheck } from "lucide-react";
 import { blockEventDate } from "@/actions/events";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Button } from "@/components/ui/button";
+import { useAsyncAction } from "@/hooks/use-async-action";
 import { formatDate } from "@/lib/utils";
 
 export function BlockDateButton({
@@ -16,14 +17,14 @@ export function BlockDateButton({
   dateDebut: string | null;
 }) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const { pending, run } = useAsyncAction();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   function handleClick() {
     setError(null);
     setSuccess(null);
-    startTransition(async () => {
+    void run(async () => {
       const result = await blockEventDate(eventId);
       if (result.error) {
         setError(result.error);

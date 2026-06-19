@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArchiveRestore, Search } from "lucide-react";
@@ -10,13 +10,14 @@ import { EventStatusBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useAsyncActionByKey } from "@/hooks/use-async-action";
 import { EVENT_STATUS_LABELS, type Event } from "@/lib/types";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export function ArchivesBoard({ events }: { events: Event[] }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const [pending, startTransition] = useTransition();
+  const { isPending, run } = useAsyncActionByKey();
   const [feedback, setFeedback] = useState<{
     error?: string;
     success?: string;
@@ -35,7 +36,7 @@ export function ArchivesBoard({ events }: { events: Event[] }) {
 
   function handleRestore(eventId: string) {
     setFeedback({});
-    startTransition(async () => {
+    void run(eventId, async () => {
       const result = await restoreEvent(eventId);
       if (result.error) {
         setFeedback({ error: result.error });
@@ -114,11 +115,11 @@ export function ArchivesBoard({ events }: { events: Event[] }) {
                   variant="outline"
                   size="sm"
                   className="shrink-0 gap-2"
-                  disabled={pending}
+                  disabled={isPending(event.id)}
                   onClick={() => handleRestore(event.id)}
                 >
                   <ArchiveRestore className="h-4 w-4" />
-                  Restaurer
+                  {isPending(event.id) ? "…" : "Restaurer"}
                 </Button>
               </CardContent>
             </Card>

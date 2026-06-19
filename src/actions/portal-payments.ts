@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { notifyPaymentDeclaredFromPortal } from "@/actions/payment-emails";
 import { createClient } from "@/lib/supabase/server";
+import { runInBackground } from "@/lib/run-in-background";
 
 export async function declarePortalPayment(
   portalToken: string,
@@ -32,6 +33,6 @@ export async function declarePortalPayment(
 
   revalidatePath(`/portail/${portalToken}`);
   revalidatePath("/");
-  await notifyPaymentDeclaredFromPortal(portalToken, paymentId);
+  runInBackground(notifyPaymentDeclaredFromPortal(portalToken, paymentId));
   return { ok: true };
 }

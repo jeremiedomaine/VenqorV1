@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Copy, Lock, ShieldCheck } from "lucide-react";
 import { declarePortalPayment } from "@/actions/portal-payments";
 import { Button } from "@/components/ui/button";
+import { useAsyncAction } from "@/hooks/use-async-action";
 import { capitalizeFirst, formatDateShort } from "@/lib/portal-utils";
 import { hasVirementConfig } from "@/lib/payment-utils";
 import type { PortalData, PaymentStatus } from "@/lib/types";
@@ -57,7 +58,7 @@ function DeclareButton({
   portalToken: string;
   paymentId: string;
 }) {
-  const [pending, startTransition] = useTransition();
+  const { pending, run } = useAsyncAction();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
@@ -68,7 +69,7 @@ function DeclareButton({
         disabled={pending}
         className="h-12 w-full rounded-xl bg-zinc-900 text-base font-medium hover:bg-zinc-800"
         onClick={() =>
-          startTransition(async () => {
+          void run(async () => {
             setError(null);
             const result = await declarePortalPayment(portalToken, paymentId);
             if (result.ok) router.refresh();

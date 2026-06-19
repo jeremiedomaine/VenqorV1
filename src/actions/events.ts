@@ -7,6 +7,7 @@ import { loadWorkspaceEventTypes } from "@/lib/load-workspace";
 import { syncAutoPayments } from "@/lib/sync-payments";
 import { maybeAutoSendPaymentRequest, notifyPaymentConfirmed } from "@/actions/payment-emails";
 import { isEventRangeBlocked } from "@/lib/calendar-events";
+import { runInBackground } from "@/lib/run-in-background";
 import type { EventStatus } from "@/lib/types";
 
 async function getWorkspaceId() {
@@ -382,7 +383,7 @@ export async function blockEventDate(
       prixTotal,
       event.date_debut,
     );
-    await maybeAutoSendPaymentRequest(eventId);
+    runInBackground(maybeAutoSendPaymentRequest(eventId));
   }
 
   revalidatePath("/");
@@ -451,7 +452,7 @@ export async function confirmDepositPaid(
         .eq("workspace_id", workspaceId);
 
       if (paymentError) return { error: paymentError.message };
-      await notifyPaymentConfirmed(deposit.id, eventId);
+      runInBackground(notifyPaymentConfirmed(deposit.id, eventId));
     }
   }
 

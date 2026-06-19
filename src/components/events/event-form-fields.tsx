@@ -234,7 +234,7 @@ export function EventFormFields({
             name="montant_acompte"
             type="number"
             min={0}
-            step={100}
+            step="0.01"
             placeholder="1500"
           />
         </div>
@@ -245,7 +245,7 @@ export function EventFormFields({
             name="montant_solde"
             type="number"
             min={0}
-            step={100}
+            step="0.01"
             placeholder="3500"
           />
         </div>
@@ -256,7 +256,7 @@ export function EventFormFields({
             name="prix_total"
             type="number"
             min={0}
-            step={100}
+            step="0.01"
             defaultValue={event?.prix_total ?? ""}
             placeholder="5000"
           />

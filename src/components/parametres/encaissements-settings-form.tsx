@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { updateWorkspaceEncaissements } from "@/actions/workspace";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAsyncAction } from "@/hooks/use-async-action";
 import {
   PAYMENT_MODE_LABELS,
   type WorkspaceEncaissements,
@@ -29,11 +30,11 @@ export function EncaissementsSettingsForm({
     encaissements.instructions_virement ?? "",
   );
   const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const { pending, run } = useAsyncAction();
 
   function handleSubmit(formData: FormData) {
     setError(null);
-    startTransition(async () => {
+    void run(async () => {
       const result = await updateWorkspaceEncaissements(formData);
       if (result.error) setError(result.error);
     });

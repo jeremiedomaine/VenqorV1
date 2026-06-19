@@ -1,17 +1,18 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateWorkspaceGoals } from "@/actions/workspace";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAsyncAction } from "@/hooks/use-async-action";
 import type { WorkspaceGoals } from "@/lib/workspace-setup";
 
 export function GoalsSettingsForm({ goals }: { goals: WorkspaceGoals }) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const { pending, run } = useAsyncAction();
   const [dossiers, setDossiers] = useState(
     goals.objectif_dossiers_annuel?.toString() ?? "",
   );
@@ -27,7 +28,7 @@ export function GoalsSettingsForm({ goals }: { goals: WorkspaceGoals }) {
 
   function handleSubmit(formData: FormData) {
     setFeedback({});
-    startTransition(async () => {
+    void run(async () => {
       const result = await updateWorkspaceGoals(formData);
       if (result.error) {
         setFeedback({ error: result.error });

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Archive, ArchiveRestore } from "lucide-react";
 import { archiveEvent, restoreEvent } from "@/actions/events";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Button } from "@/components/ui/button";
+import { useAsyncAction } from "@/hooks/use-async-action";
 
 export function ArchiveEventButton({
   eventId,
@@ -15,7 +16,7 @@ export function ArchiveEventButton({
   archived: boolean;
 }) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const { pending, run } = useAsyncAction();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [confirmArchive, setConfirmArchive] = useState(false);
@@ -23,7 +24,7 @@ export function ArchiveEventButton({
   function handleArchive() {
     setError(null);
     setSuccess(null);
-    startTransition(async () => {
+    void run(async () => {
       const result = await archiveEvent(eventId);
       if (result.error) {
         setError(result.error);
@@ -39,7 +40,7 @@ export function ArchiveEventButton({
   function handleRestore() {
     setError(null);
     setSuccess(null);
-    startTransition(async () => {
+    void run(async () => {
       const result = await restoreEvent(eventId);
       if (result.error) {
         setError(result.error);

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CircleCheck } from "lucide-react";
 import { closeEventDossier } from "@/actions/events";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Button } from "@/components/ui/button";
+import { useAsyncAction } from "@/hooks/use-async-action";
 import { formatCurrency } from "@/lib/utils";
 import type { Payment } from "@/lib/types";
 
@@ -21,14 +22,14 @@ export function CloseDossierButton({
   hasPaymentSchedule: boolean;
 }) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const { pending, run } = useAsyncAction();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   function handleClick() {
     setError(null);
     setSuccess(null);
-    startTransition(async () => {
+    void run(async () => {
       const result = await closeEventDossier(eventId);
       if (result.error) {
         setError(result.error);

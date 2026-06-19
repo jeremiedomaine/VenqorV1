@@ -6,7 +6,6 @@ import {
   automationFromWorkspace,
   eventDashboardUrl,
   paymentPortalUrl,
-  portalUrl,
 } from "@/lib/automation-settings";
 import { sendEmail } from "@/lib/email/send-email";
 import { emailForCouple, emailForDomain } from "@/lib/email/recipients";

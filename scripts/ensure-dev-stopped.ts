@@ -1,9 +1,13 @@
 /**
- * Bloque `npm run build` si le serveur dev est actif.
+ * Bloque `npm run build` si le serveur dev est actif (local uniquement).
  * Un build pendant `next dev` corrompt .next → page sans CSS, texte collé.
  */
 import { existsSync } from "fs";
 import { resolve } from "path";
+
+if (process.env.VERCEL || process.env.CI) {
+  process.exit(0);
+}
 
 const PORT = Number(process.env.PORT || 3000);
 const LOCK = resolve(process.cwd(), ".venqor-dev.lock");

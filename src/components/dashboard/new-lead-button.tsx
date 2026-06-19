@@ -6,7 +6,6 @@ import { Plus, X } from "lucide-react";
 import { createEvent } from "@/actions/events";
 import { EventFormFields } from "@/components/events/event-form-fields";
 import { Button } from "@/components/ui/button";
-import { isDateBlocked } from "@/lib/calendar-events";
 
 import type { CustomEventType } from "@/lib/types";
 

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   automationFromWorkspace,
   eventDashboardUrl,
+  normalizeSoldeEmailSettings,
   paymentPortalUrl,
 } from "@/lib/automation-settings";
 import { billingFromWorkspace } from "@/lib/billing";
@@ -160,7 +161,9 @@ export async function sendPaymentRequestEmail(
     return { ok: false, error: "Aucun solde en attente à envoyer." };
   }
 
-  const settings = automationFromWorkspace(workspace);
+  const settings = normalizeSoldeEmailSettings(
+    automationFromWorkspace(workspace),
+  );
   const vars = buildTemplateVars(
     workspace as WorkspaceRow,
     event as EventRow,

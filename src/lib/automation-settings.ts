@@ -13,6 +13,37 @@ export const DEFAULT_PAYMENT_EMAIL_INTRO = `Bonjour {couple},
 
 Votre mariage chez {domaine} approche. Merci de régler votre {libelle} ({montant}) via le lien sécurisé ci-dessous.`;
 
+/** Ancien modèle (acompte / date bloquée) — migration 011 */
+const LEGACY_PAYMENT_EMAIL_SUBJECT =
+  "{domaine} — Règlement de votre échéance";
+
+const LEGACY_PAYMENT_EMAIL_INTRO = `Bonjour {couple},
+
+Votre date est réservée chez {domaine}. Vous pouvez régler votre {libelle} ({montant}) via le lien sécurisé ci-dessous.`;
+
+export function normalizeSoldeEmailSettings(
+  settings: PaymentAutomationSettings,
+): PaymentAutomationSettings {
+  let { email_paiement_objet, email_paiement_intro } = settings;
+
+  if (
+    email_paiement_objet === LEGACY_PAYMENT_EMAIL_SUBJECT ||
+    email_paiement_objet.trim() === ""
+  ) {
+    email_paiement_objet = DEFAULT_PAYMENT_EMAIL_SUBJECT;
+  }
+
+  if (
+    email_paiement_intro === LEGACY_PAYMENT_EMAIL_INTRO ||
+    email_paiement_intro.includes("date est réservée") ||
+    email_paiement_intro.trim() === ""
+  ) {
+    email_paiement_intro = DEFAULT_PAYMENT_EMAIL_INTRO;
+  }
+
+  return { ...settings, email_paiement_objet, email_paiement_intro };
+}
+
 export const PAYMENT_EMAIL_VARIABLES = [
   { key: "{domaine}", label: "Nom du domaine" },
   { key: "{couple}", label: "Nom du couple" },
@@ -30,13 +61,13 @@ export function automationFromWorkspace(
     | "email_paiement_intro"
   >,
 ): PaymentAutomationSettings {
-  return {
+  return normalizeSoldeEmailSettings({
     automation_paiement_active: workspace.automation_paiement_active ?? true,
     email_paiement_objet:
       workspace.email_paiement_objet ?? DEFAULT_PAYMENT_EMAIL_SUBJECT,
     email_paiement_intro:
       workspace.email_paiement_intro ?? DEFAULT_PAYMENT_EMAIL_INTRO,
-  };
+  });
 }
 
 export function portalUrl(portalToken: string): string {

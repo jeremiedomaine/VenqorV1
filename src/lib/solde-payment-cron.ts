@@ -1,5 +1,6 @@
 import {
   automationFromWorkspace,
+  normalizeSoldeEmailSettings,
   paymentPortalUrl,
 } from "@/lib/automation-settings";
 import { billingFromWorkspace } from "@/lib/billing";
@@ -120,7 +121,9 @@ export async function processSoldePaymentRequests(): Promise<SoldeCronResult> {
         continue;
       }
 
-      const settings = automationFromWorkspace(workspace);
+      const settings = normalizeSoldeEmailSettings(
+        automationFromWorkspace(workspace),
+      );
       const vars = {
         domaine: workspace.nom_domaine,
         couple: event.nom_des_maries,

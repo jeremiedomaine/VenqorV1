@@ -124,9 +124,9 @@ export function paymentRequestEmailHtml(
 ): string {
   return venqorEmailLayout({
     domainName: vars.domaine,
-    title: "Votre échéance de paiement",
+    title: "Règlement de votre solde",
     bodyHtml: paragraphsFromText(introText),
-    ctaLabel: "Régler mon échéance",
+    ctaLabel: "Régler mon solde",
     ctaHref: vars.lien_paiement,
     footerNote:
       "Page de paiement sécurisée. Vous y trouverez les coordonnées bancaires et pourrez confirmer votre virement.",

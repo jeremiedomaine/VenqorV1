@@ -1,6 +1,10 @@
+import { DepositAutomationForm } from "@/components/automatisations/deposit-automation-form";
 import { PaymentAutomationForm } from "@/components/automatisations/payment-automation-form";
 import { loadWorkspace } from "@/lib/load-workspace";
-import { automationFromWorkspace } from "@/lib/automation-settings";
+import {
+  automationFromWorkspace,
+  depositAutomationFromWorkspace,
+} from "@/lib/automation-settings";
 
 export default async function AutomatisationsPage() {
   const { workspace } = await loadWorkspace();
@@ -14,7 +18,8 @@ export default async function AutomatisationsPage() {
     );
   }
 
-  const settings = automationFromWorkspace(workspace);
+  const soldeSettings = automationFromWorkspace(workspace);
+  const acompteSettings = depositAutomationFromWorkspace(workspace);
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 pb-12">
@@ -31,17 +36,34 @@ export default async function AutomatisationsPage() {
       <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
         <div className="mb-8 space-y-2">
           <h2 className="text-lg font-semibold text-slate-900">
+            Email de demande d&apos;acompte
+          </h2>
+          <p className="text-sm text-slate-500">
+            Envoyé au couple pour le règlement de l&apos;acompte, en lien avec
+            la signature Yousign. Choisissez si l&apos;email part avec le
+            contrat ou une fois les deux signatures reçues.
+          </p>
+        </div>
+
+        <DepositAutomationForm
+          settings={acompteSettings}
+          workspaceName={workspace.nom_domaine}
+        />
+      </section>
+
+      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+        <div className="mb-8 space-y-2">
+          <h2 className="text-lg font-semibold text-slate-900">
             Email de demande de solde
           </h2>
           <p className="text-sm text-slate-500">
             Personnalisez le message envoyé au couple pour le règlement du
             solde (J-30). Le lien mène à la page couple pour payer par virement.
-            L&apos;acompte à la signature sera géré via Yousign.
           </p>
         </div>
 
         <PaymentAutomationForm
-          settings={settings}
+          settings={soldeSettings}
           workspaceName={workspace.nom_domaine}
         />
       </section>
@@ -50,8 +72,7 @@ export default async function AutomatisationsPage() {
         <h3 className="text-sm font-semibold text-slate-800">À venir</h3>
         <ul className="mt-3 space-y-2 text-sm text-slate-500">
           <li>Relances configurables avant / après échéance (rappels J-7, J+3…)</li>
-          <li>Acompte à la signature via Yousign</li>
-          <li>Contrat + signature Yousign</li>
+          <li>Paiement Stripe</li>
         </ul>
       </section>
     </div>

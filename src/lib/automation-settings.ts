@@ -13,6 +13,20 @@ export const DEFAULT_PAYMENT_EMAIL_INTRO = `Bonjour {couple},
 
 Votre mariage chez {domaine} approche. Merci de régler votre {libelle} ({montant}) via le lien sécurisé ci-dessous.`;
 
+export const DEFAULT_ACOMPTE_EMAIL_SUBJECT =
+  "{domaine} — Règlement de votre acompte";
+
+export const DEFAULT_ACOMPTE_EMAIL_INTRO = `Bonjour {couple},
+
+Merci de régler votre {libelle} ({montant}) pour confirmer votre réservation chez {domaine}. Utilisez le lien sécurisé ci-dessous.`;
+
+export interface DepositAutomationSettings {
+  automation_acompte_active: boolean;
+  acompte_signature_timing: "with_contract" | "after_contract";
+  email_acompte_objet: string;
+  email_acompte_intro: string;
+}
+
 /** Ancien modèle (acompte / date bloquée) — migration 011 */
 const LEGACY_PAYMENT_EMAIL_SUBJECT =
   "{domaine} — Règlement de votre échéance";
@@ -68,6 +82,26 @@ export function automationFromWorkspace(
     email_paiement_intro:
       workspace.email_paiement_intro ?? DEFAULT_PAYMENT_EMAIL_INTRO,
   });
+}
+
+export function depositAutomationFromWorkspace(
+  workspace: Pick<
+    Workspace,
+    | "automation_acompte_active"
+    | "acompte_signature_timing"
+    | "email_acompte_objet"
+    | "email_acompte_intro"
+  >,
+): DepositAutomationSettings {
+  return {
+    automation_acompte_active: workspace.automation_acompte_active ?? true,
+    acompte_signature_timing:
+      workspace.acompte_signature_timing ?? "after_contract",
+    email_acompte_objet:
+      workspace.email_acompte_objet?.trim() || DEFAULT_ACOMPTE_EMAIL_SUBJECT,
+    email_acompte_intro:
+      workspace.email_acompte_intro?.trim() || DEFAULT_ACOMPTE_EMAIL_INTRO,
+  };
 }
 
 export function portalUrl(portalToken: string): string {

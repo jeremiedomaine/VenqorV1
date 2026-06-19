@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "crypto";
+import { maybeSendDepositAfterContract } from "@/lib/deposit-payment-email";
 import { createServiceClient } from "@/lib/supabase/service";
 
 export const dynamic = "force-dynamic";
@@ -53,13 +54,24 @@ export async function POST(request: Request) {
     payload.data?.signature_request?.status === "done"
   ) {
     const supabase = createServiceClient();
-    await supabase
+    const { data: event } = await supabase
       .from("events")
       .update({
         contrat_statut: "signe",
         contrat_signe_at: new Date().toISOString(),
       })
-      .eq("yousign_signature_request_id", signatureRequestId);
+      .eq("yousign_signature_request_id", signatureRequestId)
+      .select("id, workspace_id")
+      .maybeSingle();
+
+    if (event) {
+      await maybeSendDepositAfterContract({
+        supabase,
+        eventId: event.id,
+        workspaceId: event.workspace_id,
+        timing: "after_contract",
+      });
+    }
   }
 
   if (eventName === "signature_request.declined") {

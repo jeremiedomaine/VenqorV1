@@ -25,6 +25,7 @@ import {
   soldeWindowDaysFromWorkspace,
 } from "@/lib/payment-schedule";
 import { formatCurrency } from "@/lib/utils";
+import { sendDepositPaymentRequest } from "@/lib/deposit-payment-email";
 
 async function getWorkspaceId() {
   const supabase = createClient();
@@ -191,6 +192,35 @@ export async function sendPaymentRequestEmail(
       .update({ payment_request_sent_at: new Date().toISOString() })
       .eq("id", payment.id)
       .eq("workspace_id", workspaceId);
+  }
+
+  revalidatePath(`/evenements/${eventId}`);
+  revalidatePath("/automatisations");
+  return { ok: true, skipped: result.skipped };
+}
+
+/** Demande de paiement manuelle — cible l'acompte. */
+export async function sendDepositPaymentRequestEmail(
+  eventId: string,
+  paymentId?: string,
+): Promise<{ ok: boolean; error?: string; skipped?: boolean }> {
+  const workspaceId = await getWorkspaceId();
+  const supabase = createClient();
+
+  const result = await sendDepositPaymentRequest({
+    supabase,
+    eventId,
+    workspaceId,
+    manual: true,
+    paymentId,
+  });
+
+  if (result.alreadySent) {
+    return { ok: false, error: "L'email acompte a déjà été envoyé." };
+  }
+
+  if (result.error) {
+    return { ok: false, error: result.error };
   }
 
   revalidatePath(`/evenements/${eventId}`);

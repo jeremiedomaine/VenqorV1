@@ -11,6 +11,7 @@ import { EventPipelineStepper } from "@/components/events/event-pipeline-stepper
 import { EventPortalLink } from "@/components/events/event-portal-link";
 import { SendPaymentRequestButton } from "@/components/events/send-payment-request-button";
 import { SendContractButton } from "@/components/events/send-contract-button";
+import { SendDepositRequestButton } from "@/components/events/send-deposit-request-button";
 import { PaymentsSection } from "@/components/events/payments-section";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +19,7 @@ import { getBalancePayment } from "@/lib/event-pipeline";
 import { billingFromWorkspace } from "@/lib/billing";
 import {
   isWithinSoldeWindow,
+  pickAcomptePayment,
   pickSoldePayment,
   soldeWindowDaysFromWorkspace,
 } from "@/lib/payment-schedule";
@@ -64,15 +66,16 @@ export default async function EventDetailPage({
     ? soldeWindowDaysFromWorkspace(workspace)
     : 30;
 
-  const depositPayment =
-    paymentList.length > 0
+  const depositPayment = billing
+    ? pickAcomptePayment(paymentList, billing.facturation_acompte_label)
+    : paymentList.length > 0
       ? [...paymentList].sort((a, b) => {
           if (!a.date_echeance) return 1;
           if (!b.date_echeance) return -1;
           return a.date_echeance.localeCompare(b.date_echeance);
         })[0]
       : null;
-  const balancePayment = getBalancePayment(paymentList, depositPayment);
+  const balancePayment = getBalancePayment(paymentList, depositPayment ?? null);
   const soldePayment = billing
     ? pickSoldePayment(paymentList, billing.facturation_solde_label)
     : balancePayment;
@@ -84,6 +87,14 @@ export default async function EventDetailPage({
     (isOption || isConfirme) &&
     Boolean(soldePayment) &&
     withinSoldeWindow &&
+    !isArchived &&
+    !isClosed;
+
+  const acompteTiming = workspace?.acompte_signature_timing ?? "after_contract";
+  const showDepositEmail =
+    isOption &&
+    Boolean(depositPayment) &&
+    depositPayment?.statut === "en_attente" &&
     !isArchived &&
     !isClosed;
 
@@ -133,7 +144,7 @@ export default async function EventDetailPage({
         <ConfirmDepositButton
           eventId={event.id}
           prixTotal={Number(event.prix_total)}
-          depositPayment={depositPayment}
+          depositPayment={depositPayment ?? null}
         />
       )}
 
@@ -174,6 +185,18 @@ export default async function EventDetailPage({
               contratStatut={typedEvent.contrat_statut ?? "non_envoye"}
               contratEnvoyeAt={typedEvent.contrat_envoye_at ?? null}
               contratSigneAt={typedEvent.contrat_signe_at ?? null}
+            />
+          )}
+
+          {showDepositEmail && (
+            <SendDepositRequestButton
+              eventId={event.id}
+              coupleEmail={typedEvent.email}
+              hasPendingDeposit
+              paymentId={depositPayment?.id}
+              timing={acompteTiming}
+              contractSigned={typedEvent.contrat_statut === "signe"}
+              sentAt={depositPayment?.payment_request_sent_at ?? null}
             />
           )}
 

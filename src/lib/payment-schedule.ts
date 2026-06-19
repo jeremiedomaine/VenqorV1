@@ -31,6 +31,28 @@ export function pickSoldePayment<T extends PaymentPickRow>(
   })[0];
 }
 
+/** Acompte = première échéance en attente (ou libellé facturation acompte). */
+export function pickAcomptePayment<T extends PaymentPickRow>(
+  payments: T[],
+  acompteLabel?: string,
+): T | undefined {
+  const pending = payments.filter((p) => p.statut === "en_attente");
+  if (pending.length === 0) return undefined;
+
+  if (acompteLabel) {
+    const byLabel = pending.find((p) => p.label === acompteLabel);
+    if (byLabel) return byLabel;
+  }
+
+  if (pending.length === 1) return pending[0];
+
+  return [...pending].sort((a, b) => {
+    if (!a.date_echeance) return -1;
+    if (!b.date_echeance) return 1;
+    return a.date_echeance.localeCompare(b.date_echeance);
+  })[0];
+}
+
 export function daysUntil(dateStr: string): number {
   const today = new Date();
   today.setHours(0, 0, 0, 0);

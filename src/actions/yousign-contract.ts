@@ -7,6 +7,7 @@ import {
   sendYousignContract,
 } from "@/lib/yousign/send-contract";
 import { isYousignConfigured } from "@/lib/yousign/client";
+import { maybeSendDepositAfterContract } from "@/lib/deposit-payment-email";
 
 async function getWorkspaceId() {
   const supabase = createClient();
@@ -32,7 +33,7 @@ function trimName(value: string | null | undefined, fallback: string) {
 
 export async function sendContractForEvent(
   eventId: string,
-): Promise<{ ok?: boolean; error?: string }> {
+): Promise<{ ok?: boolean; error?: string; depositEmailSent?: boolean }> {
   if (!isYousignConfigured()) {
     return { error: "Yousign non configuré (YOUSIGN_API_KEY manquant)." };
   }
@@ -101,8 +102,19 @@ export async function sendContractForEvent(
 
   if (error) return { error: error.message };
 
+  const depositResult = await maybeSendDepositAfterContract({
+    supabase,
+    eventId,
+    workspaceId,
+    timing: "with_contract",
+  });
+
   revalidatePath("/");
   revalidatePath("/evenements");
   revalidatePath(`/evenements/${eventId}`);
-  return { ok: true };
+  return {
+    ok: true,
+    depositEmailSent:
+      depositResult.ok && !depositResult.skipped && !depositResult.alreadySent,
+  };
 }

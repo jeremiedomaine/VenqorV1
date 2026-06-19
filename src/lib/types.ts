@@ -3,6 +3,7 @@ export type EventStatus = "prospect" | "option" | "confirme";
 export type EventType = string;
 export type PaymentStatus = "en_attente" | "declare_paye" | "paye";
 export type PaymentMode = "virement" | "stripe";
+export type AcompteSignatureTiming = "with_contract" | "after_contract";
 export type ContratStatut =
   | "non_envoye"
   | "en_cours"
@@ -43,6 +44,10 @@ export interface Workspace {
   automation_paiement_active: boolean;
   email_paiement_objet: string;
   email_paiement_intro: string;
+  acompte_signature_timing: AcompteSignatureTiming;
+  automation_acompte_active: boolean;
+  email_acompte_objet: string;
+  email_acompte_intro: string;
   created_at: string;
   updated_at: string;
 }

@@ -86,7 +86,9 @@ export function SendContractButton({
                 const result = await sendContractForEvent(eventId);
                 if (result.ok) {
                   setMessage(
-                    "Contrat envoyé — les mariés recevront un email Yousign.",
+                    result.depositEmailSent
+                      ? "Contrat envoyé — email acompte envoyé au couple."
+                      : "Contrat envoyé — les mariés recevront un email Yousign.",
                   );
                   router.refresh();
                 } else {

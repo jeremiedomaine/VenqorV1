@@ -10,6 +10,7 @@ import { EventForm } from "@/components/events/event-form";
 import { EventPipelineStepper } from "@/components/events/event-pipeline-stepper";
 import { EventPortalLink } from "@/components/events/event-portal-link";
 import { SendPaymentRequestButton } from "@/components/events/send-payment-request-button";
+import { SendContractButton } from "@/components/events/send-contract-button";
 import { PaymentsSection } from "@/components/events/payments-section";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -165,6 +166,16 @@ export default async function EventDetailPage({
             portalToken={typedEvent.portal_token}
             show={showPortalLink}
           />
+
+          {isOption && (
+            <SendContractButton
+              eventId={event.id}
+              coupleEmail={typedEvent.email}
+              contratStatut={typedEvent.contrat_statut ?? "non_envoye"}
+              contratEnvoyeAt={typedEvent.contrat_envoye_at ?? null}
+              contratSigneAt={typedEvent.contrat_signe_at ?? null}
+            />
+          )}
 
           <SendPaymentRequestButton
             eventId={event.id}

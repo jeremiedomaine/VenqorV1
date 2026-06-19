@@ -3,6 +3,12 @@ export type EventStatus = "prospect" | "option" | "confirme";
 export type EventType = string;
 export type PaymentStatus = "en_attente" | "declare_paye" | "paye";
 export type PaymentMode = "virement" | "stripe";
+export type ContratStatut =
+  | "non_envoye"
+  | "en_cours"
+  | "signe"
+  | "refuse"
+  | "expire";
 
 export interface CustomEventType {
   slug: string;
@@ -71,6 +77,10 @@ export interface Event {
   message_accueil: string;
   archived_at: string | null;
   cloture_at: string | null;
+  yousign_signature_request_id: string | null;
+  contrat_statut: ContratStatut;
+  contrat_envoye_at: string | null;
+  contrat_signe_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -131,6 +141,14 @@ export interface PortalData {
     reference_virement: string | null;
   }>;
 }
+
+export const CONTRAT_STATUT_LABELS: Record<ContratStatut, string> = {
+  non_envoye: "Non envoyé",
+  en_cours: "En attente de signature",
+  signe: "Signé",
+  refuse: "Refusé",
+  expire: "Expiré",
+};
 
 export const EVENT_STATUS_LABELS: Record<EventStatus, string> = {
   prospect: "Prospects",

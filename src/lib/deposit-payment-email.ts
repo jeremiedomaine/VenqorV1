@@ -22,6 +22,7 @@ export type SendDepositPaymentResult = {
   skipped?: boolean;
   alreadySent?: boolean;
   error?: string;
+  reason?: string;
 };
 
 export async function sendDepositPaymentRequest(params: {
@@ -62,7 +63,11 @@ export async function sendDepositPaymentRequest(params: {
   const depositSettings = depositAutomationFromWorkspace(workspace);
 
   if (!manual && !depositSettings.automation_acompte_active) {
-    return { ok: true, skipped: true };
+    return {
+      ok: true,
+      skipped: true,
+      reason: "L'envoi automatique de l'acompte est désactivé dans Automatisations.",
+    };
   }
 
   const coupleTo = emailForCouple(event.email);
@@ -97,11 +102,21 @@ export async function sendDepositPaymentRequest(params: {
   }
 
   if (!payment) {
-    return { ok: false, error: "Aucun acompte en attente à envoyer." };
+    return {
+      ok: false,
+      error: "Aucun acompte en attente à envoyer.",
+      reason:
+        "Générez l'échéancier (prix total > 0) ou vérifiez que l'acompte n'est pas déjà payé.",
+    };
   }
 
   if (payment.payment_request_sent_at) {
-    return { ok: true, alreadySent: true, skipped: true };
+    return {
+      ok: true,
+      alreadySent: true,
+      skipped: true,
+      reason: "L'email acompte a déjà été envoyé pour cette échéance.",
+    };
   }
 
   const vars = {
@@ -162,7 +177,14 @@ export async function maybeSendDepositAfterContract(params: {
 
   const settings = depositAutomationFromWorkspace(workspace);
   if (settings.acompte_signature_timing !== params.timing) {
-    return { ok: true, skipped: true };
+    return {
+      ok: true,
+      skipped: true,
+      reason:
+        params.timing === "with_contract"
+          ? "Timing réglé sur « après signature » dans Automatisations."
+          : "Timing réglé sur « en même temps que le contrat ».",
+    };
   }
 
   return sendDepositPaymentRequest({

@@ -28,6 +28,7 @@ export function SendContractButton({
   const router = useRouter();
   const { pending, run } = useAsyncAction();
   const [message, setMessage] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const canSend =
@@ -72,6 +73,7 @@ export function SendContractButton({
         )}
 
         {message && <p className="text-sm text-emerald-700">{message}</p>}
+        {warning && <p className="text-sm text-amber-700">{warning}</p>}
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         {canSend && (
@@ -82,14 +84,22 @@ export function SendContractButton({
             onClick={() =>
               void run(async () => {
                 setMessage(null);
+                setWarning(null);
                 setError(null);
                 const result = await sendContractForEvent(eventId);
                 if (result.ok) {
-                  setMessage(
-                    result.depositEmailSent
-                      ? "Contrat envoyé — email acompte envoyé au couple."
-                      : "Contrat envoyé — les mariés recevront un email Yousign.",
-                  );
+                  if (result.depositEmailSent) {
+                    setMessage(
+                      "Contrat envoyé — email acompte envoyé au couple.",
+                    );
+                  } else {
+                    setMessage(
+                      "Contrat envoyé — les mariés recevront un email Yousign.",
+                    );
+                  }
+                  if (result.depositEmailWarning) {
+                    setWarning(result.depositEmailWarning);
+                  }
                   router.refresh();
                 } else {
                   setError(result.error ?? "Envoi impossible.");

@@ -40,8 +40,17 @@ export function pickAcomptePayment<T extends PaymentPickRow>(
   if (pending.length === 0) return undefined;
 
   if (acompteLabel) {
-    const byLabel = pending.find((p) => p.label === acompteLabel);
+    const normalized = acompteLabel.trim().toLowerCase();
+    const byLabel = pending.find(
+      (p) => p.label.trim().toLowerCase() === normalized,
+    );
     if (byLabel) return byLabel;
+
+    const byPartial = pending.find((p) => {
+      const label = p.label.trim().toLowerCase();
+      return label.includes(normalized) || normalized.includes(label);
+    });
+    if (byPartial) return byPartial;
   }
 
   if (pending.length === 1) return pending[0];

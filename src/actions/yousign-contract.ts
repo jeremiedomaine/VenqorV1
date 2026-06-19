@@ -8,6 +8,8 @@ import {
 } from "@/lib/yousign/send-contract";
 import { isYousignConfigured } from "@/lib/yousign/client";
 import { maybeSendDepositAfterContract } from "@/lib/deposit-payment-email";
+import { depositEmailUserMessage } from "@/lib/deposit-email-feedback";
+import { syncAutoPayments } from "@/lib/sync-payments";
 
 async function getWorkspaceId() {
   const supabase = createClient();
@@ -33,7 +35,12 @@ function trimName(value: string | null | undefined, fallback: string) {
 
 export async function sendContractForEvent(
   eventId: string,
-): Promise<{ ok?: boolean; error?: string; depositEmailSent?: boolean }> {
+): Promise<{
+  ok?: boolean;
+  error?: string;
+  depositEmailSent?: boolean;
+  depositEmailWarning?: string;
+}> {
   if (!isYousignConfigured()) {
     return { error: "Yousign non configuré (YOUSIGN_API_KEY manquant)." };
   }
@@ -44,7 +51,7 @@ export async function sendContractForEvent(
   const { data: event } = await supabase
     .from("events")
     .select(
-      "id, workspace_id, statut, archived_at, cloture_at, nom_evenement, nom_des_maries, marie1_prenom, marie1_nom, marie2_prenom, marie2_nom, email, telephone, contrat_statut, yousign_signature_request_id",
+      "id, workspace_id, statut, archived_at, cloture_at, nom_evenement, nom_des_maries, marie1_prenom, marie1_nom, marie2_prenom, marie2_nom, email, telephone, contrat_statut, yousign_signature_request_id, prix_total, date_debut",
     )
     .eq("id", eventId)
     .eq("workspace_id", workspaceId)
@@ -102,6 +109,17 @@ export async function sendContractForEvent(
 
   if (error) return { error: error.message };
 
+  const prixTotal = Number(event.prix_total);
+  if (prixTotal > 0) {
+    await syncAutoPayments(
+      supabase,
+      workspaceId,
+      eventId,
+      prixTotal,
+      event.date_debut,
+    );
+  }
+
   const depositResult = await maybeSendDepositAfterContract({
     supabase,
     eventId,
@@ -116,5 +134,6 @@ export async function sendContractForEvent(
     ok: true,
     depositEmailSent:
       depositResult.ok && !depositResult.skipped && !depositResult.alreadySent,
+    depositEmailWarning: depositEmailUserMessage(depositResult) ?? undefined,
   };
 }

@@ -21,8 +21,8 @@ import { formatCurrency } from "@/lib/utils";
 const PREVIEW_VARS = {
   domaine: "Domaine Les Chênes",
   couple: "Alice & Martin",
-  montant: formatCurrency(4500),
-  libelle: "Acompte 30 %",
+  montant: formatCurrency(3500),
+  libelle: "Solde",
   lien_paiement: "https://venqor.fr/portail/exemple/paiement",
   contact_domaine: "contact@domaine.fr",
 };
@@ -85,11 +85,13 @@ export function PaymentAutomationForm({
           />
           <span>
             <span className="block text-sm font-medium text-slate-900">
-              Envoi automatique à la date bloquée
+              Envoi automatique du solde à J-30
             </span>
             <span className="mt-1 block text-sm text-slate-500">
-              Quand un prospect passe en date bloquée et qu&apos;un échéancier
-              est généré, Venqor envoie l&apos;email de paiement au couple.
+              Quand le mariage est à 30 jours ou moins, Venqor envoie
+              automatiquement l&apos;email de règlement du solde au couple
+              (une fois par échéance). L&apos;acompte à la signature sera
+              géré via Yousign ultérieurement.
             </span>
           </span>
         </label>

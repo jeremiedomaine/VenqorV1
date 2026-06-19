@@ -7,11 +7,11 @@ export interface PaymentAutomationSettings {
 }
 
 export const DEFAULT_PAYMENT_EMAIL_SUBJECT =
-  "{domaine} — Règlement de votre échéance";
+  "{domaine} — Règlement de votre solde";
 
 export const DEFAULT_PAYMENT_EMAIL_INTRO = `Bonjour {couple},
 
-Votre date est réservée chez {domaine}. Vous pouvez régler votre {libelle} ({montant}) via le lien sécurisé ci-dessous.`;
+Votre mariage chez {domaine} approche. Merci de régler votre {libelle} ({montant}) via le lien sécurisé ci-dessous.`;
 
 export const PAYMENT_EMAIL_VARIABLES = [
   { key: "{domaine}", label: "Nom du domaine" },
@@ -23,7 +23,12 @@ export const PAYMENT_EMAIL_VARIABLES = [
 ] as const;
 
 export function automationFromWorkspace(
-  workspace: Workspace,
+  workspace: Pick<
+    Workspace,
+    | "automation_paiement_active"
+    | "email_paiement_objet"
+    | "email_paiement_intro"
+  >,
 ): PaymentAutomationSettings {
   return {
     automation_paiement_active: workspace.automation_paiement_active ?? true,

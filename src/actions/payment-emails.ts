@@ -7,6 +7,7 @@ import {
   eventDashboardUrl,
   paymentPortalUrl,
 } from "@/lib/automation-settings";
+import { billingFromWorkspace } from "@/lib/billing";
 import { sendEmail } from "@/lib/email/send-email";
 import { emailForCouple, emailForDomain } from "@/lib/email/recipients";
 import {
@@ -17,6 +18,11 @@ import {
   paymentRejectedCoupleEmailHtml,
   paymentRequestEmailHtml,
 } from "@/lib/email/templates";
+import {
+  isWithinSoldeWindow,
+  pickSoldePayment,
+  soldeWindowDaysFromWorkspace,
+} from "@/lib/payment-schedule";
 import { formatCurrency } from "@/lib/utils";
 
 async function getWorkspaceId() {
@@ -41,6 +47,7 @@ type PaymentRow = {
   label: string;
   montant: number;
   statut: string;
+  date_echeance?: string | null;
   payment_request_sent_at: string | null;
 };
 
@@ -50,6 +57,7 @@ type EventRow = {
   nom_des_maries: string;
   portal_token: string;
   statut: string;
+  date_debut: string | null;
 };
 
 type WorkspaceRow = {
@@ -58,6 +66,8 @@ type WorkspaceRow = {
   automation_paiement_active: boolean;
   email_paiement_objet: string;
   email_paiement_intro: string;
+  facturation_solde_label: string;
+  facturation_solde_jours: number;
 };
 
 function buildTemplateVars(
@@ -75,6 +85,7 @@ function buildTemplateVars(
   };
 }
 
+/** Demande de paiement manuelle — cible le solde (J-30), pas l'acompte. */
 export async function sendPaymentRequestEmail(
   eventId: string,
   paymentId?: string,
@@ -86,7 +97,7 @@ export async function sendPaymentRequestEmail(
     supabase.from("workspaces").select("*").eq("id", workspaceId).single(),
     supabase
       .from("events")
-      .select("id, email, nom_des_maries, portal_token, statut")
+      .select("id, email, nom_des_maries, portal_token, statut, date_debut")
       .eq("id", eventId)
       .eq("workspace_id", workspaceId)
       .single(),
@@ -99,7 +110,18 @@ export async function sendPaymentRequestEmail(
   if (!["option", "confirme"].includes(event.statut)) {
     return {
       ok: false,
-      error: "L'email paiement s'envoie uniquement sur un dossier engagé.",
+      error: "L'email solde s'envoie uniquement sur un dossier engagé.",
+    };
+  }
+
+  const windowDays = soldeWindowDaysFromWorkspace(workspace);
+  if (
+    !paymentId &&
+    !isWithinSoldeWindow(event.date_debut, windowDays)
+  ) {
+    return {
+      ok: false,
+      error: `L'email solde s'envoie à J-${windowDays} du mariage (dans ${windowDays} jours ou moins).`,
     };
   }
 
@@ -108,23 +130,34 @@ export async function sendPaymentRequestEmail(
     return { ok: false, error: "Renseignez l'email du couple sur le dossier." };
   }
 
-  let paymentQuery = supabase
-    .from("payments")
-    .select("id, label, montant, statut, payment_request_sent_at")
-    .eq("event_id", eventId)
-    .eq("workspace_id", workspaceId)
-    .eq("statut", "en_attente")
-    .order("date_echeance", { ascending: true, nullsFirst: false });
+  const billing = billingFromWorkspace(workspace);
+  let payment: PaymentRow | undefined;
 
   if (paymentId) {
-    paymentQuery = paymentQuery.eq("id", paymentId);
+    const { data } = await supabase
+      .from("payments")
+      .select("id, label, montant, statut, payment_request_sent_at")
+      .eq("id", paymentId)
+      .eq("event_id", eventId)
+      .eq("workspace_id", workspaceId)
+      .eq("statut", "en_attente")
+      .maybeSingle();
+    payment = data as PaymentRow | undefined;
+  } else {
+    const { data: payments } = await supabase
+      .from("payments")
+      .select("id, label, montant, statut, payment_request_sent_at, date_echeance")
+      .eq("event_id", eventId)
+      .eq("workspace_id", workspaceId);
+
+    payment = pickSoldePayment(
+      payments ?? [],
+      billing.facturation_solde_label,
+    ) as PaymentRow | undefined;
   }
 
-  const { data: payments } = await paymentQuery.limit(1);
-  const payment = payments?.[0] as PaymentRow | undefined;
-
   if (!payment) {
-    return { ok: false, error: "Aucune échéance en attente à envoyer." };
+    return { ok: false, error: "Aucun solde en attente à envoyer." };
   }
 
   const settings = automationFromWorkspace(workspace);
@@ -328,30 +361,4 @@ export async function notifyPaymentRejected(
     }),
     replyTo: workspace.contact_email || undefined,
   });
-}
-
-export async function maybeAutoSendPaymentRequest(
-  eventId: string,
-): Promise<void> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
-
-  const { data: workspace } = await supabase
-    .from("workspaces")
-    .select("automation_paiement_active")
-    .eq("id", workspaceId)
-    .single();
-
-  if (!workspace?.automation_paiement_active) return;
-
-  const { data: existing } = await supabase
-    .from("payments")
-    .select("id")
-    .eq("event_id", eventId)
-    .not("payment_request_sent_at", "is", null)
-    .limit(1);
-
-  if ((existing?.length ?? 0) > 0) return;
-
-  await sendPaymentRequestEmail(eventId);
 }

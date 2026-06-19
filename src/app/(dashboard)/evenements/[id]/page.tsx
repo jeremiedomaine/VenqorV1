@@ -14,9 +14,15 @@ import { PaymentsSection } from "@/components/events/payments-section";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getBalancePayment } from "@/lib/event-pipeline";
+import { billingFromWorkspace } from "@/lib/billing";
+import {
+  isWithinSoldeWindow,
+  pickSoldePayment,
+  soldeWindowDaysFromWorkspace,
+} from "@/lib/payment-schedule";
 import { createClient } from "@/lib/supabase/server";
 import { getEventTypeLabel } from "@/lib/event-types";
-import { loadWorkspaceEventTypes } from "@/lib/load-workspace";
+import { loadWorkspace } from "@/lib/load-workspace";
 import {
   EVENT_STATUS_LABELS,
   type Event,
@@ -29,10 +35,12 @@ export default async function EventDetailPage({
   params: { id: string };
 }) {
   const supabase = createClient();
-  const [{ data: event }, customEventTypes] = await Promise.all([
+  const [{ data: event }, { workspace }] = await Promise.all([
     supabase.from("events").select("*").eq("id", params.id).single(),
-    loadWorkspaceEventTypes(),
+    loadWorkspace(),
   ]);
+
+  const customEventTypes = workspace?.types_evenement_custom ?? [];
 
   if (!event) notFound();
 
@@ -50,9 +58,10 @@ export default async function EventDetailPage({
   const isOption = event.statut === "option" && !isArchived && !isClosed;
   const isConfirme = event.statut === "confirme" && !isArchived && !isClosed;
   const showPortalLink = (isOption || isConfirme) && paymentList.length > 0;
-  const firstPendingPayment = paymentList.find((p) => p.statut === "en_attente");
-  const showPaymentEmail =
-    (isOption || isConfirme) && Boolean(firstPendingPayment) && !isArchived && !isClosed;
+  const billing = workspace ? billingFromWorkspace(workspace) : null;
+  const soldeWindowDays = workspace
+    ? soldeWindowDaysFromWorkspace(workspace)
+    : 30;
 
   const depositPayment =
     paymentList.length > 0
@@ -63,6 +72,19 @@ export default async function EventDetailPage({
         })[0]
       : null;
   const balancePayment = getBalancePayment(paymentList, depositPayment);
+  const soldePayment = billing
+    ? pickSoldePayment(paymentList, billing.facturation_solde_label)
+    : balancePayment;
+  const withinSoldeWindow = isWithinSoldeWindow(
+    event.date_debut,
+    soldeWindowDays,
+  );
+  const showPaymentEmail =
+    (isOption || isConfirme) &&
+    Boolean(soldePayment) &&
+    withinSoldeWindow &&
+    !isArchived &&
+    !isClosed;
 
   return (
     <div className="space-y-8">
@@ -148,7 +170,9 @@ export default async function EventDetailPage({
             eventId={event.id}
             coupleEmail={typedEvent.email}
             hasPendingPayment={showPaymentEmail}
-            sentAt={firstPendingPayment?.payment_request_sent_at ?? null}
+            paymentId={soldePayment?.id}
+            soldeWindowDays={soldeWindowDays}
+            sentAt={soldePayment?.payment_request_sent_at ?? null}
           />
         </div>
 

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { parseEventFormData } from "@/lib/event-utils";
 import { loadWorkspaceEventTypes } from "@/lib/load-workspace";
 import { syncAutoPayments } from "@/lib/sync-payments";
-import { maybeAutoSendPaymentRequest, notifyPaymentConfirmed } from "@/actions/payment-emails";
+import { notifyPaymentConfirmed } from "@/actions/payment-emails";
 import { isEventRangeBlocked } from "@/lib/calendar-events";
 import { runInBackground } from "@/lib/run-in-background";
 import type { EventStatus } from "@/lib/types";
@@ -383,7 +383,6 @@ export async function blockEventDate(
       prixTotal,
       event.date_debut,
     );
-    runInBackground(maybeAutoSendPaymentRequest(eventId));
   }
 
   revalidatePath("/");

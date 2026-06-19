@@ -7,3 +7,12 @@
     @apply bg-slate-50 text-slate-900;
   }
 }
+
+@keyframes progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}

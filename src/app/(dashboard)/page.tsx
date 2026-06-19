@@ -1,26 +1,52 @@
-import { Suspense } from "react";
 import {
   PipelineView,
-  PipelineViewFallback,
 } from "@/components/dashboard/pipeline-view";
 import { KpiOverview } from "@/components/dashboard/kpi-overview";
 import { NewLeadButton } from "@/components/dashboard/new-lead-button";
 import { getBlockedDateSet } from "@/lib/calendar-events";
-import { loadArchivedEvents } from "@/lib/load-archived-events";
+import {
+  loadArchivedEventCount,
+  loadArchivedEvents,
+} from "@/lib/load-archived-events";
 import { loadDashboardStats } from "@/lib/load-dashboard-stats";
-import { loadPendingPaymentNotifications } from "@/lib/load-pending-payment-notifications";
+import {
+  loadPendingPaymentNotificationCount,
+  loadPendingPaymentNotifications,
+} from "@/lib/load-pending-payment-notifications";
 import { loadWorkspaceEventTypes } from "@/lib/load-workspace";
 
-export default async function PipelinePage() {
-  const [{ events, stats }, customEventTypes, archivedEvents, paymentNotifications] =
-    await Promise.all([
+export default async function PipelinePage({
+  searchParams,
+}: {
+  searchParams: { vue?: string };
+}) {
+  const view = searchParams.vue;
+  const showArchives = view === "archives";
+  const showNotifs = view === "notifs";
+
+  const [
+    { events, stats },
+    customEventTypes,
+    archivedEvents,
+    archivedCount,
+    paymentNotifications,
+    notifCount,
+  ] = await Promise.all([
     loadDashboardStats(),
     loadWorkspaceEventTypes(),
-    loadArchivedEvents(),
-    loadPendingPaymentNotifications(),
+    showArchives ? loadArchivedEvents() : Promise.resolve([]),
+    showArchives ? Promise.resolve(0) : loadArchivedEventCount(),
+    showNotifs ? loadPendingPaymentNotifications() : Promise.resolve([]),
+    showNotifs ? Promise.resolve(0) : loadPendingPaymentNotificationCount(),
   ]);
 
   const blockedDates = Array.from(getBlockedDateSet(events));
+  const resolvedArchivedCount = showArchives
+    ? archivedEvents.length
+    : archivedCount;
+  const resolvedNotifCount = showNotifs
+    ? paymentNotifications.length
+    : notifCount;
 
   return (
     <div className="space-y-8">
@@ -41,20 +67,13 @@ export default async function PipelinePage() {
 
       <KpiOverview stats={stats} />
 
-      <Suspense
-        fallback={
-          <PipelineViewFallback
-            events={events}
-            archivedCount={archivedEvents.length}
-          />
-        }
-      >
-        <PipelineView
-          events={events}
-          archivedEvents={archivedEvents}
-          paymentNotifications={paymentNotifications}
-        />
-      </Suspense>
+      <PipelineView
+        events={events}
+        archivedEvents={archivedEvents}
+        archivedCount={resolvedArchivedCount}
+        paymentNotifications={paymentNotifications}
+        notifCount={resolvedNotifCount}
+      />
     </div>
   );
 }

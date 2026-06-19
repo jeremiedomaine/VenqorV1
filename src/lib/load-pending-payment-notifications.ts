@@ -1,3 +1,4 @@
+import { getAuthContext } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase/server";
 
 export interface PendingPaymentNotification {
@@ -13,29 +14,33 @@ export interface PendingPaymentNotification {
   };
 }
 
+export async function loadPendingPaymentNotificationCount(): Promise<number> {
+  const auth = await getAuthContext();
+  if (!auth) return 0;
+
+  const supabase = createClient();
+  const { count } = await supabase
+    .from("payments")
+    .select("id", { count: "exact", head: true })
+    .eq("workspace_id", auth.workspaceId)
+    .eq("statut", "declare_paye");
+
+  return count ?? 0;
+}
+
 export async function loadPendingPaymentNotifications(): Promise<
   PendingPaymentNotification[]
 > {
+  const auth = await getAuthContext();
+  if (!auth) return [];
+
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return [];
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("workspace_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile) return [];
-
   const { data } = await supabase
     .from("payments")
     .select(
       "id, label, montant, declared_at, event_id, events!inner(id, nom_des_maries, nom_evenement)",
     )
-    .eq("workspace_id", profile.workspace_id)
+    .eq("workspace_id", auth.workspaceId)
     .eq("statut", "declare_paye")
     .order("declared_at", { ascending: false });
 

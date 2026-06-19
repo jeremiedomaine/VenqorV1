@@ -53,16 +53,19 @@ export function PipelineViewFallback({
 export function PipelineView({
   events,
   archivedEvents,
+  archivedCount,
   paymentNotifications,
+  notifCount,
 }: {
   events: Event[];
   archivedEvents: Event[];
+  archivedCount: number;
   paymentNotifications: PendingPaymentNotification[];
+  notifCount: number;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const view = viewFromParam(searchParams.get("vue"));
-  const notifCount = paymentNotifications.length;
 
   function setView(next: PipelineViewMode) {
     const params = new URLSearchParams(searchParams.toString());
@@ -74,7 +77,7 @@ export function PipelineView({
     router.replace(query ? `/?${query}` : "/", { scroll: false });
   }
 
-  const archivedCount = archivedEvents.length;
+  const archivedCountDisplay = archivedCount;
 
   return (
     <div className="space-y-4">
@@ -139,7 +142,7 @@ export function PipelineView({
           <Archive className="h-4 w-4" />
           {view === "archives"
             ? "Retour au pipeline"
-            : `Voir les archivés${archivedCount > 0 ? ` (${archivedCount})` : ""}`}
+            : `Voir les archivés${archivedCountDisplay > 0 ? ` (${archivedCountDisplay})` : ""}`}
         </Button>
       </div>
 

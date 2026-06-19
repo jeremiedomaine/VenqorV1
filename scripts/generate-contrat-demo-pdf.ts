@@ -58,10 +58,29 @@ async function main() {
     color: rgb(1, 1, 1),
   });
 
+  const pdfBytes = Buffer.from(await doc.save());
   const outDir = resolve(process.cwd(), "assets");
   mkdirSync(outDir, { recursive: true });
-  writeFileSync(resolve(outDir, "contrat-demo.pdf"), await doc.save());
+  writeFileSync(resolve(outDir, "contrat-demo.pdf"), pdfBytes);
+
+  const bundledPath = resolve(
+    process.cwd(),
+    "src/lib/yousign/contrat-demo-pdf.ts",
+  );
+  const base64 = pdfBytes.toString("base64");
+  writeFileSync(
+    bundledPath,
+    `/** Demo contract PDF bundled for Vercel serverless (generated). */
+export const CONTRAT_DEMO_PDF_BASE64 = '${base64}';
+
+export function loadDemoContractPdf(): Buffer {
+  return Buffer.from(CONTRAT_DEMO_PDF_BASE64, 'base64');
+}
+`,
+  );
+
   console.log("✓ assets/contrat-demo.pdf");
+  console.log("✓ src/lib/yousign/contrat-demo-pdf.ts");
 }
 
 main().catch((err) => {

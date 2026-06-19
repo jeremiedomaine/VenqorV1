@@ -1,5 +1,3 @@
-import { readFileSync } from "fs";
-import { resolve } from "path";
 import {
   activateSignatureRequest,
   addSigner,
@@ -7,6 +5,7 @@ import {
   uploadSignableDocument,
   YousignError,
 } from "@/lib/yousign/client";
+import { loadDemoContractPdf } from "@/lib/yousign/contrat-demo-pdf";
 
 export type ContractSigner = {
   firstName: string;
@@ -24,12 +23,6 @@ export type SendContractInput = {
 export type SendContractResult =
   | { ok: true; signatureRequestId: string }
   | { ok: false; error: string };
-
-const DEMO_PDF_PATH = resolve(process.cwd(), "assets/contrat-demo.pdf");
-
-function loadDemoContractPdf(): Buffer {
-  return readFileSync(DEMO_PDF_PATH);
-}
 
 /** Deux signataires avec la même adresse : alias +signataire2 pour la boîte commune. */
 export function distinctSignerEmails(

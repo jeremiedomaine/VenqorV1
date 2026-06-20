@@ -36,7 +36,9 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/signup");
   const isPublic =
     request.nextUrl.pathname.startsWith("/portail") ||
-    request.nextUrl.pathname.startsWith("/auth");
+    request.nextUrl.pathname.startsWith("/auth") ||
+    request.nextUrl.pathname.startsWith("/api/webhooks") ||
+    request.nextUrl.pathname.startsWith("/api/cron");
 
   if (!user && !isAuthPage && !isPublic) {
     const url = request.nextUrl.clone();

@@ -85,9 +85,14 @@ export function ContratTemplateForm({
       </div>
 
       <div className="space-y-3 rounded-lg border border-amber-200/80 bg-amber-50/40 p-4 text-sm text-amber-950">
-        <p className="font-medium">Ancres Yousign (2 mariés)</p>
+        <p className="font-medium">Emplacement des signatures</p>
         <p className="text-amber-900/90">
-          Placez dans votre PDF, en blanc sur fond blanc ou en texte discret :
+          Sans configuration, Venqor place automatiquement les deux signatures
+          en bas de la dernière page du PDF.
+        </p>
+        <p className="text-amber-900/90">
+          Pour choisir l&apos;emplacement exact, ajoutez dans votre PDF (texte
+          blanc sur fond blanc ou discret) :
         </p>
         <ul className="list-inside list-disc space-y-1 font-mono text-xs text-amber-900">
           <li>{"{{s1|signature|200|80}}"} — 1er marié</li>

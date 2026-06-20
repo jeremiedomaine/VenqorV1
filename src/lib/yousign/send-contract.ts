@@ -5,6 +5,10 @@ import {
   uploadSignableDocument,
   YousignError,
 } from "@/lib/yousign/client";
+import {
+  buildSignatureField,
+  pdfPageCount,
+} from "@/lib/yousign/signature-fields";
 
 export type ContractSigner = {
   firstName: string;
@@ -58,22 +62,36 @@ export async function sendYousignContract(
       `Contrat — ${input.eventLabel}`.slice(0, 120),
     );
 
-    await uploadSignableDocument(
+    const document = await uploadSignableDocument(
       signatureRequestId,
       input.pdfBytes,
       input.pdfFilename,
     );
 
+    const useManualFields = document.totalAnchors < 2;
+    const pageCount = useManualFields
+      ? await pdfPageCount(input.pdfBytes)
+      : 1;
+
     const phone = normalizePhoneForYousign(input.phoneNumber);
 
-    for (const signer of input.signers) {
-      await addSigner(signatureRequestId, {
-        first_name: signer.firstName,
-        last_name: signer.lastName,
-        email: signer.email,
-        phone_number: phone,
-        locale: "fr",
-      });
+    for (let i = 0; i < input.signers.length; i++) {
+      const signer = input.signers[i];
+      const fields = useManualFields
+        ? [buildSignatureField(document.id, pageCount, i as 0 | 1)]
+        : undefined;
+
+      await addSigner(
+        signatureRequestId,
+        {
+          first_name: signer.firstName,
+          last_name: signer.lastName,
+          email: signer.email,
+          phone_number: phone,
+          locale: "fr",
+        },
+        fields,
+      );
     }
 
     await activateSignatureRequest(signatureRequestId);

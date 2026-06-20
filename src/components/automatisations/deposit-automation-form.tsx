@@ -14,7 +14,7 @@ import {
 } from "@/lib/automation-settings";
 import {
   interpolateEmailTemplate,
-  paymentRequestEmailHtml,
+  depositRequestEmailHtml,
 } from "@/lib/email/templates";
 import { formatCurrency } from "@/lib/utils";
 
@@ -53,7 +53,7 @@ export function DepositAutomationForm({
     ...PREVIEW_VARS,
     domaine: workspaceName,
   });
-  const previewHtml = paymentRequestEmailHtml(
+  const previewHtml = depositRequestEmailHtml(
     { ...PREVIEW_VARS, domaine: workspaceName },
     previewIntro,
   );

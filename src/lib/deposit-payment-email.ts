@@ -8,7 +8,7 @@ import { sendEmail } from "@/lib/email/send-email";
 import { emailForCouple } from "@/lib/email/recipients";
 import {
   interpolateEmailTemplate,
-  paymentRequestEmailHtml,
+  depositRequestEmailHtml,
 } from "@/lib/email/templates";
 import { pickAcomptePayment, type PaymentPickRow } from "@/lib/payment-schedule";
 import { formatCurrency } from "@/lib/utils";
@@ -133,7 +133,7 @@ export async function sendDepositPaymentRequest(params: {
     vars,
   );
   const intro = interpolateEmailTemplate(depositSettings.email_acompte_intro, vars);
-  const html = paymentRequestEmailHtml(vars, intro);
+  const html = depositRequestEmailHtml(vars, intro);
 
   const sendResult = await sendEmail({
     to: coupleTo,

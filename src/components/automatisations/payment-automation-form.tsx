@@ -55,6 +55,10 @@ export function PaymentAutomationForm({
   const previewHtml = paymentRequestEmailHtml(
     { ...PREVIEW_VARS, domaine: workspaceName },
     previewIntro,
+    {
+      title: "Règlement de votre solde",
+      ctaLabel: "Régler mon solde",
+    },
   );
 
   function handleSubmit(formData: FormData) {

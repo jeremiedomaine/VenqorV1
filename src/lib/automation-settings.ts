@@ -40,8 +40,16 @@ export function normalizeSoldeEmailSettings(
 ): PaymentAutomationSettings {
   let { email_paiement_objet, email_paiement_intro } = settings;
 
+  const subjectLooksLikeAcompte =
+    email_paiement_objet.toLowerCase().includes("acompte");
+  const introLooksLikeAcompte =
+    email_paiement_intro.includes("confirmer votre réservation") ||
+    email_paiement_intro.toLowerCase().includes("acompte");
+
   if (
     email_paiement_objet === LEGACY_PAYMENT_EMAIL_SUBJECT ||
+    email_paiement_objet === DEFAULT_ACOMPTE_EMAIL_SUBJECT ||
+    subjectLooksLikeAcompte ||
     email_paiement_objet.trim() === ""
   ) {
     email_paiement_objet = DEFAULT_PAYMENT_EMAIL_SUBJECT;
@@ -49,7 +57,9 @@ export function normalizeSoldeEmailSettings(
 
   if (
     email_paiement_intro === LEGACY_PAYMENT_EMAIL_INTRO ||
+    email_paiement_intro === DEFAULT_ACOMPTE_EMAIL_INTRO ||
     email_paiement_intro.includes("date est réservée") ||
+    introLooksLikeAcompte ||
     email_paiement_intro.trim() === ""
   ) {
     email_paiement_intro = DEFAULT_PAYMENT_EMAIL_INTRO;

@@ -121,15 +121,29 @@ export function venqorEmailLayout({
 export function paymentRequestEmailHtml(
   vars: EmailTemplateVars,
   introText: string,
+  options?: {
+    title?: string;
+    ctaLabel?: string;
+  },
 ): string {
   return venqorEmailLayout({
     domainName: vars.domaine,
-    title: "Règlement de votre solde",
+    title: options?.title ?? "Règlement de votre solde",
     bodyHtml: paragraphsFromText(introText),
-    ctaLabel: "Régler mon solde",
+    ctaLabel: options?.ctaLabel ?? "Régler mon solde",
     ctaHref: vars.lien_paiement,
     footerNote:
       "Page de paiement sécurisée. Vous y trouverez les coordonnées bancaires et pourrez confirmer votre virement.",
+  });
+}
+
+export function depositRequestEmailHtml(
+  vars: EmailTemplateVars,
+  introText: string,
+): string {
+  return paymentRequestEmailHtml(vars, introText, {
+    title: "Règlement de votre acompte",
+    ctaLabel: "Régler mon acompte",
   });
 }
 

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
-  Calendar,
   LayoutGrid,
   LogOut,
   Settings,
@@ -21,12 +20,6 @@ const NAV_ITEMS = [
     href: "/pilotage",
     label: "Pilotage",
     icon: BarChart3,
-    match: "prefix" as const,
-  },
-  {
-    href: "/evenements",
-    label: "Événements",
-    icon: Calendar,
     match: "prefix" as const,
   },
   {
@@ -61,7 +54,12 @@ export function DashboardSidebar({ workspaceName }: { workspaceName: string }) {
 
       <nav className="flex-1 space-y-1 px-3 py-4">
         {NAV_ITEMS.map(({ href, label, icon: Icon, match }) => {
-          const active = isActive(pathname, href, match);
+          const onEventDetail =
+            pathname.startsWith("/evenements/") && pathname !== "/evenements";
+          const active =
+            onEventDetail && href === "/"
+              ? true
+              : isActive(pathname, href, match);
           return (
             <Link
               key={href}

@@ -5,7 +5,6 @@ import {
   uploadSignableDocument,
   YousignError,
 } from "@/lib/yousign/client";
-import { loadDemoContractPdf } from "@/lib/yousign/contrat-demo-pdf";
 
 export type ContractSigner = {
   firstName: string;
@@ -18,6 +17,8 @@ export type SendContractInput = {
   eventLabel: string;
   signers: [ContractSigner, ContractSigner];
   phoneNumber?: string | null;
+  pdfBytes: Buffer;
+  pdfFilename: string;
 };
 
 export type SendContractResult =
@@ -53,15 +54,14 @@ export async function sendYousignContract(
   input: SendContractInput,
 ): Promise<SendContractResult> {
   try {
-    const pdf = loadDemoContractPdf();
     const signatureRequestId = await createSignatureRequest(
       `Contrat — ${input.eventLabel}`.slice(0, 120),
     );
 
     await uploadSignableDocument(
       signatureRequestId,
-      pdf,
-      `contrat-${input.eventId.slice(0, 8)}.pdf`,
+      input.pdfBytes,
+      input.pdfFilename,
     );
 
     const phone = normalizePhoneForYousign(input.phoneNumber);

@@ -8,6 +8,7 @@ export const SETTINGS_NAV_SECTIONS = [
   { id: "objectifs", label: "Objectifs" },
   { id: "facturation", label: "Facturation" },
   { id: "encaissements", label: "Encaissements" },
+  { id: "contrat", label: "Contrat" },
   { id: "types-evenement", label: "Types" },
 ] as const;
 

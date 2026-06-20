@@ -9,7 +9,9 @@ import {
 import { isYousignConfigured } from "@/lib/yousign/client";
 import { maybeSendDepositAfterContract } from "@/lib/deposit-payment-email";
 import { depositEmailUserMessage } from "@/lib/deposit-email-feedback";
+import { loadContractPdfForWorkspace } from "@/lib/contrat-template";
 import { syncAutoPayments } from "@/lib/sync-payments";
+import { createServiceClient } from "@/lib/supabase/service";
 
 async function getWorkspaceId() {
   const supabase = createClient();
@@ -40,6 +42,7 @@ export async function sendContractForEvent(
   error?: string;
   depositEmailSent?: boolean;
   depositEmailWarning?: string;
+  usingDefaultTemplate?: boolean;
 }> {
   if (!isYousignConfigured()) {
     return { error: "Yousign non configuré (YOUSIGN_API_KEY manquant)." };
@@ -82,10 +85,25 @@ export async function sendContractForEvent(
 
   const [email1, email2] = distinctSignerEmails(coupleEmail);
 
+  const serviceSupabase = createServiceClient();
+  const { data: workspace } = await supabase
+    .from("workspaces")
+    .select("contrat_template_path")
+    .eq("id", workspaceId)
+    .single();
+
+  const contractPdf = await loadContractPdfForWorkspace(
+    serviceSupabase,
+    workspaceId,
+    workspace?.contrat_template_path,
+  );
+
   const result = await sendYousignContract({
     eventId: event.id,
     eventLabel: event.nom_evenement || event.nom_des_maries,
     phoneNumber: event.telephone,
+    pdfBytes: contractPdf.bytes,
+    pdfFilename: `contrat-${event.id.slice(0, 8)}.pdf`,
     signers: [
       { firstName: marie1First, lastName: marie1Last, email: email1 },
       { firstName: marie2First, lastName: marie2Last, email: email2 },
@@ -135,5 +153,6 @@ export async function sendContractForEvent(
     depositEmailSent:
       depositResult.ok && !depositResult.skipped && !depositResult.alreadySent,
     depositEmailWarning: depositEmailUserMessage(depositResult) ?? undefined,
+    usingDefaultTemplate: contractPdf.source === "default",
   };
 }

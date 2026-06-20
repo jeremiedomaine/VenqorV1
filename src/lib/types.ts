@@ -20,6 +20,9 @@ export interface Workspace {
   id: string;
   nom_domaine: string;
   logo_url: string | null;
+  contrat_template_path: string | null;
+  contrat_template_filename: string | null;
+  contrat_template_updated_at: string | null;
   guide_infos_pratiques: string;
   guide_regles: string;
   guide_prestataires: string;

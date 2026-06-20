@@ -18,12 +18,14 @@ export function SendContractButton({
   contratStatut,
   contratEnvoyeAt,
   contratSigneAt,
+  hasCustomTemplate,
 }: {
   eventId: string;
   coupleEmail: string;
   contratStatut: ContratStatut;
   contratEnvoyeAt: string | null;
   contratSigneAt: string | null;
+  hasCustomTemplate: boolean;
 }) {
   const router = useRouter();
   const { pending, run } = useAsyncAction();
@@ -47,6 +49,11 @@ export function SendContractButton({
       <CardContent className="space-y-3">
         <p className="text-sm text-slate-600">
           Envoie le contrat aux deux mariés pour signature électronique.
+          {!hasCustomTemplate && (
+            <span className="mt-1 block text-amber-700">
+              Modèle démo Venqor — uploadez votre PDF dans Paramètres → Contrat.
+            </span>
+          )}
           {!coupleEmail && (
             <span className="mt-1 block text-amber-700">
               Renseignez l&apos;email du couple dans le dossier.
@@ -99,6 +106,13 @@ export function SendContractButton({
                   }
                   if (result.depositEmailWarning) {
                     setWarning(result.depositEmailWarning);
+                  }
+                  if (result.usingDefaultTemplate) {
+                    setWarning(
+                      (w) =>
+                        w ??
+                        "Contrat envoyé avec le modèle démo — uploadez le vôtre dans Paramètres.",
+                    );
                   }
                   router.refresh();
                 } else {

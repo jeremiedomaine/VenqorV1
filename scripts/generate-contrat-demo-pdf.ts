@@ -4,56 +4,105 @@ import { resolve } from "path";
 
 async function main() {
   const doc = await PDFDocument.create();
-  const page = doc.addPage([595, 842]);
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const margin = 50;
+  const line = 14;
+  let y = 780;
 
-  page.drawText("Contrat de reservation — DEMO Venqor", {
-    x: 50,
-    y: 780,
-    size: 16,
-    font: fontBold,
-    color: rgb(0.1, 0.1, 0.1),
-  });
-  page.drawText("Document provisoire pour tests Yousign sandbox.", {
-    x: 50,
-    y: 750,
-    size: 11,
+  function drawTitle(text: string) {
+    page.drawText(text, {
+      x: margin,
+      y,
+      size: 16,
+      font: fontBold,
+      color: rgb(0.08, 0.09, 0.12),
+    });
+    y -= 28;
+  }
+
+  function drawParagraph(text: string, size = 10, bold = false) {
+    const f = bold ? fontBold : font;
+    page.drawText(text, {
+      x: margin,
+      y,
+      size,
+      font: f,
+      color: rgb(0.2, 0.22, 0.28),
+      maxWidth: 495,
+      lineHeight: line,
+    });
+    y -= Math.ceil(text.length / 80) * line + 10;
+  }
+
+  let page = doc.addPage([595, 842]);
+
+  drawTitle("CONTRAT DE RESERVATION — MARIAGE");
+  drawParagraph(
+    "Modele Venqor — a remplacer par le PDF de votre domaine (Parametres > Contrat).",
+    9,
+  );
+  y -= 8;
+
+  drawParagraph("ENTRE LES SOUSSIGNES", 11, true);
+  drawParagraph(
+    "Le domaine [NOM DU DOMAINE], ci-apres « le Prestataire », d'une part,",
+  );
+  drawParagraph(
+    "Et les futurs epoux [NOMS DES MARIES], ci-apres « les Clients », d'autre part.",
+  );
+  y -= 6;
+
+  drawParagraph("ARTICLE 1 — OBJET", 11, true);
+  drawParagraph(
+    "Le present contrat a pour objet la reservation du domaine pour la celebration d'un mariage a la date convenue entre les parties.",
+  );
+
+  drawParagraph("ARTICLE 2 — DATE ET PRESTATIONS", 11, true);
+  drawParagraph(
+    "Date de l'evenement, horaires, capacite et prestations incluses : voir devis et fiche dossier Venqor.",
+  );
+
+  drawParagraph("ARTICLE 3 — TARIF ET MODALITES DE PAIEMENT", 11, true);
+  drawParagraph(
+    "Le montant total, l'acompte et le solde sont definis dans l'echeancier Venqor. Les reglements s'effectuent selon les modalites communiquees au couple.",
+  );
+
+  drawParagraph("ARTICLE 4 — CONDITIONS GENERALES", 11, true);
+  drawParagraph(
+    "Annulation, report, assurance, reglement interieur et responsabilites : se reporter aux conditions generales du domaine annexees ou communiquees au Client.",
+  );
+
+  y -= 10;
+  drawParagraph("SIGNATURES DES CLIENTS", 11, true);
+  drawParagraph("Les Clients reconnaissent avoir pris connaissance du present contrat.");
+
+  page.drawText("Signature marié(e) 1", {
+    x: margin,
+    y: 200,
+    size: 10,
     font,
-    color: rgb(0.3, 0.3, 0.3),
-  });
-  page.drawText("Les maries signent ci-dessous :", {
-    x: 50,
-    y: 700,
-    size: 12,
-    font: fontBold,
-    color: rgb(0.1, 0.1, 0.1),
-  });
-  page.drawText("Signataire 1", {
-    x: 50,
-    y: 660,
-    size: 11,
-    font,
-    color: rgb(0.2, 0.2, 0.2),
+    color: rgb(0.35, 0.37, 0.42),
   });
   page.drawText("{{s1|signature|200|80}}", {
-    x: 50,
-    y: 640,
-    size: 12,
+    x: margin,
+    y: 178,
+    size: 11,
     font,
     color: rgb(1, 1, 1),
   });
-  page.drawText("Signataire 2", {
-    x: 50,
-    y: 560,
-    size: 11,
+
+  page.drawText("Signature marié(e) 2", {
+    x: margin,
+    y: 120,
+    size: 10,
     font,
-    color: rgb(0.2, 0.2, 0.2),
+    color: rgb(0.35, 0.37, 0.42),
   });
   page.drawText("{{s2|signature|200|80}}", {
-    x: 50,
-    y: 540,
-    size: 12,
+    x: margin,
+    y: 98,
+    size: 11,
     font,
     color: rgb(1, 1, 1),
   });

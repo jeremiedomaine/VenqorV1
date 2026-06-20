@@ -1,4 +1,5 @@
 import { BillingSettingsForm } from "@/components/parametres/billing-settings-form";
+import { ContratTemplateForm } from "@/components/parametres/contrat-template-form";
 import { EncaissementsSettingsForm } from "@/components/parametres/encaissements-settings-form";
 import { EventTypesSettings } from "@/components/parametres/event-types-settings";
 import { GoalsSettingsForm } from "@/components/parametres/goals-settings-form";
@@ -101,6 +102,31 @@ export default async function ParametresPage() {
               </p>
             </SettingsInfoBox>
             <EncaissementsSettingsForm encaissements={encaissements} />
+          </div>
+        </SettingsSection>
+
+        <SettingsSection
+          id="contrat"
+          title="Contrat de réservation"
+          description="Modèle PDF signé via Yousign par les deux mariés. Venqor envoie votre document tel quel — sans le rédiger à votre place."
+        >
+          <div className="space-y-6">
+            <SettingsInfoBox title="Bon à savoir">
+              <p>
+                Uploadez le contrat type de votre domaine (PDF). Ajoutez les
+                ancres Yousign pour les deux signatures si elles ne sont pas
+                déjà positionnées dans l&apos;interface Yousign.
+              </p>
+              <p>
+                Sans modèle personnalisé, le modèle Venqor de démonstration est
+                utilisé pour les tests sandbox.
+              </p>
+            </SettingsInfoBox>
+            <ContratTemplateForm
+              hasCustomTemplate={Boolean(workspace.contrat_template_path)}
+              filename={workspace.contrat_template_filename}
+              updatedAt={workspace.contrat_template_updated_at}
+            />
           </div>
         </SettingsSection>
 

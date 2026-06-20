@@ -57,6 +57,15 @@ export function computeWorkspaceSetupStatus(
       href: "/parametres#encaissements",
     },
     {
+      id: "contrat",
+      label: "Contrat Yousign",
+      detail: workspace.contrat_template_path
+        ? workspace.contrat_template_filename ?? "PDF personnalisé"
+        : "Modèle démo — uploadez le vôtre",
+      done: Boolean(workspace.contrat_template_path),
+      href: "/parametres#contrat",
+    },
+    {
       id: "types",
       label: "Types d'événement",
       detail:

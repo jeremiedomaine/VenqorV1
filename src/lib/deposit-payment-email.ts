@@ -133,7 +133,11 @@ export async function sendDepositPaymentRequest(params: {
     vars,
   );
   const intro = interpolateEmailTemplate(depositSettings.email_acompte_intro, vars);
-  const html = depositRequestEmailHtml(vars, intro);
+  const html = depositRequestEmailHtml(vars, intro, {
+    title: depositSettings.email_acompte_titre,
+    ctaLabel: depositSettings.email_acompte_cta,
+    footerNote: depositSettings.email_acompte_details,
+  });
 
   const sendResult = await sendEmail({
     to: coupleTo,
@@ -166,7 +170,7 @@ export async function maybeSendDepositAfterContract(params: {
   const { data: workspace } = await params.supabase
     .from("workspaces")
     .select(
-      "automation_acompte_active, acompte_signature_timing, email_acompte_objet, email_acompte_intro",
+      "automation_acompte_active, acompte_signature_timing, email_acompte_objet, email_acompte_intro, email_acompte_titre, email_acompte_cta, email_acompte_details",
     )
     .eq("id", params.workspaceId)
     .single();

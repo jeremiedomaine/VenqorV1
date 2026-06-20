@@ -66,10 +66,16 @@ export interface Workspace {
   automation_paiement_active: boolean;
   email_paiement_objet: string;
   email_paiement_intro: string;
+  email_paiement_titre: string;
+  email_paiement_cta: string;
+  email_paiement_details: string;
   acompte_signature_timing: AcompteSignatureTiming;
   automation_acompte_active: boolean;
   email_acompte_objet: string;
   email_acompte_intro: string;
+  email_acompte_titre: string;
+  email_acompte_cta: string;
+  email_acompte_details: string;
   relances_actives: boolean;
   created_at: string;
   updated_at: string;

@@ -150,6 +150,7 @@ export function paymentRequestEmailHtml(
   options?: {
     title?: string;
     ctaLabel?: string;
+    footerNote?: string;
   },
 ): string {
   return venqorEmailLayout({
@@ -159,6 +160,7 @@ export function paymentRequestEmailHtml(
     ctaLabel: options?.ctaLabel ?? "Régler mon solde",
     ctaHref: vars.lien_paiement,
     footerNote:
+      options?.footerNote ??
       "Page de paiement sécurisée. Vous y trouverez les coordonnées bancaires et pourrez confirmer votre virement.",
   });
 }
@@ -166,10 +168,16 @@ export function paymentRequestEmailHtml(
 export function depositRequestEmailHtml(
   vars: EmailTemplateVars,
   introText: string,
+  options?: {
+    title?: string;
+    ctaLabel?: string;
+    footerNote?: string;
+  },
 ): string {
   return paymentRequestEmailHtml(vars, introText, {
-    title: "Règlement de votre acompte",
-    ctaLabel: "Régler mon acompte",
+    title: options?.title ?? "Règlement de votre acompte",
+    ctaLabel: options?.ctaLabel ?? "Régler mon acompte",
+    footerNote: options?.footerNote,
   });
 }
 

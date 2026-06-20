@@ -30,6 +30,9 @@ export async function ensureDefaultRelanceRules(
         delai_jours: preset.delai_jours,
         email_objet: preset.email_objet,
         email_intro: preset.email_intro,
+        email_titre: preset.email_title,
+        email_cta_label: preset.cta_label,
+        email_footer_note: null,
       })),
     );
   }

@@ -5,7 +5,15 @@ export interface PaymentAutomationSettings {
   automation_paiement_active: boolean;
   email_paiement_objet: string;
   email_paiement_intro: string;
+  email_paiement_titre: string;
+  email_paiement_cta: string;
+  email_paiement_details: string;
 }
+
+export const DEFAULT_PAYMENT_EMAIL_TITLE = "Règlement de votre solde";
+export const DEFAULT_PAYMENT_EMAIL_CTA = "Régler mon solde";
+export const DEFAULT_PAYMENT_EMAIL_DETAILS =
+  "Page de paiement sécurisée. Vous y trouverez les coordonnées bancaires et pourrez confirmer votre virement.";
 
 export const DEFAULT_PAYMENT_EMAIL_SUBJECT =
   "{domaine} — Règlement de votre solde";
@@ -26,7 +34,14 @@ export interface DepositAutomationSettings {
   acompte_signature_timing: "with_contract" | "after_contract";
   email_acompte_objet: string;
   email_acompte_intro: string;
+  email_acompte_titre: string;
+  email_acompte_cta: string;
+  email_acompte_details: string;
 }
+
+export const DEFAULT_ACOMPTE_EMAIL_TITLE = "Règlement de votre acompte";
+export const DEFAULT_ACOMPTE_EMAIL_CTA = "Régler mon acompte";
+export const DEFAULT_ACOMPTE_EMAIL_DETAILS = DEFAULT_PAYMENT_EMAIL_DETAILS;
 
 /** Ancien modèle (acompte / date bloquée) — migration 011 */
 const LEGACY_PAYMENT_EMAIL_SUBJECT =
@@ -84,6 +99,9 @@ export function automationFromWorkspace(
     | "automation_paiement_active"
     | "email_paiement_objet"
     | "email_paiement_intro"
+    | "email_paiement_titre"
+    | "email_paiement_cta"
+    | "email_paiement_details"
   >,
 ): PaymentAutomationSettings {
   return normalizeSoldeEmailSettings({
@@ -92,6 +110,13 @@ export function automationFromWorkspace(
       workspace.email_paiement_objet ?? DEFAULT_PAYMENT_EMAIL_SUBJECT,
     email_paiement_intro:
       workspace.email_paiement_intro ?? DEFAULT_PAYMENT_EMAIL_INTRO,
+    email_paiement_titre:
+      workspace.email_paiement_titre?.trim() || DEFAULT_PAYMENT_EMAIL_TITLE,
+    email_paiement_cta:
+      workspace.email_paiement_cta?.trim() || DEFAULT_PAYMENT_EMAIL_CTA,
+    email_paiement_details:
+      workspace.email_paiement_details?.trim() ||
+      DEFAULT_PAYMENT_EMAIL_DETAILS,
   });
 }
 
@@ -102,6 +127,9 @@ export function depositAutomationFromWorkspace(
     | "acompte_signature_timing"
     | "email_acompte_objet"
     | "email_acompte_intro"
+    | "email_acompte_titre"
+    | "email_acompte_cta"
+    | "email_acompte_details"
   >,
 ): DepositAutomationSettings {
   return {
@@ -112,6 +140,12 @@ export function depositAutomationFromWorkspace(
       workspace.email_acompte_objet?.trim() || DEFAULT_ACOMPTE_EMAIL_SUBJECT,
     email_acompte_intro:
       workspace.email_acompte_intro?.trim() || DEFAULT_ACOMPTE_EMAIL_INTRO,
+    email_acompte_titre:
+      workspace.email_acompte_titre?.trim() || DEFAULT_ACOMPTE_EMAIL_TITLE,
+    email_acompte_cta:
+      workspace.email_acompte_cta?.trim() || DEFAULT_ACOMPTE_EMAIL_CTA,
+    email_acompte_details:
+      workspace.email_acompte_details?.trim() || DEFAULT_ACOMPTE_EMAIL_DETAILS,
   };
 }
 

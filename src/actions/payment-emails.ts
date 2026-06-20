@@ -173,7 +173,11 @@ export async function sendPaymentRequestEmail(
 
   const subject = interpolateEmailTemplate(settings.email_paiement_objet, vars);
   const intro = interpolateEmailTemplate(settings.email_paiement_intro, vars);
-  const html = paymentRequestEmailHtml(vars, intro);
+  const html = paymentRequestEmailHtml(vars, intro, {
+    title: settings.email_paiement_titre,
+    ctaLabel: settings.email_paiement_cta,
+    footerNote: settings.email_paiement_details,
+  });
 
   const result = await sendEmail({
     to: coupleTo,

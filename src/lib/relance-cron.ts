@@ -11,7 +11,7 @@ import {
   relanceEmailHtml,
 } from "@/lib/email/templates";
 import {
-  getRelancePreset,
+  relanceEmailContent,
   type RelanceDeclencheur,
   type RelanceRegle,
 } from "@/lib/relance-presets";
@@ -182,7 +182,7 @@ export async function processRelanceEmails(): Promise<RelanceCronResult> {
             continue;
           }
 
-          const preset = getRelancePreset(rule.preset_key);
+          const emailContent = relanceEmailContent(rule);
           const portalLink = portalUrl(event.portal_token);
           const vars = {
             domaine: workspace.nom_domaine,
@@ -206,11 +206,12 @@ export async function processRelanceEmails(): Promise<RelanceCronResult> {
             subject: interpolateEmailTemplate(rule.email_objet, vars),
             html: relanceEmailHtml({
               domainName: workspace.nom_domaine,
-              title: preset?.email_title ?? rule.nom,
+              title: emailContent.title,
               introText: interpolateEmailTemplate(rule.email_intro, vars),
-              ctaLabel: preset?.cta_label ?? "Mon espace couple",
+              ctaLabel: emailContent.ctaLabel,
               ctaHref: portalLink,
               paymentRelated: false,
+              footerNote: emailContent.footerNote,
             }),
             replyTo: workspace.contact_email || undefined,
           });
@@ -262,7 +263,7 @@ export async function processRelanceEmails(): Promise<RelanceCronResult> {
             continue;
           }
 
-          const preset = getRelancePreset(rule.preset_key);
+          const emailContent = relanceEmailContent(rule);
           const paymentLink = paymentPortalUrl(event.portal_token, payment.id);
           const eventLink = eventDashboardUrl(event.id);
           const formattedDate = payment.date_echeance
@@ -296,14 +297,15 @@ export async function processRelanceEmails(): Promise<RelanceCronResult> {
             subject: interpolateEmailTemplate(rule.email_objet, vars),
             html: relanceEmailHtml({
               domainName: workspace.nom_domaine,
-              title: preset?.email_title ?? rule.nom,
+              title: emailContent.title,
               introText: interpolateEmailTemplate(rule.email_intro, vars),
-              ctaLabel: preset?.cta_label ?? "Voir",
+              ctaLabel: emailContent.ctaLabel,
               ctaHref: vars.lien_paiement,
               footerNote:
-                rule.cible === "couple"
+                emailContent.footerNote ??
+                (rule.cible === "couple"
                   ? "Page couple sécurisée — coordonnées bancaires et déclaration de virement."
-                  : undefined,
+                  : undefined),
               paymentRelated: true,
             }),
             replyTo: workspace.contact_email || undefined,

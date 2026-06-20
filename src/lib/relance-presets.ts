@@ -22,6 +22,9 @@ export interface RelanceRegle {
   delai_jours: number;
   email_objet: string;
   email_intro: string;
+  email_titre: string | null;
+  email_cta_label: string | null;
+  email_footer_note: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -129,4 +132,13 @@ export function getRelancePreset(
   presetKey: RelancePresetKey,
 ): RelancePresetDefinition | undefined {
   return DEFAULT_RELANCE_PRESETS.find((p) => p.preset_key === presetKey);
+}
+
+export function relanceEmailContent(rule: RelanceRegle) {
+  const preset = getRelancePreset(rule.preset_key);
+  return {
+    title: rule.email_titre?.trim() || preset?.email_title || rule.nom,
+    ctaLabel: rule.email_cta_label?.trim() || preset?.cta_label || "Voir",
+    footerNote: rule.email_footer_note?.trim() || undefined,
+  };
 }

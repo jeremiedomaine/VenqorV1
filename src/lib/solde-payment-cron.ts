@@ -31,6 +31,9 @@ type WorkspaceRow = {
   automation_paiement_active: boolean;
   email_paiement_objet: string;
   email_paiement_intro: string;
+  email_paiement_titre: string;
+  email_paiement_cta: string;
+  email_paiement_details: string;
   facturation_solde_label: string;
   facturation_solde_jours: number;
 };
@@ -59,7 +62,7 @@ export async function processSoldePaymentRequests(): Promise<SoldeCronResult> {
   const { data: workspaces, error: wsError } = await supabase
     .from("workspaces")
     .select(
-      "id, nom_domaine, contact_email, automation_paiement_active, email_paiement_objet, email_paiement_intro, facturation_solde_label, facturation_solde_jours",
+      "id, nom_domaine, contact_email, automation_paiement_active, email_paiement_objet, email_paiement_intro, email_paiement_titre, email_paiement_cta, email_paiement_details, facturation_solde_label, facturation_solde_jours",
     )
     .eq("automation_paiement_active", true);
 
@@ -135,7 +138,11 @@ export async function processSoldePaymentRequests(): Promise<SoldeCronResult> {
 
       const subject = interpolateEmailTemplate(settings.email_paiement_objet, vars);
       const intro = interpolateEmailTemplate(settings.email_paiement_intro, vars);
-      const html = paymentRequestEmailHtml(vars, intro);
+      const html = paymentRequestEmailHtml(vars, intro, {
+        title: settings.email_paiement_titre,
+        ctaLabel: settings.email_paiement_cta,
+        footerNote: settings.email_paiement_details,
+      });
 
       const sendResult = await sendEmail({
         to: coupleTo,

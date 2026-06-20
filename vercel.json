@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/solde-payment",
       "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/cron/relances",
+      "schedule": "0 6 * * *"
     }
   ],
   "functions": {

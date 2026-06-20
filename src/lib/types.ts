@@ -70,6 +70,7 @@ export interface Workspace {
   automation_acompte_active: boolean;
   email_acompte_objet: string;
   email_acompte_intro: string;
+  relances_actives: boolean;
   created_at: string;
   updated_at: string;
 }

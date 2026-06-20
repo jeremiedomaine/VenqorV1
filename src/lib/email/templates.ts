@@ -5,6 +5,8 @@ export interface EmailTemplateVars {
   libelle: string;
   lien_paiement: string;
   contact_domaine: string;
+  date_echeance?: string;
+  delai_jours?: string;
 }
 
 export function interpolateEmailTemplate(
@@ -17,7 +19,9 @@ export function interpolateEmailTemplate(
     .replaceAll("{montant}", vars.montant)
     .replaceAll("{libelle}", vars.libelle)
     .replaceAll("{lien_paiement}", vars.lien_paiement)
-    .replaceAll("{contact_domaine}", vars.contact_domaine);
+    .replaceAll("{contact_domaine}", vars.contact_domaine)
+    .replaceAll("{date_echeance}", vars.date_echeance ?? "")
+    .replaceAll("{delai_jours}", vars.delai_jours ?? "");
 }
 
 export function paragraphsFromText(text: string): string {
@@ -44,6 +48,7 @@ interface VenqorEmailLayoutOptions {
   ctaLabel?: string;
   ctaHref?: string;
   footerNote?: string;
+  paymentFooter?: boolean;
 }
 
 export function venqorEmailLayout({
@@ -53,6 +58,7 @@ export function venqorEmailLayout({
   ctaLabel,
   ctaHref,
   footerNote,
+  paymentFooter = true,
 }: VenqorEmailLayoutOptions): string {
   const ctaBlock =
     ctaLabel && ctaHref
@@ -105,8 +111,8 @@ export function venqorEmailLayout({
             <tr>
               <td style="padding:18px 32px 24px;border-top:1px solid #f1f5f9;background:#fafafa;">
                 <p style="margin:0;color:#94a3b8;font-size:11px;line-height:1.5;text-align:center;">
-                  Propulsé par Venqor · Paiement géré par ${escapeHtml(domainName)}<br/>
-                  Venqor ne émet pas de factures légales.
+                  Propulsé par Venqor · Espace géré par ${escapeHtml(domainName)}<br/>
+                  ${paymentFooter ? "Venqor ne émet pas de factures légales." : "Répondez à cet email pour contacter le domaine."}
                 </p>
               </td>
             </tr>
@@ -116,6 +122,26 @@ export function venqorEmailLayout({
     </table>
   </body>
 </html>`;
+}
+
+export function relanceEmailHtml(options: {
+  domainName: string;
+  title: string;
+  introText: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+  footerNote?: string;
+  paymentRelated?: boolean;
+}): string {
+  return venqorEmailLayout({
+    domainName: options.domainName,
+    title: options.title,
+    bodyHtml: paragraphsFromText(options.introText),
+    ctaLabel: options.ctaLabel,
+    ctaHref: options.ctaHref,
+    footerNote: options.footerNote,
+    paymentFooter: options.paymentRelated ?? true,
+  });
 }
 
 export function paymentRequestEmailHtml(

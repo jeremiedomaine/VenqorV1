@@ -1,10 +1,14 @@
 import { DepositAutomationForm } from "@/components/automatisations/deposit-automation-form";
 import { PaymentAutomationForm } from "@/components/automatisations/payment-automation-form";
-import { loadWorkspace } from "@/lib/load-workspace";
+import { RelancesAutomationSection } from "@/components/automatisations/relances-automation-section";
 import {
   automationFromWorkspace,
   depositAutomationFromWorkspace,
 } from "@/lib/automation-settings";
+import { loadRelanceRulesForWorkspace } from "@/lib/load-relance-rules";
+import { loadWorkspace } from "@/lib/load-workspace";
+import { createClient } from "@/lib/supabase/server";
+import { getAuthContext } from "@/lib/auth-context";
 
 export default async function AutomatisationsPage() {
   const { workspace } = await loadWorkspace();
@@ -20,6 +24,12 @@ export default async function AutomatisationsPage() {
 
   const soldeSettings = automationFromWorkspace(workspace);
   const acompteSettings = depositAutomationFromWorkspace(workspace);
+
+  const auth = await getAuthContext();
+  const supabase = createClient();
+  const relanceRules = auth
+    ? await loadRelanceRulesForWorkspace(supabase, auth.workspaceId)
+    : [];
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 pb-12">
@@ -68,11 +78,23 @@ export default async function AutomatisationsPage() {
         />
       </section>
 
-      <section className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-6">
-        <h3 className="text-sm font-semibold text-slate-800">À venir</h3>
-        <ul className="mt-3 space-y-2 text-sm text-slate-500">
-          <li>Relances configurables avant / après échéance (rappels J-7, J+3…)</li>
-        </ul>
+      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+        <div className="mb-8 space-y-2">
+          <h2 className="text-lg font-semibold text-slate-900">
+            Relances et rappels
+          </h2>
+          <p className="text-sm text-slate-500">
+            Règles prédéfinies pour rappeler le couple ou alerter le domaine
+            avant ou après une échéance, ou en cas de contrat non signé.
+            Objet et message personnalisables avec variables.
+          </p>
+        </div>
+
+        <RelancesAutomationSection
+          relancesActives={workspace.relances_actives ?? true}
+          rules={relanceRules}
+          workspaceName={workspace.nom_domaine}
+        />
       </section>
     </div>
   );

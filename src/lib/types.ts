@@ -11,6 +11,19 @@ export type ContratStatut =
   | "refuse"
   | "expire";
 
+export type ContratSignatureZone = {
+  page: number | "last";
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+export type ContratSignatureZones = {
+  signer1: ContratSignatureZone;
+  signer2: ContratSignatureZone;
+};
+
 export interface CustomEventType {
   slug: string;
   label: string;
@@ -23,6 +36,8 @@ export interface Workspace {
   contrat_template_path: string | null;
   contrat_template_filename: string | null;
   contrat_template_updated_at: string | null;
+  contrat_signature_zones: ContratSignatureZones | null;
+  contrat_signature_zones_updated_at: string | null;
   guide_infos_pratiques: string;
   guide_regles: string;
   guide_prestataires: string;

@@ -10,6 +10,7 @@ import { isYousignConfigured } from "@/lib/yousign/client";
 import { maybeSendDepositAfterContract } from "@/lib/deposit-payment-email";
 import { depositEmailUserMessage } from "@/lib/deposit-email-feedback";
 import { loadContractPdfForWorkspace } from "@/lib/contrat-template";
+import { parseContratSignatureZones } from "@/lib/contrat-signature-zones";
 import { syncAutoPayments } from "@/lib/sync-payments";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -88,7 +89,7 @@ export async function sendContractForEvent(
   const serviceSupabase = createServiceClient();
   const { data: workspace } = await supabase
     .from("workspaces")
-    .select("contrat_template_path")
+    .select("contrat_template_path, contrat_signature_zones")
     .eq("id", workspaceId)
     .single();
 
@@ -98,12 +99,17 @@ export async function sendContractForEvent(
     workspace?.contrat_template_path,
   );
 
+  const signatureZones = parseContratSignatureZones(
+    workspace?.contrat_signature_zones,
+  );
+
   const result = await sendYousignContract({
     eventId: event.id,
     eventLabel: event.nom_evenement || event.nom_des_maries,
     phoneNumber: event.telephone,
     pdfBytes: contractPdf.bytes,
     pdfFilename: `contrat-${event.id.slice(0, 8)}.pdf`,
+    workspaceSignatureZones: signatureZones,
     signers: [
       { firstName: marie1First, lastName: marie1Last, email: email1 },
       { firstName: marie2First, lastName: marie2Last, email: email2 },

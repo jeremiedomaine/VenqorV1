@@ -63,6 +63,8 @@ export async function uploadContratTemplate(
       contrat_template_path: storagePath,
       contrat_template_filename: file.name,
       contrat_template_updated_at: new Date().toISOString(),
+      contrat_signature_zones: null,
+      contrat_signature_zones_updated_at: null,
     })
     .eq("id", workspaceId);
 
@@ -90,6 +92,8 @@ export async function removeContratTemplate(): Promise<{
       contrat_template_path: null,
       contrat_template_filename: null,
       contrat_template_updated_at: null,
+      contrat_signature_zones: null,
+      contrat_signature_zones_updated_at: null,
     })
     .eq("id", workspaceId);
 

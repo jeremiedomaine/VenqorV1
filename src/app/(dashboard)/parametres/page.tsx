@@ -113,19 +113,23 @@ export default async function ParametresPage() {
           <div className="space-y-6">
             <SettingsInfoBox title="Bon à savoir">
               <p>
-                Uploadez le contrat type de votre domaine (PDF). Ajoutez les
-                ancres Yousign pour les deux signatures si elles ne sont pas
-                déjà positionnées dans l&apos;interface Yousign.
+                Uploadez le contrat type de votre domaine (PDF), puis placez
+                visuellement les deux zones de signature sur l&apos;aperçu.
               </p>
               <p>
-                Sans modèle personnalisé, le modèle Venqor de démonstration est
-                utilisé pour les tests sandbox.
+                Choisissez « dernière page » si la longueur du contrat varie
+                selon les dossiers — les signatures suivront toujours la fin du
+                document.
               </p>
             </SettingsInfoBox>
             <ContratTemplateForm
               hasCustomTemplate={Boolean(workspace.contrat_template_path)}
               filename={workspace.contrat_template_filename}
               updatedAt={workspace.contrat_template_updated_at}
+              signatureZones={workspace.contrat_signature_zones}
+              signatureZonesUpdatedAt={
+                workspace.contrat_signature_zones_updated_at
+              }
             />
           </div>
         </SettingsSection>

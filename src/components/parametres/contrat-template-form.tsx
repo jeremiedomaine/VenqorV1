@@ -6,22 +6,31 @@ import {
   removeContratTemplate,
   uploadContratTemplate,
 } from "@/actions/contrat-template";
+import { ContratSignaturePlacer } from "@/components/parametres/contrat-signature-placer";
 import { Button } from "@/components/ui/button";
+import type { ContratSignatureZones } from "@/lib/types";
 import { useAsyncAction } from "@/hooks/use-async-action";
 
 export function ContratTemplateForm({
   hasCustomTemplate,
   filename,
   updatedAt,
+  signatureZones,
+  signatureZonesUpdatedAt,
 }: {
   hasCustomTemplate: boolean;
   filename: string | null;
   updatedAt: string | null;
+  signatureZones: ContratSignatureZones | null;
+  signatureZonesUpdatedAt: string | null;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const { pending, run } = useAsyncAction();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [placerKey, setPlacerKey] = useState(
+    `${updatedAt ?? "default"}-${signatureZonesUpdatedAt ?? "none"}`,
+  );
 
   function handleUpload(formData: FormData) {
     setError(null);
@@ -32,7 +41,10 @@ export function ContratTemplateForm({
         setError(result.error);
         return;
       }
-      setSuccess("Modèle enregistré — il sera utilisé pour les prochains envois Yousign.");
+      setSuccess(
+        "Modèle enregistré — placez les signatures ci-dessous puis enregistrez les emplacements.",
+      );
+      setPlacerKey(`${Date.now()}-reset`);
       if (inputRef.current) inputRef.current.value = "";
     });
   }
@@ -47,11 +59,12 @@ export function ContratTemplateForm({
         return;
       }
       setSuccess("Modèle personnalisé retiré — le modèle Venqor par défaut sera utilisé.");
+      setPlacerKey(`${Date.now()}-removed`);
     });
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-4">
         <div className="flex items-start gap-3">
           <FileText className="mt-0.5 h-5 w-5 shrink-0 text-[#4F46E5]" />
@@ -80,28 +93,18 @@ export function ContratTemplateForm({
                 démonstration.
               </p>
             )}
+            {signatureZonesUpdatedAt && (
+              <p className="text-xs text-emerald-700">
+                Signatures configurées le{" "}
+                {new Date(signatureZonesUpdatedAt).toLocaleDateString("fr-FR", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </p>
+            )}
           </div>
         </div>
-      </div>
-
-      <div className="space-y-3 rounded-lg border border-amber-200/80 bg-amber-50/40 p-4 text-sm text-amber-950">
-        <p className="font-medium">Emplacement des signatures</p>
-        <p className="text-amber-900/90">
-          Sans configuration, Venqor place automatiquement les deux signatures
-          en bas de la dernière page du PDF.
-        </p>
-        <p className="text-amber-900/90">
-          Pour choisir l&apos;emplacement exact, ajoutez dans votre PDF (texte
-          blanc sur fond blanc ou discret) :
-        </p>
-        <ul className="list-inside list-disc space-y-1 font-mono text-xs text-amber-900">
-          <li>{"{{s1|signature|200|80}}"} — 1er marié</li>
-          <li>{"{{s2|signature|200|80}}"} — 2e marié</li>
-        </ul>
-        <p className="text-xs text-amber-800/90">
-          Venqor n&apos;édite pas le contenu juridique : vous fournissez le
-          contrat type de votre domaine tel quel.
-        </p>
       </div>
 
       <form action={handleUpload} className="space-y-4">
@@ -142,6 +145,23 @@ export function ContratTemplateForm({
           )}
         </div>
       </form>
+
+      <div className="space-y-3 rounded-lg border border-amber-200/80 bg-amber-50/40 p-4 text-sm text-amber-950">
+        <p className="font-medium">Option avancée : ancres Yousign dans le PDF</p>
+        <p className="text-amber-900/90">
+          Si vous préférez définir les emplacements dans Word, ajoutez en texte
+          blanc :{" "}
+          <span className="font-mono text-xs">{"{{s1|signature|200|80}}"}</span>{" "}
+          et{" "}
+          <span className="font-mono text-xs">{"{{s2|signature|200|80}}"}</span>.
+          Les ancres du PDF priment sur le placement visuel ci-dessous.
+        </p>
+      </div>
+
+      <ContratSignaturePlacer
+        key={placerKey}
+        initialZones={signatureZones}
+      />
     </div>
   );
 }

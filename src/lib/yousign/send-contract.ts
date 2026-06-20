@@ -6,9 +6,9 @@ import {
   YousignError,
 } from "@/lib/yousign/client";
 import {
-  buildSignatureField,
-  pdfPageCount,
+  buildSignatureFields,
 } from "@/lib/yousign/signature-fields";
+import type { ContratSignatureZones } from "@/lib/contrat-signature-zones";
 
 export type ContractSigner = {
   firstName: string;
@@ -23,6 +23,7 @@ export type SendContractInput = {
   phoneNumber?: string | null;
   pdfBytes: Buffer;
   pdfFilename: string;
+  workspaceSignatureZones?: ContratSignatureZones | null;
 };
 
 export type SendContractResult =
@@ -69,16 +70,20 @@ export async function sendYousignContract(
     );
 
     const useManualFields = document.totalAnchors < 2;
-    const pageCount = useManualFields
-      ? await pdfPageCount(input.pdfBytes)
-      : 1;
+    const manualFields = useManualFields
+      ? await buildSignatureFields(
+          document.id,
+          input.pdfBytes,
+          input.workspaceSignatureZones,
+        )
+      : null;
 
     const phone = normalizePhoneForYousign(input.phoneNumber);
 
     for (let i = 0; i < input.signers.length; i++) {
       const signer = input.signers[i];
-      const fields = useManualFields
-        ? [buildSignatureField(document.id, pageCount, i as 0 | 1)]
+      const fields = manualFields
+        ? [manualFields[i]]
         : undefined;
 
       await addSigner(

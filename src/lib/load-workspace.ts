@@ -1,3 +1,4 @@
+import { parseContratSignatureZones } from "@/lib/contrat-signature-zones";
 import { parseCustomEventTypes } from "@/lib/event-types";
 import { getAuthContext } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase/server";
@@ -20,7 +21,13 @@ export async function loadWorkspace() {
 
   return {
     workspace: workspace
-      ? { ...workspace, types_evenement_custom }
+      ? {
+          ...workspace,
+          types_evenement_custom,
+          contrat_signature_zones: parseContratSignatureZones(
+            workspace.contrat_signature_zones,
+          ),
+        }
       : null,
   };
 }

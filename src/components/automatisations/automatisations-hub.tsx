@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { sendAutomationTestEmail } from "@/actions/automation-test-emails";
 import {
   updateDepositAutomationSettings,
   updatePaymentAutomationSettings,
@@ -81,30 +82,191 @@ function CategoryTabs({
   onChange: (c: AutomationCategory) => void;
 }) {
   const tabs = [
-    { id: "paiements" as const, label: "Emails de paiement" },
-    { id: "relances" as const, label: "Emails de relance" },
+    {
+      id: "paiements" as const,
+      label: "Emails de paiement",
+      description: "Acompte et solde",
+    },
+    {
+      id: "relances" as const,
+      label: "Emails de relance",
+      description: "Rappels et alertes",
+    },
   ];
 
   return (
-    <div className="border-b border-slate-200">
-      <nav className="-mb-px flex gap-8" aria-label="Type d'automatisation">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => onChange(tab.id)}
-            className={cn(
-              "border-b-2 pb-3 text-sm font-medium transition-colors",
-              category === tab.id
-                ? "border-[#4F46E5] text-slate-900"
-                : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700",
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </nav>
+    <div
+      className="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-slate-100/90 p-2 shadow-sm"
+      role="tablist"
+      aria-label="Type d'automatisation"
+    >
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {tabs.map((tab) => {
+          const active = category === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => onChange(tab.id)}
+              className={cn(
+                "rounded-xl px-5 py-4 text-left transition-all duration-200",
+                active
+                  ? "bg-white text-slate-900 shadow-md ring-2 ring-[#4F46E5]/25"
+                  : "bg-white/40 text-slate-600 hover:bg-white/70 hover:text-slate-800",
+              )}
+            >
+              <span
+                className={cn(
+                  "block text-base font-semibold tracking-tight",
+                  active && "text-[#4F46E5]",
+                )}
+              >
+                {tab.label}
+              </span>
+              <span
+                className={cn(
+                  "mt-1 block text-sm",
+                  active ? "text-slate-600" : "text-slate-500",
+                )}
+              >
+                {tab.description}
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </div>
+  );
+}
+
+function TestEmailButton({
+  contactEmail,
+  buildFormData,
+  disabled,
+}: {
+  contactEmail: string;
+  buildFormData: () => FormData;
+  disabled?: boolean;
+}) {
+  const { pending, run } = useAsyncAction();
+  const [feedback, setFeedback] = useState<{
+    type: "ok" | "err";
+    message: string;
+  } | null>(null);
+
+  function handleSend() {
+    setFeedback(null);
+    void run(async () => {
+      const result = await sendAutomationTestEmail(buildFormData());
+      if (result.error && !result.sentTo) {
+        setFeedback({ type: "err", message: result.error });
+        return;
+      }
+      if (result.error && result.sentTo) {
+        setFeedback({
+          type: "ok",
+          message: `${result.error} (destinataire : ${result.sentTo})`,
+        });
+        return;
+      }
+      setFeedback({
+        type: "ok",
+        message: `Email test envoyé à ${result.sentTo ?? contactEmail}.`,
+      });
+    });
+  }
+
+  return (
+    <div className="space-y-2">
+      <Button
+        type="button"
+        variant="outline"
+        disabled={disabled || pending || !contactEmail.trim()}
+        onClick={handleSend}
+      >
+        {pending ? "Envoi…" : "Envoyer un email test"}
+      </Button>
+      {contactEmail ? (
+        <p className="text-xs text-slate-500">
+          Reçu sur{" "}
+          <span className="font-medium text-slate-700">{contactEmail}</span>{" "}
+          (contact domaine)
+        </p>
+      ) : (
+        <p className="text-xs text-amber-700">
+          Renseignez l&apos;email de contact dans Paramètres pour tester.
+        </p>
+      )}
+      {feedback && (
+        <p
+          className={cn(
+            "text-sm",
+            feedback.type === "ok" ? "text-emerald-700" : "text-red-600",
+          )}
+        >
+          {feedback.message}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function AutomationNavigator({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <aside className="order-2 space-y-3 lg:order-2 lg:sticky lg:top-6 lg:self-start">
+      <div className="rounded-2xl border border-white/70 bg-white/45 p-4 shadow-sm ring-1 ring-slate-200/40 backdrop-blur-md">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          {title}
+        </p>
+        <div className="space-y-2">{children}</div>
+      </div>
+    </aside>
+  );
+}
+
+function NavItem({
+  active,
+  label,
+  subtitle,
+  live,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  subtitle: string;
+  live?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "w-full rounded-xl border px-3 py-2.5 text-left transition-all",
+        active
+          ? "border-[#4F46E5]/40 bg-white/90 shadow-sm ring-1 ring-[#4F46E5]/15"
+          : "border-transparent bg-white/30 hover:border-slate-200/80 hover:bg-white/60",
+      )}
+    >
+      <div className="flex items-center gap-2">
+        <span
+          className={cn(
+            "h-2 w-2 shrink-0 rounded-full",
+            live ? "bg-emerald-500" : "bg-slate-300",
+          )}
+        />
+        <span className="text-sm font-medium text-slate-900">{label}</span>
+      </div>
+      <p className="mt-1 pl-4 text-xs text-slate-500">{subtitle}</p>
+    </button>
   );
 }
 
@@ -241,6 +403,7 @@ function EmailContentFields({
 
 export function AutomatisationsHub({
   workspaceName,
+  contactEmail,
   soldeSettings,
   acompteSettings,
   relancesActives,
@@ -249,6 +412,7 @@ export function AutomatisationsHub({
   eventTypeOptions,
 }: {
   workspaceName: string;
+  contactEmail: string;
   soldeSettings: PaymentAutomationSettings;
   acompteSettings: DepositAutomationSettings;
   relancesActives: boolean;
@@ -414,137 +578,9 @@ export function AutomatisationsHub({
     <div className="space-y-8">
       <CategoryTabs category={category} onChange={switchCategory} />
 
-      <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-        {/* Liste latérale */}
-        <aside className="space-y-3">
-          <p className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
-            {category === "paiements"
-              ? "Automatisations paiement"
-              : "Automatisations relance"}
-          </p>
-
-          {category === "paiements" &&
-            paymentItems.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  setSelectedPayment(item.id);
-                  setError(null);
-                }}
-                className={cn(
-                  "w-full rounded-lg border px-4 py-3 text-left transition-colors",
-                  selectedPayment === item.id
-                    ? "border-[#4F46E5] bg-indigo-50/60 ring-1 ring-[#4F46E5]/20"
-                    : "border-slate-200 bg-white hover:border-slate-300",
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    className={cn(
-                      "h-2 w-2 shrink-0 rounded-full",
-                      item.active ? "bg-emerald-500" : "bg-slate-300",
-                    )}
-                  />
-                  <span className="text-sm font-medium text-slate-900">
-                    {item.label}
-                  </span>
-                </div>
-                <p className="mt-1 pl-4 text-xs text-slate-500">{item.subtitle}</p>
-              </button>
-            ))}
-
-          {category === "relances" && (
-            <>
-              {relancesUnavailable ? (
-                <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                  {relancesUnavailable}
-                </p>
-              ) : (
-                <>
-                  <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={relancesActive}
-                      onChange={(e) => {
-                        setRelancesActive(e.target.checked);
-                        void run(async () => {
-                          const fd = new FormData();
-                          fd.set(
-                            "relances_actives",
-                            e.target.checked ? "on" : "off",
-                          );
-                          await updateRelancesMasterSwitch(fd);
-                        });
-                      }}
-                      className="h-4 w-4 rounded border-slate-300 text-[#4F46E5]"
-                    />
-                    <span className="text-slate-700">Relances activées</span>
-                  </label>
-
-                  {rules.map((rule) => (
-                    <button
-                      key={rule.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedRelanceId(rule.id);
-                        setError(null);
-                      }}
-                      className={cn(
-                        "w-full rounded-lg border px-4 py-3 text-left transition-colors",
-                        selectedRelanceId === rule.id
-                          ? "border-[#4F46E5] bg-indigo-50/60 ring-1 ring-[#4F46E5]/20"
-                          : "border-slate-200 bg-white hover:border-slate-300",
-                      )}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={cn(
-                            "h-2 w-2 shrink-0 rounded-full",
-                            rule.active ? "bg-emerald-500" : "bg-slate-300",
-                          )}
-                        />
-                        <span className="text-sm font-medium text-slate-900">
-                          {rule.nom}
-                        </span>
-                      </div>
-                      <p className="mt-1 pl-4 text-xs text-slate-500">
-                        {delayLabel(rule.declencheur, rule.delai_jours)} ·{" "}
-                        {rule.cible === "couple" ? "Couple" : "Domaine"}
-                      </p>
-                    </button>
-                  ))}
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    disabled={pending}
-                    onClick={() => {
-                      void run(async () => {
-                        const result = await createRelanceRule();
-                        if (result.error) {
-                          setError(result.error);
-                          return;
-                        }
-                        if (result.id) {
-                          setSelectedRelanceId(result.id);
-                        }
-                        router.refresh();
-                      });
-                    }}
-                  >
-                    + Nouvelle automatisation
-                  </Button>
-                </>
-              )}
-            </>
-          )}
-        </aside>
-
-        {/* Éditeur */}
-        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
+        {/* Éditeur principal */}
+        <section className="order-1 min-w-0 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8 lg:order-1">
           {category === "paiements" && selectedPayment === "acompte" && (
             <PaymentEditor
               type="acompte"
@@ -563,6 +599,7 @@ export function AutomatisationsHub({
               details={acompteDetails}
               onDetailsChange={setAcompteDetails}
               preview={buildPaymentPreview("acompte")}
+              contactEmail={contactEmail}
               error={error}
               pending={pending}
               onSave={() => handleSavePayment("acompte")}
@@ -585,6 +622,7 @@ export function AutomatisationsHub({
               details={soldeDetails}
               onDetailsChange={setSoldeDetails}
               preview={buildPaymentPreview("solde")}
+              contactEmail={contactEmail}
               error={error}
               pending={pending}
               onSave={() => handleSavePayment("solde")}
@@ -597,6 +635,7 @@ export function AutomatisationsHub({
               rule={selectedRule}
               workspaceName={workspaceName}
               eventTypeOptions={eventTypeOptions}
+              contactEmail={contactEmail}
               error={error}
               pending={pending}
               onError={setError}
@@ -621,6 +660,98 @@ export function AutomatisationsHub({
             </p>
           )}
         </section>
+
+        <AutomationNavigator
+          title={
+            category === "paiements"
+              ? "Vos automatisations"
+              : "Vos relances"
+          }
+        >
+          {category === "paiements" &&
+            paymentItems.map((item) => (
+              <NavItem
+                key={item.id}
+                active={selectedPayment === item.id}
+                label={item.label}
+                subtitle={item.subtitle}
+                live={item.active}
+                onClick={() => {
+                  setSelectedPayment(item.id);
+                  setError(null);
+                }}
+              />
+            ))}
+
+          {category === "relances" && (
+            <>
+              {relancesUnavailable ? (
+                <p className="rounded-lg border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-xs text-amber-900">
+                  {relancesUnavailable}
+                </p>
+              ) : (
+                <>
+                  <label className="flex items-center gap-2 rounded-xl border border-white/60 bg-white/50 px-3 py-2.5 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={relancesActive}
+                      onChange={(e) => {
+                        setRelancesActive(e.target.checked);
+                        void run(async () => {
+                          const fd = new FormData();
+                          fd.set(
+                            "relances_actives",
+                            e.target.checked ? "on" : "off",
+                          );
+                          await updateRelancesMasterSwitch(fd);
+                        });
+                      }}
+                      className="h-4 w-4 rounded border-slate-300 text-[#4F46E5]"
+                    />
+                    <span className="text-slate-700">Relances activées</span>
+                  </label>
+
+                  {rules.map((rule) => (
+                    <NavItem
+                      key={rule.id}
+                      active={selectedRelanceId === rule.id}
+                      label={rule.nom}
+                      subtitle={`${delayLabel(rule.declencheur, rule.delai_jours)} · ${rule.cible === "couple" ? "Couple" : "Domaine"}`}
+                      live={rule.active}
+                      onClick={() => {
+                        setSelectedRelanceId(rule.id);
+                        setError(null);
+                      }}
+                    />
+                  ))}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full bg-white/50"
+                    disabled={pending}
+                    onClick={() => {
+                      void run(async () => {
+                        const result = await createRelanceRule();
+                        if (result.error) {
+                          setError(result.error);
+                          return;
+                        }
+                        if (result.id) {
+                          setSelectedRelanceId(result.id);
+                        }
+                        router.refresh();
+                      });
+                    }}
+                  >
+                    + Nouvelle automatisation
+                  </Button>
+                </>
+              )}
+            </>
+          )}
+        </AutomationNavigator>
       </div>
     </div>
   );
@@ -643,6 +774,7 @@ function PaymentEditor({
   details,
   onDetailsChange,
   preview,
+  contactEmail,
   error,
   pending,
   onSave,
@@ -663,6 +795,7 @@ function PaymentEditor({
   details: string;
   onDetailsChange: (v: string) => void;
   preview: { subject: string; html: string };
+  contactEmail: string;
   error: string | null;
   pending: boolean;
   onSave: () => void;
@@ -744,17 +877,33 @@ function PaymentEditor({
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      <Button type="button" disabled={pending} onClick={onSave}>
-        {pending ? "Enregistrement…" : "Enregistrer"}
-      </Button>
+      <div className="flex flex-wrap items-end gap-4 border-t border-slate-100 pt-6">
+        <Button type="button" disabled={pending} onClick={onSave}>
+          {pending ? "Enregistrement…" : "Enregistrer"}
+        </Button>
+        <TestEmailButton
+          contactEmail={contactEmail}
+          disabled={pending}
+          buildFormData={() => {
+            const fd = new FormData();
+            fd.set("kind", type === "acompte" ? "payment_acompte" : "payment_solde");
+            fd.set("email_titre", title);
+            fd.set("email_objet", subject);
+            fd.set("email_intro", intro);
+            fd.set("email_cta_label", ctaLabel);
+            fd.set("email_footer_note", details);
+            return fd;
+          }}
+        />
+      </div>
     </div>
   );
 }
-
 function RelanceEditor({
   rule,
   workspaceName,
   eventTypeOptions,
+  contactEmail,
   error,
   pending,
   onError,
@@ -764,6 +913,7 @@ function RelanceEditor({
   rule: RelanceRegle;
   workspaceName: string;
   eventTypeOptions: Array<{ slug: string; label: string; builtin: boolean }>;
+  contactEmail: string;
   error: string | null;
   pending: boolean;
   onError: (msg: string | null) => void;
@@ -1048,9 +1198,30 @@ function RelanceEditor({
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      <Button type="button" disabled={pending || actionPending} onClick={handleSave}>
-        {pending || actionPending ? "Enregistrement…" : "Enregistrer"}
-      </Button>
+      <div className="flex flex-wrap items-end gap-4 border-t border-slate-100 pt-6">
+        <Button
+          type="button"
+          disabled={pending || actionPending}
+          onClick={handleSave}
+        >
+          {pending || actionPending ? "Enregistrement…" : "Enregistrer"}
+        </Button>
+        <TestEmailButton
+          contactEmail={contactEmail}
+          disabled={pending || actionPending}
+          buildFormData={() => {
+            const fd = new FormData();
+            fd.set("kind", "relance");
+            fd.set("declencheur", declencheur);
+            fd.set("email_titre", title);
+            fd.set("email_objet", subject);
+            fd.set("email_intro", intro);
+            fd.set("email_cta_label", ctaLabel);
+            fd.set("email_footer_note", details);
+            return fd;
+          }}
+        />
+      </div>
     </div>
   );
 }

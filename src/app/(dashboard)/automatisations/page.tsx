@@ -45,7 +45,7 @@ export default async function AutomatisationsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 pb-12">
+    <div className="mx-auto max-w-7xl space-y-6 pb-12">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
           Automatisations
@@ -58,6 +58,7 @@ export default async function AutomatisationsPage() {
 
       <AutomatisationsHub
         workspaceName={workspace.nom_domaine}
+        contactEmail={workspace.contact_email}
         soldeSettings={soldeSettings}
         acompteSettings={acompteSettings}
         relancesActives={workspace.relances_actives ?? true}

@@ -27,9 +27,23 @@ export default async function AutomatisationsPage() {
 
   const auth = await getAuthContext();
   const supabase = createClient();
-  const relanceRules = auth
-    ? await loadRelanceRulesForWorkspace(supabase, auth.workspaceId)
-    : [];
+  let relanceRules: Awaited<
+    ReturnType<typeof loadRelanceRulesForWorkspace>
+  > = [];
+  let relancesUnavailable: string | null = null;
+
+  if (auth) {
+    try {
+      relanceRules = await loadRelanceRulesForWorkspace(
+        supabase,
+        auth.workspaceId,
+      );
+    } catch (err) {
+      console.error("[automatisations] relance rules load failed", err);
+      relancesUnavailable =
+        "Les relances ne sont pas encore disponibles. Appliquez la migration Supabase 021_relance_rules.sql puis rechargez la page.";
+    }
+  }
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 pb-12">
@@ -90,11 +104,17 @@ export default async function AutomatisationsPage() {
           </p>
         </div>
 
-        <RelancesAutomationSection
-          relancesActives={workspace.relances_actives ?? true}
-          rules={relanceRules}
-          workspaceName={workspace.nom_domaine}
-        />
+        {relancesUnavailable ? (
+          <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            {relancesUnavailable}
+          </p>
+        ) : (
+          <RelancesAutomationSection
+            relancesActives={workspace.relances_actives ?? true}
+            rules={relanceRules}
+            workspaceName={workspace.nom_domaine}
+          />
+        )}
       </section>
     </div>
   );

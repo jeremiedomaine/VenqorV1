@@ -5,14 +5,18 @@ import {
   parseContratSignatureZones,
   type ContratSignatureZones,
 } from "@/lib/contrat-signature-zones";
+import { isVenqorAdminEmail } from "@/lib/venqor-admin";
 import { createClient } from "@/lib/supabase/server";
 
-async function getWorkspaceId() {
+async function getVenqorContratContext() {
   const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Non authentifié");
+  if (!isVenqorAdminEmail(user.email)) {
+    throw new Error("Accès réservé à l'équipe Venqor.");
+  }
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -32,7 +36,7 @@ export async function saveContratSignatureZones(
     return { error: "Zones de signature invalides." };
   }
 
-  const { workspaceId, supabase } = await getWorkspaceId();
+  const { workspaceId, supabase } = await getVenqorContratContext();
 
   const { error } = await supabase
     .from("workspaces")

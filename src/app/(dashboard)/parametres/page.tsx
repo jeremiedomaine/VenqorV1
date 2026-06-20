@@ -1,4 +1,5 @@
 import { BillingSettingsForm } from "@/components/parametres/billing-settings-form";
+import { ContratDomainStatus } from "@/components/parametres/contrat-domain-status";
 import { ContratTemplateForm } from "@/components/parametres/contrat-template-form";
 import { EncaissementsSettingsForm } from "@/components/parametres/encaissements-settings-form";
 import { EventTypesSettings } from "@/components/parametres/event-types-settings";
@@ -13,7 +14,9 @@ import {
   SettingsSection,
 } from "@/components/parametres/settings-section";
 import { billingFromWorkspace } from "@/lib/billing";
+import { getContratReadiness } from "@/lib/contrat-status";
 import { encaissementsFromWorkspace } from "@/lib/payment-utils";
+import { getAuthContext } from "@/lib/auth-context";
 import { loadWorkspace } from "@/lib/load-workspace";
 import {
   computeWorkspaceSetupStatus,
@@ -23,7 +26,10 @@ import {
 export const maxDuration = 60;
 
 export default async function ParametresPage() {
-  const { workspace } = await loadWorkspace();
+  const [{ workspace }, auth] = await Promise.all([
+    loadWorkspace(),
+    getAuthContext(),
+  ]);
 
   if (!workspace) {
     return (
@@ -38,6 +44,8 @@ export default async function ParametresPage() {
   const encaissements = encaissementsFromWorkspace(workspace);
   const setup = computeWorkspaceSetupStatus(workspace);
   const goals = goalsFromWorkspace(workspace);
+  const contratStatus = getContratReadiness(workspace);
+  const showContratSetup = auth?.isVenqorAdmin ?? false;
 
   return (
     <div className="lg:flex lg:items-start lg:gap-8 xl:gap-10">
@@ -110,34 +118,40 @@ export default async function ParametresPage() {
         <SettingsSection
           id="contrat"
           title="Contrat de réservation"
-          description="Modèle PDF signé via Yousign par les deux mariés. Venqor envoie votre document tel quel — sans le rédiger à votre place."
+          description={
+            showContratSetup
+              ? "Configuration interne Venqor — modèle et signatures pour ce domaine."
+              : "Signature électronique du contrat de mariage via Yousign."
+          }
         >
           <div className="space-y-6">
-            <SettingsInfoBox title="Bon à savoir">
-              <p>
-                Uploadez le contrat type Word (.docx) avec les variables Venqor
-                — le PDF est généré automatiquement à chaque envoi avec les
-                données du dossier (noms, date, montants…).
-              </p>
-              <p>
-                Placez une fois les deux zones de signature sur le PDF
-                d&apos;aperçu. Option « dernière page » si la longueur du
-                contrat varie selon les dossiers.
-              </p>
-            </SettingsInfoBox>
-            <ContratTemplateForm
-              hasCustomTemplate={Boolean(workspace.contrat_template_path)}
-              hasDocxTemplate={Boolean(workspace.contrat_template_docx_path)}
-              templateMode={workspace.contrat_template_mode}
-              filename={workspace.contrat_template_filename}
-              docxFilename={workspace.contrat_template_docx_filename}
-              updatedAt={workspace.contrat_template_updated_at}
-              docxUpdatedAt={workspace.contrat_template_docx_updated_at}
-              signatureZones={workspace.contrat_signature_zones}
-              signatureZonesUpdatedAt={
-                workspace.contrat_signature_zones_updated_at
-              }
-            />
+            {!showContratSetup && (
+              <>
+                <SettingsInfoBox title="Bon à savoir">
+                  <p>
+                    Votre contrat type est préparé avec l&apos;équipe Venqor.
+                    Depuis un dossier en date bloquée, utilisez « Envoyer le
+                    contrat » — les deux mariés signent en ligne.
+                  </p>
+                </SettingsInfoBox>
+                <ContratDomainStatus status={contratStatus} />
+              </>
+            )}
+            {showContratSetup && (
+              <ContratTemplateForm
+                hasCustomTemplate={Boolean(workspace.contrat_template_path)}
+                hasDocxTemplate={Boolean(workspace.contrat_template_docx_path)}
+                templateMode={workspace.contrat_template_mode}
+                filename={workspace.contrat_template_filename}
+                docxFilename={workspace.contrat_template_docx_filename}
+                updatedAt={workspace.contrat_template_updated_at}
+                docxUpdatedAt={workspace.contrat_template_docx_updated_at}
+                signatureZones={workspace.contrat_signature_zones}
+                signatureZonesUpdatedAt={
+                  workspace.contrat_signature_zones_updated_at
+                }
+              />
+            )}
           </div>
         </SettingsSection>
 

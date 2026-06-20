@@ -9,16 +9,20 @@ import {
 } from "@/lib/contrat-template";
 import { ContratMergeError } from "@/lib/contrat-merge";
 import { ContratPdfConvertError } from "@/lib/contrat-pdf-convert";
+import { isVenqorAdminEmail } from "@/lib/venqor-admin";
 import { createClient } from "@/lib/supabase/server";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 
-async function getWorkspaceContext() {
+async function getVenqorContratContext() {
   const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Non authentifié");
+  if (!isVenqorAdminEmail(user.email)) {
+    throw new Error("Accès réservé à l'équipe Venqor.");
+  }
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -69,7 +73,7 @@ export async function uploadContratDocxTemplate(
     return { error: "Fichier trop volumineux (max 10 Mo)." };
   }
 
-  const { workspaceId, supabase, workspace } = await getWorkspaceContext();
+  const { workspaceId, supabase, workspace } = await getVenqorContratContext();
   const docxPath = contratDocxStoragePath(workspaceId);
   const pdfPath = contratTemplateStoragePath(workspaceId);
   const docxBytes = Buffer.from(await file.arrayBuffer());
@@ -150,7 +154,7 @@ export async function uploadContratTemplate(
     return { error: "PDF trop volumineux (max 10 Mo)." };
   }
 
-  const { workspaceId, supabase } = await getWorkspaceContext();
+  const { workspaceId, supabase } = await getVenqorContratContext();
   const storagePath = contratTemplateStoragePath(workspaceId);
   const bytes = Buffer.from(await file.arrayBuffer());
 
@@ -189,7 +193,7 @@ export async function removeContratTemplate(): Promise<{
   error?: string;
   success?: boolean;
 }> {
-  const { workspaceId, supabase } = await getWorkspaceContext();
+  const { workspaceId, supabase } = await getVenqorContratContext();
   const pdfPath = contratTemplateStoragePath(workspaceId);
   const docxPath = contratDocxStoragePath(workspaceId);
 
@@ -222,7 +226,7 @@ export async function previewContratMerge(
   eventId: string,
 ): Promise<{ error?: string; ok?: boolean }> {
   try {
-    const { workspaceId, supabase } = await getWorkspaceContext();
+    const { workspaceId, supabase } = await getVenqorContratContext();
 
     const { data: event } = await supabase
       .from("events")

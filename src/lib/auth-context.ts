@@ -1,10 +1,13 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { isVenqorAdminEmail } from "@/lib/venqor-admin";
 
 export type AuthContext = {
   userId: string;
+  email: string;
   workspaceId: string;
   workspaceName: string;
+  isVenqorAdmin: boolean;
 };
 
 /** One auth + profile fetch per request (deduped across layout + pages). */
@@ -29,7 +32,9 @@ export const getAuthContext = cache(async (): Promise<AuthContext | null> => {
 
   return {
     userId: user.id,
+    email: user.email ?? "",
     workspaceId: profile.workspace_id,
     workspaceName: workspace?.nom_domaine ?? "Mon domaine",
+    isVenqorAdmin: isVenqorAdminEmail(user.email),
   };
 });

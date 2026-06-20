@@ -1,4 +1,5 @@
 import { billingFromWorkspace } from "@/lib/billing";
+import { getContratReadiness } from "@/lib/contrat-status";
 import { hasVirementConfig, encaissementsFromWorkspace } from "@/lib/payment-utils";
 import type { Workspace } from "@/lib/types";
 
@@ -27,6 +28,8 @@ export function computeWorkspaceSetupStatus(
   const encaissementsReady =
     encaissements.mode_paiement_defaut === "stripe" ||
     hasVirementConfig(encaissements);
+
+  const contrat = getContratReadiness(workspace);
 
   const steps: SetupStep[] = [
     {
@@ -59,17 +62,8 @@ export function computeWorkspaceSetupStatus(
     {
       id: "contrat",
       label: "Contrat Yousign",
-      detail:
-        workspace.contrat_template_docx_path && workspace.contrat_signature_zones
-          ? "Word + signatures configurés"
-          : workspace.contrat_template_docx_path
-            ? "Word uploadé — placez les signatures"
-            : workspace.contrat_template_path
-              ? "PDF statique — ajoutez le modèle Word"
-              : "Modèle démo — configurez le contrat",
-      done: Boolean(
-        workspace.contrat_template_docx_path && workspace.contrat_signature_zones,
-      ),
+      detail: contrat.label,
+      done: contrat.ready,
       href: "/parametres#contrat",
     },
     {

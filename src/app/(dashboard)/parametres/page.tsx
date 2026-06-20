@@ -20,6 +20,8 @@ import {
   goalsFromWorkspace,
 } from "@/lib/workspace-setup";
 
+export const maxDuration = 60;
+
 export default async function ParametresPage() {
   const { workspace } = await loadWorkspace();
 

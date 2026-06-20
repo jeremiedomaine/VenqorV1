@@ -241,9 +241,8 @@ export function ContratTemplateForm({
 
       {hasDocxTemplate && !hasCustomTemplate && (
         <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          Uploadez un PDF d&apos;aperçu pour placer les signatures, ou configurez{" "}
-          <code className="text-xs">GOTENBERG_URL</code> pour générer
-          automatiquement le PDF depuis le modèle Word.
+          PDF d&apos;aperçu en cours de génération… Rechargez la page dans quelques
+          secondes, ou uploadez un PDF d&apos;aperçu manuellement.
         </p>
       )}
     </div>

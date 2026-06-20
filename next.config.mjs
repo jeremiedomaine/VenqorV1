@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: ["pdfjs-dist"],
+  serverExternalPackages: [
+    "pdfjs-dist",
+    "@sparticuz/chromium-min",
+    "puppeteer-core",
+  ],
   async redirects() {
     return [
       {

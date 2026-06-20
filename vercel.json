@@ -4,5 +4,13 @@
       "path": "/api/cron/solde-payment",
       "schedule": "0 5 * * *"
     }
-  ]
+  ],
+  "functions": {
+    "src/app/**/*.tsx": {
+      "maxDuration": 60
+    },
+    "src/app/api/**/*.ts": {
+      "maxDuration": 60
+    }
+  }
 }

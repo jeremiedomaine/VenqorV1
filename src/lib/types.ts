@@ -36,6 +36,10 @@ export interface Workspace {
   contrat_template_path: string | null;
   contrat_template_filename: string | null;
   contrat_template_updated_at: string | null;
+  contrat_template_docx_path: string | null;
+  contrat_template_docx_filename: string | null;
+  contrat_template_docx_updated_at: string | null;
+  contrat_template_mode: "docx" | "pdf" | null;
   contrat_signature_zones: ContratSignatureZones | null;
   contrat_signature_zones_updated_at: string | null;
   guide_infos_pratiques: string;

@@ -113,19 +113,24 @@ export default async function ParametresPage() {
           <div className="space-y-6">
             <SettingsInfoBox title="Bon à savoir">
               <p>
-                Uploadez le contrat type de votre domaine (PDF), puis placez
-                visuellement les deux zones de signature sur l&apos;aperçu.
+                Uploadez le contrat type Word (.docx) avec les variables Venqor
+                — le PDF est généré automatiquement à chaque envoi avec les
+                données du dossier (noms, date, montants…).
               </p>
               <p>
-                Choisissez « dernière page » si la longueur du contrat varie
-                selon les dossiers — les signatures suivront toujours la fin du
-                document.
+                Placez une fois les deux zones de signature sur le PDF
+                d&apos;aperçu. Option « dernière page » si la longueur du
+                contrat varie selon les dossiers.
               </p>
             </SettingsInfoBox>
             <ContratTemplateForm
               hasCustomTemplate={Boolean(workspace.contrat_template_path)}
+              hasDocxTemplate={Boolean(workspace.contrat_template_docx_path)}
+              templateMode={workspace.contrat_template_mode}
               filename={workspace.contrat_template_filename}
+              docxFilename={workspace.contrat_template_docx_filename}
               updatedAt={workspace.contrat_template_updated_at}
+              docxUpdatedAt={workspace.contrat_template_docx_updated_at}
               signatureZones={workspace.contrat_signature_zones}
               signatureZonesUpdatedAt={
                 workspace.contrat_signature_zones_updated_at

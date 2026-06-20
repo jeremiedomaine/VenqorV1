@@ -9,7 +9,11 @@ import {
 import { isYousignConfigured } from "@/lib/yousign/client";
 import { maybeSendDepositAfterContract } from "@/lib/deposit-payment-email";
 import { depositEmailUserMessage } from "@/lib/deposit-email-feedback";
-import { loadContractPdfForWorkspace } from "@/lib/contrat-template";
+import {
+  ContratMergeError,
+  loadContractPdfForEvent,
+} from "@/lib/contrat-template";
+import { ContratPdfConvertError } from "@/lib/contrat-pdf-convert";
 import { parseContratSignatureZones } from "@/lib/contrat-signature-zones";
 import { syncAutoPayments } from "@/lib/sync-payments";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -44,6 +48,7 @@ export async function sendContractForEvent(
   depositEmailSent?: boolean;
   depositEmailWarning?: string;
   usingDefaultTemplate?: boolean;
+  contractMerged?: boolean;
 }> {
   if (!isYousignConfigured()) {
     return { error: "Yousign non configuré (YOUSIGN_API_KEY manquant)." };
@@ -55,7 +60,7 @@ export async function sendContractForEvent(
   const { data: event } = await supabase
     .from("events")
     .select(
-      "id, workspace_id, statut, archived_at, cloture_at, nom_evenement, nom_des_maries, marie1_prenom, marie1_nom, marie2_prenom, marie2_nom, email, telephone, contrat_statut, yousign_signature_request_id, prix_total, date_debut",
+      "id, workspace_id, statut, archived_at, cloture_at, nom_evenement, nom_des_maries, marie1_prenom, marie1_nom, marie2_prenom, marie2_nom, email, telephone, adresse_postale, contrat_statut, yousign_signature_request_id, prix_total, date_debut, date_fin",
     )
     .eq("id", eventId)
     .eq("workspace_id", workspaceId)
@@ -89,18 +94,36 @@ export async function sendContractForEvent(
   const serviceSupabase = createServiceClient();
   const { data: workspace } = await supabase
     .from("workspaces")
-    .select("contrat_template_path, contrat_signature_zones")
+    .select("*")
     .eq("id", workspaceId)
     .single();
 
-  const contractPdf = await loadContractPdfForWorkspace(
-    serviceSupabase,
-    workspaceId,
-    workspace?.contrat_template_path,
-  );
+  if (!workspace) return { error: "Workspace introuvable" };
+
+  const { data: payments } = await supabase
+    .from("payments")
+    .select("label, montant")
+    .eq("event_id", eventId)
+    .order("date_echeance", { ascending: true });
+
+  let contractPdf;
+  try {
+    contractPdf = await loadContractPdfForEvent(
+      serviceSupabase,
+      workspaceId,
+      workspace,
+      { event, payments: payments ?? [] },
+    );
+  } catch (err) {
+    if (err instanceof ContratMergeError || err instanceof ContratPdfConvertError) {
+      return { error: err.message };
+    }
+    if (err instanceof Error) return { error: err.message };
+    return { error: "Préparation du contrat impossible." };
+  }
 
   const signatureZones = parseContratSignatureZones(
-    workspace?.contrat_signature_zones,
+    workspace.contrat_signature_zones,
   );
 
   const result = await sendYousignContract({
@@ -160,5 +183,6 @@ export async function sendContractForEvent(
       depositResult.ok && !depositResult.skipped && !depositResult.alreadySent,
     depositEmailWarning: depositEmailUserMessage(depositResult) ?? undefined,
     usingDefaultTemplate: contractPdf.source === "default",
+    contractMerged: contractPdf.source === "merged",
   };
 }

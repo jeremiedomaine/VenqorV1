@@ -106,7 +106,10 @@ export function ContratSignaturePlacer({
       const canvas = canvasRef.current;
       if (!pdfjs || !pdfData || !canvas) return;
 
-      const pdf = await pdfjs.getDocument({ data: pdfData }).promise;
+      const pdf = await pdfjs.getDocument({
+        data: pdfData.slice(0),
+        useSystemFonts: true,
+      }).promise;
       const page = await pdf.getPage(pageNumber);
       const viewport = page.getViewport({ scale: 1 });
       const nextScale = DISPLAY_WIDTH / viewport.width;
@@ -135,19 +138,28 @@ export function ContratSignaturePlacer({
 
       try {
         const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-        pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/legacy/build/pdf.worker.min.mjs`;
+        pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
         pdfjsRef.current = pdfjs;
 
-        const response = await fetch("/api/workspace/contrat-pdf");
+        const response = await fetch("/api/workspace/contrat-pdf", {
+          credentials: "same-origin",
+        });
         if (!response.ok) {
-          throw new Error("Impossible de charger le PDF.");
+          const message =
+            response.status === 401
+              ? "Session expirée — reconnectez-vous."
+              : "Impossible de charger le PDF.";
+          throw new Error(message);
         }
 
         const buffer = await response.arrayBuffer();
         if (cancelled) return;
 
         pdfDataRef.current = buffer;
-        const pdf = await pdfjs.getDocument({ data: buffer }).promise;
+        const pdf = await pdfjs.getDocument({
+          data: buffer.slice(0),
+          useSystemFonts: true,
+        }).promise;
         const totalPages = pdf.numPages;
         setNumPages(totalPages);
 

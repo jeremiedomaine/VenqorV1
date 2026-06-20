@@ -60,13 +60,15 @@ export function computeWorkspaceSetupStatus(
       id: "contrat",
       label: "Contrat Yousign",
       detail:
-        workspace.contrat_template_path && workspace.contrat_signature_zones
-          ? "PDF et signatures configurés"
-          : workspace.contrat_template_path
-            ? "PDF uploadé — placez les signatures"
-            : "Modèle démo — uploadez le vôtre",
+        workspace.contrat_template_docx_path && workspace.contrat_signature_zones
+          ? "Word + signatures configurés"
+          : workspace.contrat_template_docx_path
+            ? "Word uploadé — placez les signatures"
+            : workspace.contrat_template_path
+              ? "PDF statique — ajoutez le modèle Word"
+              : "Modèle démo — configurez le contrat",
       done: Boolean(
-        workspace.contrat_template_path && workspace.contrat_signature_zones,
+        workspace.contrat_template_docx_path && workspace.contrat_signature_zones,
       ),
       href: "/parametres#contrat",
     },

@@ -7,8 +7,8 @@ import { sendContractForEvent } from "@/actions/yousign-contract";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAsyncAction } from "@/hooks/use-async-action";
+import { formatContratStatutLabel } from "@/lib/contrat-display";
 import {
-  CONTRAT_STATUT_LABELS,
   type ContratStatut,
 } from "@/lib/types";
 
@@ -18,6 +18,8 @@ export function SendContractButton({
   contratStatut,
   contratEnvoyeAt,
   contratSigneAt,
+  contratSignaturesDone,
+  contratSignaturesTotal,
   hasCustomTemplate,
 }: {
   eventId: string;
@@ -25,6 +27,8 @@ export function SendContractButton({
   contratStatut: ContratStatut;
   contratEnvoyeAt: string | null;
   contratSigneAt: string | null;
+  contratSignaturesDone: number;
+  contratSignaturesTotal: number;
   hasCustomTemplate: boolean;
 }) {
   const router = useRouter();
@@ -62,7 +66,12 @@ export function SendContractButton({
         </p>
 
         <p className="text-sm font-medium text-slate-800">
-          Statut : {CONTRAT_STATUT_LABELS[contratStatut]}
+          Statut :{" "}
+          {formatContratStatutLabel(
+            contratStatut,
+            contratSignaturesDone,
+            contratSignaturesTotal,
+          )}
         </p>
 
         {contratEnvoyeAt && contratStatut !== "non_envoye" && (
@@ -75,7 +84,10 @@ export function SendContractButton({
 
         {contratStatut === "en_cours" && (
           <p className="text-xs text-slate-500">
-            Yousign a envoyé les liens de signature par email aux deux mariés.
+            {contratSignaturesDone > 0 &&
+            contratSignaturesDone < contratSignaturesTotal
+              ? `${contratSignaturesDone} marié(e) sur ${contratSignaturesTotal} a signé — en attente de l'autre signature.`
+              : "Yousign a envoyé les liens de signature par email aux deux mariés."}
           </p>
         )}
 

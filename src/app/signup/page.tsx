@@ -5,8 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signUp } from "@/actions/auth";
+import { authErrorMessage } from "@/lib/auth-errors";
 
-export default function SignupPage() {
+export default function SignupPage({
+  searchParams,
+}: {
+  searchParams: { error?: string };
+}) {
+  const errorMessage = authErrorMessage(searchParams.error);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
       <Card className="w-full max-w-md">
@@ -58,13 +65,21 @@ export default function SignupPage() {
                 minLength={6}
               />
             </div>
+            {errorMessage && (
+              <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {errorMessage}
+              </p>
+            )}
             <Button type="submit" className="w-full">
               Créer mon compte
             </Button>
           </form>
           <p className="mt-6 text-center text-sm text-slate-500">
             Déjà inscrit ?{" "}
-            <Link href="/login" className="font-medium text-[#4F46E5] hover:underline">
+            <Link
+              href="/login"
+              className="font-medium text-[#4F46E5] hover:underline"
+            >
               Se connecter
             </Link>
           </p>

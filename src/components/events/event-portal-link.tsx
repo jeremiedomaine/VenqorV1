@@ -7,6 +7,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
+function portalBaseUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "";
+  const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(
+    configured,
+  );
+
+  if (configured && !isLocalhost) return configured;
+  if (typeof window !== "undefined") return window.location.origin;
+  return configured;
+}
+
 export function EventPortalLink({
   portalToken,
   show,
@@ -18,9 +29,7 @@ export function EventPortalLink({
 
   if (!show) return null;
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "";
-  const portalUrl = `${baseUrl}/portail/${portalToken}`;
+  const portalUrl = `${portalBaseUrl()}/portail/${portalToken}`;
 
   async function copyLink() {
     try {

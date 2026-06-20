@@ -108,6 +108,8 @@ export interface Event {
   contrat_statut: ContratStatut;
   contrat_envoye_at: string | null;
   contrat_signe_at: string | null;
+  contrat_signatures_done: number;
+  contrat_signatures_total: number;
   created_at: string;
   updated_at: string;
 }

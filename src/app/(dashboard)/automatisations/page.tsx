@@ -72,7 +72,6 @@ export default async function AutomatisationsPage() {
         <h3 className="text-sm font-semibold text-slate-800">À venir</h3>
         <ul className="mt-3 space-y-2 text-sm text-slate-500">
           <li>Relances configurables avant / après échéance (rappels J-7, J+3…)</li>
-          <li>Paiement Stripe</li>
         </ul>
       </section>
     </div>

@@ -185,6 +185,8 @@ export default async function EventDetailPage({
               contratStatut={typedEvent.contrat_statut ?? "non_envoye"}
               contratEnvoyeAt={typedEvent.contrat_envoye_at ?? null}
               contratSigneAt={typedEvent.contrat_signe_at ?? null}
+              contratSignaturesDone={typedEvent.contrat_signatures_done ?? 0}
+              contratSignaturesTotal={typedEvent.contrat_signatures_total ?? 2}
               hasCustomTemplate={Boolean(workspace?.contrat_template_path)}
             />
           )}

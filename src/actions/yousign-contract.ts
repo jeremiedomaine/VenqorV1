@@ -150,6 +150,8 @@ export async function sendContractForEvent(
       contrat_statut: "en_cours",
       contrat_envoye_at: new Date().toISOString(),
       contrat_signe_at: null,
+      contrat_signatures_done: 0,
+      contrat_signatures_total: 2,
     })
     .eq("id", eventId)
     .eq("workspace_id", workspaceId);

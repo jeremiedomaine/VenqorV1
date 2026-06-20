@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { actionError, type ActionResult } from "@/lib/action-result";
 import { createClient } from "@/lib/supabase/server";
 import {
   parseCustomEventTypes,
@@ -25,12 +26,18 @@ async function getWorkspaceId() {
   return profile.workspace_id;
 }
 
-export async function updateWorkspaceBilling(formData: FormData): Promise<void> {
+export async function updateWorkspaceBilling(
+  formData: FormData,
+): Promise<ActionResult> {
   const workspaceId = await getWorkspaceId();
   const supabase = createClient();
 
   const acomptePct = Number(formData.get("facturation_acompte_pct") || 30);
   const soldePct = Number(formData.get("facturation_solde_pct") || 70);
+
+  if (acomptePct + soldePct !== 100) {
+    return actionError("Acompte et solde doivent totaliser 100 %.");
+  }
 
   const { error } = await supabase
     .from("workspaces")
@@ -52,9 +59,10 @@ export async function updateWorkspaceBilling(formData: FormData): Promise<void> 
     })
     .eq("id", workspaceId);
 
-  if (error) return;
+  if (error) return actionError("Impossible d'enregistrer la facturation.");
   revalidatePath("/parametres");
   revalidatePath("/pilotage");
+  return {};
 }
 
 export async function updateWorkspaceGoals(
@@ -110,24 +118,19 @@ export async function updateWorkspaceEncaissements(
   const workspaceId = await getWorkspaceId();
   const supabase = createClient();
 
-  const mode = String(formData.get("mode_paiement_defaut") ?? "virement");
-  if (mode !== "virement" && mode !== "stripe") {
-    return { error: "Mode de paiement invalide." };
-  }
-
   const iban = String(formData.get("iban") ?? "").replace(/\s/g, "").trim();
   const bic = String(formData.get("bic") ?? "").trim();
   const titulaire = String(formData.get("titulaire_compte") ?? "").trim();
   const instructions = String(formData.get("instructions_virement") ?? "").trim();
 
-  if (mode === "virement" && iban && !/^[A-Z]{2}[0-9A-Z]{13,32}$/i.test(iban)) {
+  if (iban && !/^[A-Z]{2}[0-9A-Z]{13,32}$/i.test(iban)) {
     return { error: "Format IBAN invalide." };
   }
 
   const { error } = await supabase
     .from("workspaces")
     .update({
-      mode_paiement_defaut: mode,
+      mode_paiement_defaut: "virement",
       iban: iban || null,
       bic: bic || null,
       titulaire_compte: titulaire || null,
@@ -141,14 +144,18 @@ export async function updateWorkspaceEncaissements(
   return {};
 }
 
-export async function addCustomEventType(formData: FormData): Promise<void> {
+export async function addCustomEventType(
+  formData: FormData,
+): Promise<ActionResult> {
   const workspaceId = await getWorkspaceId();
   const supabase = createClient();
   const label = String(formData.get("label") ?? "").trim();
-  if (!label) return;
+  if (!label) return actionError("Indiquez un nom pour le type.");
 
   const slug = slugifyEventType(label);
-  if (RESERVED_EVENT_TYPE_SLUGS.has(slug)) return;
+  if (RESERVED_EVENT_TYPE_SLUGS.has(slug)) {
+    return actionError("Ce nom est réservé.");
+  }
 
   const { data: workspace } = await supabase
     .from("workspaces")
@@ -157,7 +164,9 @@ export async function addCustomEventType(formData: FormData): Promise<void> {
     .single();
 
   const current = parseCustomEventTypes(workspace?.types_evenement_custom);
-  if (current.some((t) => t.slug === slug)) return;
+  if (current.some((t) => t.slug === slug)) {
+    return actionError("Un type avec ce nom existe déjà.");
+  }
 
   const { error } = await supabase
     .from("workspaces")
@@ -166,17 +175,20 @@ export async function addCustomEventType(formData: FormData): Promise<void> {
     })
     .eq("id", workspaceId);
 
-  if (error) return;
+  if (error) return actionError("Impossible d'ajouter le type.");
   revalidatePath("/parametres");
   revalidatePath("/");
   revalidatePath("/evenements", "layout");
+  return {};
 }
 
-export async function removeCustomEventType(formData: FormData): Promise<void> {
+export async function removeCustomEventType(
+  formData: FormData,
+): Promise<ActionResult> {
   const workspaceId = await getWorkspaceId();
   const supabase = createClient();
   const slug = String(formData.get("slug") ?? "").trim();
-  if (!slug) return;
+  if (!slug) return actionError("Type introuvable.");
 
   const { data: workspace } = await supabase
     .from("workspaces")
@@ -192,7 +204,8 @@ export async function removeCustomEventType(formData: FormData): Promise<void> {
     .update({ types_evenement_custom: next })
     .eq("id", workspaceId);
 
-  if (error) return;
+  if (error) return actionError("Impossible de supprimer le type.");
   revalidatePath("/parametres");
   revalidatePath("/");
+  return {};
 }

@@ -95,9 +95,7 @@ export function PortalVirementSection({
   workspace: PortalData["workspace"];
   payments: PortalPayment[];
 }) {
-  const virementPayments = payments.filter(
-    (p) => p.mode_paiement === "virement" && p.statut !== "paye",
-  );
+  const virementPayments = payments.filter((p) => p.statut !== "paye");
 
   if (virementPayments.length === 0) return null;
 
@@ -185,30 +183,6 @@ export function PortalVirementSection({
           </div>
         ))}
       </div>
-    </section>
-  );
-}
-
-export function PortalStripePlaceholder({
-  payments,
-}: {
-  payments: PortalPayment[];
-}) {
-  const stripePending = payments.some(
-    (p) => p.mode_paiement === "stripe" && p.statut === "en_attente",
-  );
-
-  if (!stripePending) return null;
-
-  return (
-    <section className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/50 p-8 md:p-10">
-      <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-zinc-400">
-        Paiement en ligne
-      </p>
-      <p className="mt-4 text-sm text-zinc-500">
-        Le paiement par carte bancaire sera disponible prochainement. En
-        attendant, contactez le domaine pour les modalités de règlement.
-      </p>
     </section>
   );
 }

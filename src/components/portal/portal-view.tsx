@@ -3,10 +3,7 @@ import { EspaceMariesSections } from "@/components/portal/espace-maries-sections
 import { EventDetails } from "@/components/portal/event-details";
 import { PaymentProgress } from "@/components/portal/payment-progress";
 import { PaymentSchedule } from "@/components/portal/payment-schedule";
-import {
-  PortalStripePlaceholder,
-  PortalVirementSection,
-} from "@/components/portal/portal-payments";
+import { PortalVirementSection } from "@/components/portal/portal-payments";
 import { PortalLogo } from "@/components/portal/portal-logo";
 import { WelcomeMessage } from "@/components/portal/welcome-message";
 import type { PortalData } from "@/lib/types";
@@ -71,8 +68,6 @@ export function PortalView({
             workspace={workspace}
             payments={payments}
           />
-
-          <PortalStripePlaceholder payments={payments} />
 
           <EspaceMariesSections workspace={workspace} />
         </div>

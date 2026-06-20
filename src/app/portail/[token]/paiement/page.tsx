@@ -1,26 +1,22 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PortalPaymentCheckout } from "@/components/portal/portal-payment-checkout";
+import { PortalUnavailable } from "@/components/portal/portal-unavailable";
+import { loadPortalPage } from "@/lib/load-portal-page";
 import { pickCheckoutPayment } from "@/lib/portal-payment";
-import { createClient } from "@/lib/supabase/server";
-import type { PortalData } from "@/lib/types";
 
 export async function generateMetadata({
   params,
 }: {
   params: { token: string };
 }): Promise<Metadata> {
-  const supabase = createClient();
-  const { data } = await supabase.rpc("fetch_portal_data", {
-    p_token: params.token,
-  });
+  const result = await loadPortalPage(params.token);
 
-  if (!data) return { title: "Paiement" };
+  if (result.status !== "ok") return { title: "Paiement" };
 
-  const portal = data as PortalData;
   return {
-    title: `Paiement — ${portal.event.nom_des_maries}`,
-    description: `Régler votre échéance chez ${portal.workspace.nom_domaine}`,
+    title: `Paiement — ${result.data.event.nom_des_maries}`,
+    description: `Régler votre échéance chez ${result.data.workspace.nom_domaine}`,
     robots: { index: false, follow: false },
   };
 }
@@ -32,21 +28,20 @@ export default async function PortailPaiementPage({
   params: { token: string };
   searchParams: { e?: string };
 }) {
-  const supabase = createClient();
-  const { data, error } = await supabase.rpc("fetch_portal_data", {
-    p_token: params.token,
-  });
+  const result = await loadPortalPage(params.token);
+  if (result.status === "unavailable") {
+    return <PortalUnavailable reason={result.reason} />;
+  }
 
-  if (error || !data) notFound();
+  if (result.status !== "ok") notFound();
 
-  const portal = data as PortalData;
-  const payment = pickCheckoutPayment(portal.payments, searchParams.e);
+  const payment = pickCheckoutPayment(result.data.payments, searchParams.e);
 
   if (!payment) notFound();
 
   return (
     <PortalPaymentCheckout
-      data={portal}
+      data={result.data}
       portalToken={params.token}
       payment={payment}
     />

@@ -1,15 +1,19 @@
 /**
- * Insère 9 événements de démo (3 par colonne Kanban) pour le premier workspace.
+ * Fusionne les workspaces en doublon, nettoie les dossiers et insère 10 événements de démo.
  * Usage: npm run db:seed
+ *
+ * Cible le workspace du compte PRIMARY_OWNER_EMAIL (défaut: jeremie.thomasse@gmail.com).
  */
 import { config } from "dotenv";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { resolve } from "path";
 
 config({ path: resolve(process.cwd(), ".env.local") });
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const PRIMARY_OWNER_EMAIL =
+  process.env.SEED_OWNER_EMAIL ?? "jeremie.thomasse@gmail.com";
 
 type EventStatus = "prospect" | "option" | "confirme";
 
@@ -62,7 +66,7 @@ const DEMO_EVENTS: Array<{
     notes: "Intéressés par le package 2 nuits. Budget flexible.",
     adresse: "45 chemin du Moulin\n24100 Bergerac",
   },
-  // ——— Option / Contrat (3) ———
+  // ——— Option / Contrat (4) ———
   {
     nom: "Alice & Pierre",
     statut: "option",
@@ -109,6 +113,22 @@ const DEMO_EVENTS: Array<{
     payments: [
       { label: "Acompte 30%", pct: 0.3, statut: "en_attente", monthsBefore: 5 },
       { label: "Solde", pct: 0.7, statut: "en_attente", monthsBefore: 2 },
+    ],
+  },
+  {
+    nom: "Léa & Maxime",
+    statut: "option",
+    date: "2026-10-03",
+    nuits: 2,
+    prix: 27500,
+    capacite: 90,
+    notes: "Devis envoyé. Relance visite prévue la semaine prochaine.",
+    adresse: "14 rue Gambetta\n31000 Toulouse",
+    email: "lea.maxime@gmail.com",
+    telephone: "06 33 44 55 66",
+    payments: [
+      { label: "Acompte 30%", pct: 0.3, statut: "en_attente", monthsBefore: 3 },
+      { label: "Solde", pct: 0.7, statut: "en_attente", monthsBefore: 1 },
     ],
   },
   // ——— Confirmés (3) ———
@@ -174,35 +194,92 @@ function subtractMonths(dateStr: string, months: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-async function main() {
-  const supabase = createClient(url, serviceKey, {
-    auth: { persistSession: false },
-  });
+async function findUserIdByEmail(
+  supabase: SupabaseClient,
+  email: string,
+): Promise<string | null> {
+  const { data } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+  return data.users.find((u) => u.email?.toLowerCase() === email.toLowerCase())?.id ?? null;
+}
 
-  const { data: workspaces, error: wsErr } = await supabase
+async function removeStoragePrefix(
+  supabase: SupabaseClient,
+  bucket: string,
+  prefix: string,
+) {
+  const { data: entries } = await supabase.storage.from(bucket).list(prefix);
+  if (!entries?.length) return;
+
+  const paths = entries.map((f) => `${prefix}/${f.name}`);
+  const { error } = await supabase.storage.from(bucket).remove(paths);
+  if (error) {
+    console.warn(`  ⚠ Storage ${bucket}/${prefix}: ${error.message}`);
+  }
+}
+
+async function mergeDuplicateWorkspaces(
+  supabase: SupabaseClient,
+  primaryWorkspaceId: string,
+) {
+  const { data: workspaces } = await supabase
     .from("workspaces")
-    .select("id, nom_domaine")
-    .limit(1);
+    .select("id, nom_domaine");
 
-  if (wsErr || !workspaces?.length) {
-    console.error("✗ Aucun workspace trouvé. Créez un compte gérant d'abord.");
-    process.exit(1);
+  const duplicates = (workspaces ?? []).filter((w) => w.id !== primaryWorkspaceId);
+  if (!duplicates.length) {
+    console.log("→ Aucun workspace doublon à supprimer.");
+    return;
   }
 
-  const workspaceId = workspaces[0].id;
-  console.log(`→ Workspace : ${workspaces[0].nom_domaine}`);
+  for (const dup of duplicates) {
+    console.log(`→ Suppression workspace doublon ${dup.nom_domaine} (${dup.id})…`);
 
-  const { data: existing } = await supabase
+    await removeStoragePrefix(supabase, "workspace-contrats", dup.id);
+    await removeStoragePrefix(supabase, "workspace-logos", dup.id);
+
+    const { data: orphanProfiles } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("workspace_id", dup.id);
+
+    const { error: delErr } = await supabase
+      .from("workspaces")
+      .delete()
+      .eq("id", dup.id);
+
+    if (delErr) {
+      console.error(`✗ Impossible de supprimer ${dup.id}:`, delErr.message);
+      continue;
+    }
+
+    for (const profile of orphanProfiles ?? []) {
+      const { error: authErr } = await supabase.auth.admin.deleteUser(profile.id);
+      if (authErr) {
+        console.warn(`  ⚠ Compte auth ${profile.id}: ${authErr.message}`);
+      } else {
+        console.log(`  · Compte auth orphelin supprimé (${profile.id})`);
+      }
+    }
+  }
+}
+
+async function cleanPrimaryWorkspace(
+  supabase: SupabaseClient,
+  workspaceId: string,
+) {
+  const { count } = await supabase
     .from("events")
-    .select("id")
+    .select("id", { count: "exact", head: true })
     .eq("workspace_id", workspaceId);
 
-  if (existing?.length) {
-    console.log(`→ Suppression de ${existing.length} événement(s) existant(s)…`);
+  if (count) {
+    console.log(`→ Suppression de ${count} dossier(s) existant(s)…`);
     await supabase.from("payments").delete().eq("workspace_id", workspaceId);
     await supabase.from("events").delete().eq("workspace_id", workspaceId);
   }
+}
 
+async function seedEvents(supabase: SupabaseClient, workspaceId: string) {
   await supabase
     .from("workspaces")
     .update({
@@ -223,7 +300,6 @@ async function main() {
 
   for (const demo of DEMO_EVENTS) {
     const dateFin = addDays(demo.date, demo.nuits - 1);
-
     const [p1, p2] = demo.nom.split(" & ");
 
     const { data: event, error: evErr } = await supabase
@@ -274,9 +350,46 @@ async function main() {
     created++;
   }
 
+  return created;
+}
+
+async function main() {
+  const supabase = createClient(url, serviceKey, {
+    auth: { persistSession: false },
+  });
+
+  const ownerId = await findUserIdByEmail(supabase, PRIMARY_OWNER_EMAIL);
+  if (!ownerId) {
+    console.error(`✗ Compte introuvable : ${PRIMARY_OWNER_EMAIL}`);
+    process.exit(1);
+  }
+
+  const { data: profile, error: profileErr } = await supabase
+    .from("profiles")
+    .select("workspace_id")
+    .eq("id", ownerId)
+    .single();
+
+  if (profileErr || !profile) {
+    console.error("✗ Profil gérant introuvable.");
+    process.exit(1);
+  }
+
+  const workspaceId = profile.workspace_id;
+  console.log(`→ Workspace principal (${PRIMARY_OWNER_EMAIL}) : ${workspaceId}`);
+
+  await mergeDuplicateWorkspaces(supabase, workspaceId);
+  await cleanPrimaryWorkspace(supabase, workspaceId);
+
+  const created = await seedEvents(supabase, workspaceId);
+
+  const { count: wsCount } = await supabase
+    .from("workspaces")
+    .select("id", { count: "exact", head: true });
+
   console.log(`\n✓ ${created} événements de démo créés`);
-  console.log("  · 3 prospects · 3 options · 3 confirmés");
-  console.log("  · Échéanciers sur options et confirmés");
+  console.log("  · 3 prospects · 4 options · 3 confirmés");
+  console.log(`  · ${wsCount ?? 1} workspace actif`);
 }
 
 main().catch((err) => {

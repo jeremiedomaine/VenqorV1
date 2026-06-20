@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { maybeSendDepositAfterContract } from "@/lib/deposit-payment-email";
+import { isProductionRuntime } from "@/lib/is-production";
 import { createServiceClient } from "@/lib/supabase/service";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +10,10 @@ type YousignWebhookPayload = {
   event_name?: string;
   data?: {
     signature_request?: {
+      id?: string;
+      status?: string;
+    };
+    signer?: {
       id?: string;
       status?: string;
     };
@@ -31,8 +36,14 @@ function verifySignature(rawBody: string, signatureHeader: string | null): boole
 export async function POST(request: Request) {
   const rawBody = await request.text();
   const signature = request.headers.get("x-yousign-signature-256");
+  const webhookSecret = process.env.YOUSIGN_WEBHOOK_SECRET?.trim();
 
-  if (process.env.YOUSIGN_WEBHOOK_SECRET?.trim()) {
+  if (isProductionRuntime() && !webhookSecret) {
+    console.error("[yousign/webhook] YOUSIGN_WEBHOOK_SECRET manquant en production");
+    return Response.json({ error: "Webhook not configured" }, { status: 503 });
+  }
+
+  if (webhookSecret) {
     if (!verifySignature(rawBody, signature)) {
       return Response.json({ error: "Invalid signature" }, { status: 401 });
     }
@@ -47,46 +58,79 @@ export async function POST(request: Request) {
 
   const eventName = payload.event_name;
   const signatureRequestId = payload.data?.signature_request?.id;
+  const supabase = createServiceClient();
+
+  if (
+    eventName === "signer.done" &&
+    signatureRequestId &&
+    payload.data?.signer?.status === "signed"
+  ) {
+    const { data: event } = await supabase
+      .from("events")
+      .select("id, contrat_signatures_done, contrat_signatures_total, contrat_statut")
+      .eq("yousign_signature_request_id", signatureRequestId)
+      .maybeSingle();
+
+    if (event?.contrat_statut === "en_cours") {
+      const total = event.contrat_signatures_total ?? 2;
+      const nextDone = Math.min((event.contrat_signatures_done ?? 0) + 1, total);
+
+      await supabase
+        .from("events")
+        .update({ contrat_signatures_done: nextDone })
+        .eq("id", event.id);
+    }
+  }
 
   if (
     eventName === "signature_request.done" &&
     signatureRequestId &&
     payload.data?.signature_request?.status === "done"
   ) {
-    const supabase = createServiceClient();
-    const { data: event } = await supabase
+    const { data: existing } = await supabase
       .from("events")
-      .update({
-        contrat_statut: "signe",
-        contrat_signe_at: new Date().toISOString(),
-      })
+      .select("id, workspace_id, contrat_signatures_total")
       .eq("yousign_signature_request_id", signatureRequestId)
-      .select("id, workspace_id")
       .maybeSingle();
 
-    if (event) {
+    if (existing) {
+      const total = existing.contrat_signatures_total ?? 2;
+
+      await supabase
+        .from("events")
+        .update({
+          contrat_statut: "signe",
+          contrat_signe_at: new Date().toISOString(),
+          contrat_signatures_done: total,
+        })
+        .eq("id", existing.id);
+
       await maybeSendDepositAfterContract({
         supabase,
-        eventId: event.id,
-        workspaceId: event.workspace_id,
+        eventId: existing.id,
+        workspaceId: existing.workspace_id,
         timing: "after_contract",
       });
     }
   }
 
   if (eventName === "signature_request.declined") {
-    const supabase = createServiceClient();
     await supabase
       .from("events")
-      .update({ contrat_statut: "refuse" })
+      .update({
+        contrat_statut: "refuse",
+        contrat_signatures_done: 0,
+      })
       .eq("yousign_signature_request_id", signatureRequestId ?? "");
   }
 
   if (eventName === "signature_request.expired") {
-    const supabase = createServiceClient();
     await supabase
       .from("events")
-      .update({ contrat_statut: "expire" })
+      .update({
+        contrat_statut: "expire",
+        contrat_signatures_done: 0,
+      })
       .eq("yousign_signature_request_id", signatureRequestId ?? "");
   }
 

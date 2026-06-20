@@ -118,9 +118,7 @@ export function PortalPaymentCheckout({
 }) {
   const { workspace, event } = data;
   const bankReady = hasVirementConfig(workspace);
-  const isStripe = payment.mode_paiement === "stripe";
-  const canDeclare =
-    payment.statut === "en_attente" && !isStripe && bankReady;
+  const canDeclare = payment.statut === "en_attente" && bankReady;
 
   return (
     <div className="relative min-h-screen">
@@ -164,14 +162,7 @@ export function PortalPaymentCheckout({
             <div className="space-y-5 px-6 py-6">
               <StatusBanner status={payment.statut} />
 
-              {isStripe && payment.statut === "en_attente" && (
-                <p className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-4 text-sm text-zinc-600">
-                  Le paiement par carte sera disponible prochainement. Contactez{" "}
-                  {workspace.contact_nom || workspace.nom_domaine}.
-                </p>
-              )}
-
-              {!isStripe && payment.statut === "en_attente" && (
+              {payment.statut === "en_attente" && (
                 <>
                   {!bankReady ? (
                     <p className="text-sm text-zinc-500">

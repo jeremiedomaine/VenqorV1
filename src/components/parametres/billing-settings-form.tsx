@@ -6,6 +6,7 @@ import { BillingPreview } from "@/components/parametres/billing-preview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAsyncAction } from "@/hooks/use-async-action";
 import { billingFromWorkspace, type WorkspaceBilling } from "@/lib/billing";
 
 export function BillingSettingsForm({
@@ -15,6 +16,8 @@ export function BillingSettingsForm({
 }) {
   const initial = billingFromWorkspace(workspace);
   const [billing, setBilling] = useState(initial);
+  const [error, setError] = useState<string | null>(null);
+  const { pending, run } = useAsyncAction();
 
   const totalPct = billing.facturation_acompte_pct + billing.facturation_solde_pct;
 
@@ -33,8 +36,16 @@ export function BillingSettingsForm({
     [billing],
   );
 
+  function handleSubmit(formData: FormData) {
+    setError(null);
+    void run(async () => {
+      const result = await updateWorkspaceBilling(formData);
+      if (result.error) setError(result.error);
+    });
+  }
+
   return (
-    <form action={updateWorkspaceBilling} className="space-y-6">
+    <form action={handleSubmit} className="space-y-6">
       {hiddenFields}
 
       <div className="grid gap-6 sm:grid-cols-2">
@@ -132,7 +143,15 @@ export function BillingSettingsForm({
 
       <BillingPreview billing={billing} />
 
-      <Button type="submit">Enregistrer la facturation</Button>
+      {error && (
+        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </p>
+      )}
+
+      <Button type="submit" disabled={pending}>
+        {pending ? "Enregistrement…" : "Enregistrer la facturation"}
+      </Button>
     </form>
   );
 }

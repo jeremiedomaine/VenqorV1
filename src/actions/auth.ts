@@ -1,14 +1,19 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { signUpErrorCode } from "@/lib/auth-errors";
 import { createClient } from "@/lib/supabase/server";
 
 export async function signUp(formData: FormData): Promise<void> {
   const supabase = createClient();
-  const email = String(formData.get("email") ?? "");
+  const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  const fullName = String(formData.get("full_name") ?? "");
-  const workspaceName = String(formData.get("workspace_name") ?? "");
+  const fullName = String(formData.get("full_name") ?? "").trim();
+  const workspaceName = String(formData.get("workspace_name") ?? "").trim();
+
+  if (!email || !password || !workspaceName) {
+    redirect("/signup?error=signup_failed");
+  }
 
   const { error } = await supabase.auth.signUp({
     email,
@@ -21,7 +26,7 @@ export async function signUp(formData: FormData): Promise<void> {
     },
   });
 
-  if (error) redirect(`/signup?error=${encodeURIComponent(error.message)}`);
+  if (error) redirect(`/signup?error=${signUpErrorCode(error.message)}`);
   redirect("/");
 }
 

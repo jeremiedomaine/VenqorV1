@@ -1,5 +1,9 @@
-/** Redirige tous les emails vers une adresse de test (dev). Retirer en prod. */
-const TEST_OVERRIDE = process.env.EMAIL_TEST_OVERRIDE?.trim() || null;
+/** Redirige tous les emails vers une adresse de test (dev uniquement). */
+import { isProductionRuntime } from "@/lib/is-production";
+
+const TEST_OVERRIDE = isProductionRuntime()
+  ? null
+  : process.env.EMAIL_TEST_OVERRIDE?.trim() || null;
 
 export function emailForCouple(actual: string | null | undefined): string | null {
   if (TEST_OVERRIDE) return TEST_OVERRIDE;

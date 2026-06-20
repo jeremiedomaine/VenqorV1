@@ -10,7 +10,8 @@
     "start": "next start",
     "lint": "next lint",
     "db:migrate": "tsx scripts/run-migration.ts",
-    "db:seed": "tsx scripts/seed-demo-events.ts"
+    "db:seed": "tsx scripts/seed-demo-events.ts",
+    "prod:check": "tsx scripts/check-prod-env.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -25,9 +25,7 @@ export function computeWorkspaceSetupStatus(
   const hasGoals = Boolean(
     workspace.objectif_dossiers_annuel && workspace.objectif_dossiers_annuel > 0,
   );
-  const encaissementsReady =
-    encaissements.mode_paiement_defaut === "stripe" ||
-    hasVirementConfig(encaissements);
+  const encaissementsReady = hasVirementConfig(encaissements);
 
   const contrat = getContratReadiness(workspace);
 
@@ -51,11 +49,7 @@ export function computeWorkspaceSetupStatus(
     {
       id: "encaissements",
       label: "Encaissements",
-      detail: encaissementsReady
-        ? encaissements.mode_paiement_defaut === "virement"
-          ? "Virement configuré"
-          : "Stripe (bientôt)"
-        : "IBAN à renseigner",
+      detail: encaissementsReady ? "Virement configuré" : "IBAN à renseigner",
       done: encaissementsReady,
       href: "/parametres#encaissements",
     },

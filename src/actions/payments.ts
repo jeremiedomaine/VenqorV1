@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { notifyPaymentConfirmed, notifyPaymentRejected } from "@/actions/payment-emails";
+import { actionError, type ActionResult } from "@/lib/action-result";
 import { createClient } from "@/lib/supabase/server";
 import { runInBackground } from "@/lib/run-in-background";
 import { buildTransferReference } from "@/lib/payment-utils";
@@ -24,22 +25,17 @@ async function getWorkspaceId() {
   return profile.workspace_id;
 }
 
-async function getDefaultPaymentMode(workspaceId: string) {
-  const supabase = createClient();
-  const { data } = await supabase
-    .from("workspaces")
-    .select("mode_paiement_defaut")
-    .eq("id", workspaceId)
-    .single();
-
-  return data?.mode_paiement_defaut === "stripe" ? "stripe" : "virement";
-}
-
-export async function createPayment(formData: FormData): Promise<void> {
+export async function createPayment(formData: FormData): Promise<ActionResult> {
   const workspaceId = await getWorkspaceId();
   const supabase = createClient();
   const eventId = String(formData.get("event_id"));
-  const mode = await getDefaultPaymentMode(workspaceId);
+  const label = String(formData.get("label") ?? "").trim();
+  const montant = Number(formData.get("montant") || 0);
+
+  if (!label) return actionError("Le libellé est obligatoire.");
+  if (!Number.isFinite(montant) || montant <= 0) {
+    return actionError("Le montant doit être supérieur à 0.");
+  }
 
   const { count } = await supabase
     .from("payments")
@@ -49,26 +45,24 @@ export async function createPayment(formData: FormData): Promise<void> {
   const { error } = await supabase.from("payments").insert({
     workspace_id: workspaceId,
     event_id: eventId,
-    label: String(formData.get("label")),
-    montant: Number(formData.get("montant") || 0),
+    label,
+    montant,
     date_echeance: String(formData.get("date_echeance") || null) || null,
     statut: "en_attente",
-    mode_paiement: mode,
-    reference_virement:
-      mode === "virement"
-        ? buildTransferReference(eventId, count ?? 0)
-        : null,
+    mode_paiement: "virement",
+    reference_virement: buildTransferReference(eventId, count ?? 0),
   });
 
-  if (error) return;
+  if (error) return actionError("Impossible d'ajouter l'échéance.");
   revalidatePath(`/evenements/${eventId}`);
+  return {};
 }
 
 export async function updatePaymentStatus(
   paymentId: string,
   eventId: string,
   statut: PaymentStatus,
-): Promise<void> {
+): Promise<ActionResult> {
   const workspaceId = await getWorkspaceId();
   const supabase = createClient();
   const now = new Date().toISOString();
@@ -89,29 +83,30 @@ export async function updatePaymentStatus(
     .eq("id", paymentId)
     .eq("workspace_id", workspaceId);
 
-  if (error) return;
+  if (error) return actionError("Impossible de mettre à jour le paiement.");
   if (statut === "paye") {
     runInBackground(notifyPaymentConfirmed(paymentId, eventId));
   }
   revalidatePath(`/evenements/${eventId}`);
+  return {};
 }
 
 export async function markPaymentPaid(
   paymentId: string,
   eventId: string,
-): Promise<void> {
-  await updatePaymentStatus(paymentId, eventId, "paye");
+): Promise<ActionResult> {
+  return updatePaymentStatus(paymentId, eventId, "paye");
 }
 
 export async function confirmDeclaredPayment(
   paymentId: string,
   eventId: string,
-): Promise<void> {
+): Promise<ActionResult> {
   const workspaceId = await getWorkspaceId();
   const supabase = createClient();
   const now = new Date().toISOString();
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("payments")
     .update({
       statut: "paye",
@@ -120,23 +115,30 @@ export async function confirmDeclaredPayment(
     })
     .eq("id", paymentId)
     .eq("workspace_id", workspaceId)
-    .eq("statut", "declare_paye");
+    .eq("statut", "declare_paye")
+    .select("id")
+    .maybeSingle();
 
-  if (error) return;
+  if (error) return actionError("Impossible de confirmer le paiement.");
+  if (!data) {
+    return actionError("Ce paiement n'est plus en attente de confirmation.");
+  }
+
   runInBackground(notifyPaymentConfirmed(paymentId, eventId));
   revalidatePath(`/evenements/${eventId}`);
   revalidatePath("/");
+  return {};
 }
 
 export async function rejectDeclaredPayment(
   paymentId: string,
   eventId: string,
-): Promise<void> {
+): Promise<ActionResult> {
   const workspaceId = await getWorkspaceId();
   const supabase = createClient();
   const now = new Date().toISOString();
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("payments")
     .update({
       statut: "en_attente",
@@ -145,18 +147,25 @@ export async function rejectDeclaredPayment(
     })
     .eq("id", paymentId)
     .eq("workspace_id", workspaceId)
-    .eq("statut", "declare_paye");
+    .eq("statut", "declare_paye")
+    .select("id")
+    .maybeSingle();
 
-  if (error) return;
+  if (error) return actionError("Impossible de rejeter la déclaration.");
+  if (!data) {
+    return actionError("Ce paiement n'est plus en attente de confirmation.");
+  }
+
   runInBackground(notifyPaymentRejected(paymentId, eventId));
   revalidatePath(`/evenements/${eventId}`);
   revalidatePath("/");
+  return {};
 }
 
 export async function deletePayment(
   paymentId: string,
   eventId: string,
-): Promise<void> {
+): Promise<ActionResult> {
   const workspaceId = await getWorkspaceId();
   const supabase = createClient();
 
@@ -166,6 +175,7 @@ export async function deletePayment(
     .eq("id", paymentId)
     .eq("workspace_id", workspaceId);
 
-  if (error) return;
+  if (error) return actionError("Impossible de supprimer l'échéance.");
   revalidatePath(`/evenements/${eventId}`);
+  return {};
 }

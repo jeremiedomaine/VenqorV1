@@ -33,8 +33,3 @@ export function encaissementsFromWorkspace(
 export function hasVirementConfig(encaissements: WorkspaceEncaissements): boolean {
   return Boolean(encaissements.iban?.trim() && encaissements.titulaire_compte?.trim());
 }
-
-export const PAYMENT_MODE_LABELS: Record<PaymentMode, string> = {
-  virement: "Virement bancaire",
-  stripe: "Paiement en ligne (Stripe)",
-};

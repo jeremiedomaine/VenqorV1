@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
 import {
   addCustomEventType,
   removeCustomEventType,
@@ -18,9 +19,28 @@ export function EventTypesSettings({
   customTypes: CustomEventType[];
 }) {
   const { isPending, run } = useAsyncActionByKey();
+  const [error, setError] = useState<string | null>(null);
+
+  async function runTypeAction(
+    key: string,
+    action: () => Promise<{ error?: string }>,
+  ) {
+    const result = await run(key, action);
+    if (result?.error) {
+      setError(result.error);
+      return;
+    }
+    setError(null);
+  }
 
   return (
     <div className="space-y-6">
+      {error && (
+        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </p>
+      )}
+
       <div>
         <p className="text-sm font-medium text-slate-700">Types inclus</p>
         <ul className="mt-2 space-y-2">
@@ -55,7 +75,7 @@ export function EventTypesSettings({
                 </span>
                 <form
                   action={(fd) =>
-                    void run(`remove-${type.slug}`, () =>
+                    void runTypeAction(`remove-${type.slug}`, () =>
                       removeCustomEventType(fd),
                     )
                   }
@@ -78,7 +98,9 @@ export function EventTypesSettings({
       </div>
 
       <form
-        action={(fd) => void run("add", () => addCustomEventType(fd))}
+        action={(fd) =>
+          void runTypeAction("add", () => addCustomEventType(fd))
+        }
         className="flex flex-col gap-3 sm:flex-row sm:items-end"
       >
         <div className="min-w-0 flex-1 space-y-2">

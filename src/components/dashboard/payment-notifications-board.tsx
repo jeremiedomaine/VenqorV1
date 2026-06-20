@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   confirmDeclaredPayment,
   rejectDeclaredPayment,
@@ -18,6 +19,7 @@ export function PaymentNotificationsBoard({
 }) {
   const router = useRouter();
   const { isPending, run } = useAsyncActionByKey();
+  const [error, setError] = useState<string | null>(null);
 
   if (notifications.length === 0) {
     return (
@@ -32,8 +34,27 @@ export function PaymentNotificationsBoard({
     );
   }
 
+  async function runAction(
+    key: string,
+    action: () => Promise<{ error?: string }>,
+  ) {
+    const result = await run(key, action);
+    if (result?.error) {
+      setError(result.error);
+      return;
+    }
+    setError(null);
+    router.refresh();
+  }
+
   return (
     <div className="space-y-3">
+      {error && (
+        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </p>
+      )}
+
       {notifications.map((item) => {
         const pending = isPending(item.id);
 
@@ -63,10 +84,9 @@ export function PaymentNotificationsBoard({
                 size="sm"
                 disabled={pending}
                 onClick={() =>
-                  void run(item.id, async () => {
-                    await confirmDeclaredPayment(item.id, item.event_id);
-                    router.refresh();
-                  })
+                  void runAction(item.id, () =>
+                    confirmDeclaredPayment(item.id, item.event_id),
+                  )
                 }
               >
                 {pending ? "…" : "Confirmer"}
@@ -76,10 +96,9 @@ export function PaymentNotificationsBoard({
                 variant="outline"
                 disabled={pending}
                 onClick={() =>
-                  void run(item.id, async () => {
-                    await rejectDeclaredPayment(item.id, item.event_id);
-                    router.refresh();
-                  })
+                  void runAction(item.id, () =>
+                    rejectDeclaredPayment(item.id, item.event_id),
+                  )
                 }
               >
                 {pending ? "…" : "Non reçu"}

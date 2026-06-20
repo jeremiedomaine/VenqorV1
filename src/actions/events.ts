@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { actionError, type ActionResult } from "@/lib/action-result";
 import { createClient } from "@/lib/supabase/server";
 import { parseEventFormData } from "@/lib/event-utils";
 import { loadWorkspaceEventTypes } from "@/lib/load-workspace";
@@ -471,7 +472,7 @@ export async function confirmDepositPaid(
 
 export async function regenerateEventPayments(
   eventId: string,
-): Promise<void> {
+): Promise<ActionResult> {
   const workspaceId = await getWorkspaceId();
   const supabase = createClient();
 
@@ -482,9 +483,11 @@ export async function regenerateEventPayments(
     .eq("workspace_id", workspaceId)
     .single();
 
-  if (!event || Number(event.prix_total) <= 0) return;
+  if (!event || Number(event.prix_total) <= 0) {
+    return actionError("Renseignez un budget sur le dossier avant de générer l'échéancier.");
+  }
 
-  await syncAutoPayments(
+  const ok = await syncAutoPayments(
     supabase,
     workspaceId,
     eventId,
@@ -493,5 +496,10 @@ export async function regenerateEventPayments(
     { force: true },
   );
 
+  if (!ok) {
+    return actionError("Impossible de générer l'échéancier.");
+  }
+
   revalidatePath(`/evenements/${eventId}`);
+  return {};
 }

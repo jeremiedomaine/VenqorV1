@@ -1,4 +1,5 @@
 import type { Workspace } from "@/lib/types";
+import { getSiteUrl } from "@/lib/site-url";
 
 export interface PaymentAutomationSettings {
   automation_paiement_active: boolean;
@@ -115,7 +116,7 @@ export function depositAutomationFromWorkspace(
 }
 
 export function portalUrl(portalToken: string): string {
-  const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
+  const base = getSiteUrl();
   return `${base}/portail/${portalToken}`;
 }
 
@@ -129,6 +130,6 @@ export function paymentPortalUrl(
 }
 
 export function eventDashboardUrl(eventId: string): string {
-  const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
+  const base = getSiteUrl();
   return `${base}/evenements/${eventId}`;
 }

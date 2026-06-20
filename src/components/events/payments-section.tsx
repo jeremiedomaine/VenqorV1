@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { regenerateEventPayments } from "@/actions/events";
 import {
   confirmDeclaredPayment,
@@ -16,8 +15,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAsyncActionByKey } from "@/hooks/use-async-action";
+import type { ActionResult } from "@/lib/action-result";
 import type { Payment } from "@/lib/types";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export function PaymentsSection({
   eventId,
@@ -32,14 +34,20 @@ export function PaymentsSection({
 }) {
   const router = useRouter();
   const { isPending, run } = useAsyncActionByKey();
+  const [error, setError] = useState<string | null>(null);
 
   const total = payments.reduce((sum, p) => sum + Number(p.montant), 0);
   const paid = payments
     .filter((p) => p.statut === "paye")
     .reduce((sum, p) => sum + Number(p.montant), 0);
 
-  async function refreshAfter(action: () => Promise<void>) {
-    await action();
+  async function runPaymentAction(action: () => Promise<ActionResult | void>) {
+    const result = await action();
+    if (result?.error) {
+      setError(result.error);
+      return;
+    }
+    setError(null);
     router.refresh();
   }
 
@@ -52,6 +60,12 @@ export function PaymentsSection({
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
+        {error && (
+          <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
+          </p>
+        )}
+
         {readOnly && (
           <p className="text-sm text-slate-500">
             Échéancier en lecture seule — dossier archivé ou clôturé.
@@ -70,7 +84,7 @@ export function PaymentsSection({
               disabled={isPending("regenerate")}
               onClick={() =>
                 void run("regenerate", () =>
-                  refreshAfter(() => regenerateEventPayments(eventId)),
+                  runPaymentAction(() => regenerateEventPayments(eventId)),
                 )
               }
             >
@@ -129,7 +143,7 @@ export function PaymentsSection({
                               disabled={pending}
                               onClick={() =>
                                 void run(key, () =>
-                                  refreshAfter(() =>
+                                  runPaymentAction(() =>
                                     confirmDeclaredPayment(payment.id, eventId),
                                   ),
                                 )
@@ -143,7 +157,7 @@ export function PaymentsSection({
                               disabled={pending}
                               onClick={() =>
                                 void run(key, () =>
-                                  refreshAfter(() =>
+                                  runPaymentAction(() =>
                                     rejectDeclaredPayment(payment.id, eventId),
                                   ),
                                 )
@@ -160,7 +174,7 @@ export function PaymentsSection({
                             disabled={pending}
                             onClick={() =>
                               void run(key, () =>
-                                refreshAfter(() =>
+                                runPaymentAction(() =>
                                   markPaymentPaid(payment.id, eventId),
                                 ),
                               )
@@ -176,7 +190,7 @@ export function PaymentsSection({
                             disabled={pending}
                             onClick={() =>
                               void run(key, () =>
-                                refreshAfter(() =>
+                                runPaymentAction(() =>
                                   updatePaymentStatus(
                                     payment.id,
                                     eventId,
@@ -196,7 +210,7 @@ export function PaymentsSection({
                           disabled={pending}
                           onClick={() =>
                             void run(key, () =>
-                              refreshAfter(() =>
+                              runPaymentAction(() =>
                                 deletePayment(payment.id, eventId),
                               ),
                             )
@@ -216,7 +230,9 @@ export function PaymentsSection({
         {!readOnly && (
         <form
           action={(fd) =>
-            void run("add", () => refreshAfter(() => createPayment(fd)))
+            void run("add", () =>
+              runPaymentAction(() => createPayment(fd)),
+            )
           }
           className="space-y-3 border-t border-slate-200 pt-6"
         >

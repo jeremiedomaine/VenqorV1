@@ -103,12 +103,8 @@ export default async function ParametresPage() {
           <div className="space-y-6">
             <SettingsInfoBox title="Bon à savoir">
               <p>
-                En mode <strong>virement</strong>, le couple déclare son paiement
-                sur la page couple ; vous confirmez ou rejetez depuis le dossier.
-              </p>
-              <p>
-                Le mode <strong>Stripe</strong> sera disponible prochainement pour
-                un encaissement automatique.
+                Le couple déclare son paiement sur la page couple ; vous
+                confirmez ou rejetez depuis le dossier.
               </p>
             </SettingsInfoBox>
             <EncaissementsSettingsForm encaissements={encaissements} />

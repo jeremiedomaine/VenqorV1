@@ -5,12 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signIn } from "@/actions/auth";
+import { authErrorMessage } from "@/lib/auth-errors";
 
 export default function LoginPage({
   searchParams,
 }: {
   searchParams: { error?: string };
 }) {
+  const errorMessage = authErrorMessage(searchParams.error);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
       <Card className="w-full max-w-md">
@@ -45,9 +48,9 @@ export default function LoginPage({
                 minLength={6}
               />
             </div>
-            {searchParams.error && (
-              <p className="text-sm text-red-600">
-                Erreur de connexion. Vérifiez vos identifiants.
+            {errorMessage && (
+              <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {errorMessage}
               </p>
             )}
             <Button type="submit" className="w-full">

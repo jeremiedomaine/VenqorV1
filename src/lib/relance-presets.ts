@@ -9,17 +9,20 @@ export type RelancePresetKey =
   | "couple_rappel_echeance"
   | "couple_relance_impaye"
   | "domaine_paiement_retard"
-  | "couple_contrat_relance";
+  | "couple_contrat_relance"
+  | "custom";
 
 export interface RelanceRegle {
   id: string;
   workspace_id: string;
-  preset_key: RelancePresetKey;
+  preset_key: RelancePresetKey | string;
   nom: string;
   active: boolean;
   cible: RelanceCible;
   declencheur: RelanceDeclencheur;
   delai_jours: number;
+  types_evenement: string[];
+  statuts_evenement: string[];
   email_objet: string;
   email_intro: string;
   email_titre: string | null;
@@ -129,10 +132,47 @@ Si vous n'avez pas reçu l'email Yousign, vérifiez vos spams ou contactez-nous 
 ];
 
 export function getRelancePreset(
-  presetKey: RelancePresetKey,
+  presetKey: string,
 ): RelancePresetDefinition | undefined {
   return DEFAULT_RELANCE_PRESETS.find((p) => p.preset_key === presetKey);
 }
+
+export const BLANK_RELANCE_DEFAULTS = {
+  nom: "Nouvelle automatisation",
+  cible: "couple" as RelanceCible,
+  declencheur: "echeance_jours_avant" as RelanceDeclencheur,
+  delai_jours: 7,
+  email_titre: "Rappel",
+  email_objet: "{domaine} — Message pour {couple}",
+  email_intro: `Bonjour {couple},
+
+Merci de prendre connaissance de ce message concernant votre événement chez {domaine}.`,
+  email_cta_label: "Accéder à mon espace",
+  types_evenement: [] as string[],
+  statuts_evenement: ["prospect", "option", "confirme"] as string[],
+};
+
+export const DECLENCHEUR_OPTIONS: Array<{
+  value: RelanceDeclencheur;
+  label: string;
+  hint: string;
+}> = [
+  {
+    value: "echeance_jours_avant",
+    label: "Avant une échéance de paiement",
+    hint: "J-N jours avant la date d'échéance.",
+  },
+  {
+    value: "echeance_jours_apres",
+    label: "Après une échéance impayée",
+    hint: "J+N jours après la date d'échéance.",
+  },
+  {
+    value: "contrat_jours_apres",
+    label: "Après envoi du contrat",
+    hint: "N jours après l'envoi Yousign si non signé.",
+  },
+];
 
 export function relanceEmailContent(rule: RelanceRegle) {
   const preset = getRelancePreset(rule.preset_key);

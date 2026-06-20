@@ -37,14 +37,17 @@ import {
   paymentRequestEmailHtml,
   relanceEmailHtml,
 } from "@/lib/email/templates";
+import { RELANCE_STATUT_LABELS } from "@/lib/relance-filters";
 import {
-  DEFAULT_RELANCE_PRESETS,
+  DECLENCHEUR_OPTIONS,
   RELANCE_EMAIL_VARIABLES,
   getRelancePreset,
   relanceEmailContent,
+  type RelanceCible,
   type RelanceDeclencheur,
   type RelanceRegle,
 } from "@/lib/relance-presets";
+import type { EventStatus } from "@/lib/types";
 import { cn, formatCurrency } from "@/lib/utils";
 
 type AutomationCategory = "paiements" | "relances";
@@ -68,6 +71,70 @@ function delayLabel(
   if (declencheur === "echeance_jours_avant") return `J-${delaiJours}`;
   if (declencheur === "echeance_jours_apres") return `J+${delaiJours}`;
   return `J+${delaiJours} contrat`;
+}
+
+function CategoryTabs({
+  category,
+  onChange,
+}: {
+  category: AutomationCategory;
+  onChange: (c: AutomationCategory) => void;
+}) {
+  const tabs = [
+    { id: "paiements" as const, label: "Emails de paiement" },
+    { id: "relances" as const, label: "Emails de relance" },
+  ];
+
+  return (
+    <div className="border-b border-slate-200">
+      <nav className="-mb-px flex gap-8" aria-label="Type d'automatisation">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => onChange(tab.id)}
+            className={cn(
+              "border-b-2 pb-3 text-sm font-medium transition-colors",
+              category === tab.id
+                ? "border-[#4F46E5] text-slate-900"
+                : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700",
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </nav>
+    </div>
+  );
+}
+
+function CheckboxChip({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  label: string;
+}) {
+  return (
+    <label
+      className={cn(
+        "inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors",
+        checked
+          ? "border-[#4F46E5]/30 bg-indigo-50 text-indigo-900"
+          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
+      )}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="h-3.5 w-3.5 rounded border-slate-300 text-[#4F46E5]"
+      />
+      {label}
+    </label>
+  );
 }
 
 function EmailPreview({
@@ -179,6 +246,7 @@ export function AutomatisationsHub({
   relancesActives,
   rules: initialRules,
   relancesUnavailable,
+  eventTypeOptions,
 }: {
   workspaceName: string;
   soldeSettings: PaymentAutomationSettings;
@@ -186,6 +254,7 @@ export function AutomatisationsHub({
   relancesActives: boolean;
   rules: RelanceRegle[];
   relancesUnavailable: string | null;
+  eventTypeOptions: Array<{ slug: string; label: string; builtin: boolean }>;
 }) {
   const router = useRouter();
   const [category, setCategory] = useState<AutomationCategory>("paiements");
@@ -196,7 +265,6 @@ export function AutomatisationsHub({
   );
   const [rules, setRules] = useState(initialRules);
   const [relancesActive, setRelancesActive] = useState(relancesActives);
-  const [showCreateRelance, setShowCreateRelance] = useState(false);
   const { pending, run } = useAsyncAction();
   const [error, setError] = useState<string | null>(null);
 
@@ -343,48 +411,8 @@ export function AutomatisationsHub({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Sélecteur de catégorie */}
-      <div className="rounded-xl border border-slate-200 bg-white p-1.5 shadow-sm">
-        <div className="grid grid-cols-2 gap-1">
-          {(
-            [
-              {
-                id: "paiements" as const,
-                label: "Emails de paiement",
-                hint: "Acompte et solde",
-              },
-              {
-                id: "relances" as const,
-                label: "Emails de relance",
-                hint: "Rappels et alertes",
-              },
-            ] as const
-          ).map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => switchCategory(tab.id)}
-              className={cn(
-                "rounded-lg px-4 py-3 text-left transition-colors",
-                category === tab.id
-                  ? "bg-[#4F46E5] text-white shadow-sm"
-                  : "text-slate-600 hover:bg-slate-50",
-              )}
-            >
-              <span className="block text-sm font-semibold">{tab.label}</span>
-              <span
-                className={cn(
-                  "mt-0.5 block text-xs",
-                  category === tab.id ? "text-indigo-100" : "text-slate-400",
-                )}
-              >
-                {tab.hint}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
+    <div className="space-y-8">
+      <CategoryTabs category={category} onChange={switchCategory} />
 
       <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
         {/* Liste latérale */}
@@ -487,62 +515,28 @@ export function AutomatisationsHub({
                     </button>
                   ))}
 
-                  {showCreateRelance ? (
-                    <div className="space-y-2 rounded-lg border border-dashed border-slate-300 bg-slate-50/50 p-3">
-                      <p className="text-xs font-medium text-slate-700">
-                        Choisir un modèle
-                      </p>
-                      {DEFAULT_RELANCE_PRESETS.map((preset) => (
-                        <button
-                          key={preset.preset_key}
-                          type="button"
-                          disabled={pending}
-                          onClick={() => {
-                            void run(async () => {
-                              const fd = new FormData();
-                              fd.set("preset_key", preset.preset_key);
-                              const result = await createRelanceRule(fd);
-                              if (result.error) {
-                                setError(result.error);
-                                return;
-                              }
-                              setShowCreateRelance(false);
-                              if (result.id) {
-                                setSelectedRelanceId(result.id);
-                              }
-                              router.refresh();
-                            });
-                          }}
-                          className="block w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-left text-xs text-slate-600 hover:border-[#4F46E5]/40"
-                        >
-                          <span className="font-medium text-slate-800">
-                            {preset.nom}
-                          </span>
-                          <span className="mt-0.5 block text-slate-500">
-                            {preset.description}
-                          </span>
-                        </button>
-                      ))}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowCreateRelance(false)}
-                      >
-                        Annuler
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      onClick={() => setShowCreateRelance(true)}
-                    >
-                      + Nouvelle automatisation
-                    </Button>
-                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    disabled={pending}
+                    onClick={() => {
+                      void run(async () => {
+                        const result = await createRelanceRule();
+                        if (result.error) {
+                          setError(result.error);
+                          return;
+                        }
+                        if (result.id) {
+                          setSelectedRelanceId(result.id);
+                        }
+                        router.refresh();
+                      });
+                    }}
+                  >
+                    + Nouvelle automatisation
+                  </Button>
                 </>
               )}
             </>
@@ -602,12 +596,15 @@ export function AutomatisationsHub({
               key={selectedRule.id}
               rule={selectedRule}
               workspaceName={workspaceName}
+              eventTypeOptions={eventTypeOptions}
               error={error}
               pending={pending}
               onError={setError}
               onDeleted={() => {
                 setRules((prev) => prev.filter((r) => r.id !== selectedRule.id));
-                setSelectedRelanceId(rules.find((r) => r.id !== selectedRule.id)?.id ?? null);
+                setSelectedRelanceId(
+                  rules.find((r) => r.id !== selectedRule.id)?.id ?? null,
+                );
                 router.refresh();
               }}
               onUpdated={(updated) => {
@@ -757,6 +754,7 @@ function PaymentEditor({
 function RelanceEditor({
   rule,
   workspaceName,
+  eventTypeOptions,
   error,
   pending,
   onError,
@@ -765,6 +763,7 @@ function RelanceEditor({
 }: {
   rule: RelanceRegle;
   workspaceName: string;
+  eventTypeOptions: Array<{ slug: string; label: string; builtin: boolean }>;
   error: string | null;
   pending: boolean;
   onError: (msg: string | null) => void;
@@ -777,7 +776,20 @@ function RelanceEditor({
 
   const [nom, setNom] = useState(rule.nom);
   const [active, setActive] = useState(rule.active);
+  const [declencheur, setDeclencheur] = useState<RelanceDeclencheur>(
+    rule.declencheur,
+  );
+  const [cible, setCible] = useState<RelanceCible>(rule.cible);
   const [delaiJours, setDelaiJours] = useState(String(rule.delai_jours));
+  const [allEventTypes, setAllEventTypes] = useState(
+    !rule.types_evenement?.length,
+  );
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(
+    rule.types_evenement ?? [],
+  );
+  const [selectedStatuts, setSelectedStatuts] = useState<EventStatus[]>(
+    (rule.statuts_evenement ?? ["option", "confirme"]) as EventStatus[],
+  );
   const [title, setTitle] = useState(content.title);
   const [subject, setSubject] = useState(rule.email_objet);
   const [intro, setIntro] = useState(rule.email_intro);
@@ -797,18 +809,44 @@ function RelanceEditor({
     ctaLabel,
     ctaHref: PREVIEW_VARS.lien_paiement,
     footerNote: details || undefined,
-    paymentRelated: rule.declencheur !== "contrat_jours_apres",
+    paymentRelated: declencheur !== "contrat_jours_apres",
   });
+
+  function toggleType(slug: string, checked: boolean) {
+    setSelectedTypes((prev) =>
+      checked ? [...prev, slug] : prev.filter((s) => s !== slug),
+    );
+  }
+
+  function toggleStatut(statut: EventStatus, checked: boolean) {
+    setSelectedStatuts((prev) =>
+      checked ? [...prev, statut] : prev.filter((s) => s !== statut),
+    );
+  }
 
   function handleSave() {
     onError(null);
+    if (!allEventTypes && !selectedTypes.length) {
+      onError("Sélectionnez au moins un type d'événement ou cochez « Tous les types ».");
+      return;
+    }
+    if (!selectedStatuts.length) {
+      onError("Sélectionnez au moins un statut de dossier.");
+      return;
+    }
     void run(async () => {
       const fd = new FormData();
       fd.set("rule_id", rule.id);
-      fd.set("preset_key", rule.preset_key);
       fd.set("nom", nom);
       fd.set("active", active ? "on" : "off");
+      fd.set("declencheur", declencheur);
+      fd.set("cible", cible);
       fd.set("delai_jours", delaiJours);
+      fd.set(
+        "types_evenement",
+        allEventTypes ? "" : selectedTypes.join(","),
+      );
+      fd.set("statuts_evenement", selectedStatuts.join(","));
       fd.set("email_titre", title);
       fd.set("email_objet", subject);
       fd.set("email_intro", intro);
@@ -823,7 +861,11 @@ function RelanceEditor({
         ...rule,
         nom,
         active,
+        declencheur,
+        cible,
         delai_jours: Number(delaiJours),
+        types_evenement: allEventTypes ? [] : selectedTypes,
+        statuts_evenement: selectedStatuts,
         email_titre: title,
         email_objet: subject,
         email_intro: intro,
@@ -872,20 +914,110 @@ function RelanceEditor({
           <Input value={nom} onChange={(e) => setNom(e.target.value)} />
         </div>
         <div className="space-y-2">
-          <Label>Délai (jours)</Label>
-          <Input
-            type="number"
-            min={rule.declencheur === "echeance_jours_avant" ? 1 : 0}
-            max={365}
-            value={delaiJours}
-            onChange={(e) => setDelaiJours(e.target.value)}
-          />
-          <p className="text-xs text-slate-500">
-            {delayLabel(rule.declencheur, Number(delaiJours) || rule.delai_jours)}{" "}
-            · {rule.cible === "couple" ? "Couple" : "Domaine"}
-          </p>
+          <Label>Destinataire</Label>
+          <select
+            value={cible}
+            onChange={(e) => setCible(e.target.value as RelanceCible)}
+            className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]"
+          >
+            <option value="couple">Couple</option>
+            <option value="domaine">Domaine (gérant)</option>
+          </select>
         </div>
       </div>
+
+      <div className="space-y-2">
+        <Label>Déclencheur</Label>
+        <select
+          value={declencheur}
+          onChange={(e) =>
+            setDeclencheur(e.target.value as RelanceDeclencheur)
+          }
+          className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]"
+        >
+          {DECLENCHEUR_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-slate-500">
+          {DECLENCHEUR_OPTIONS.find((o) => o.value === declencheur)?.hint}
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Délai (jours)</Label>
+        <Input
+          type="number"
+          min={declencheur === "echeance_jours_avant" ? 1 : 0}
+          max={365}
+          value={delaiJours}
+          onChange={(e) => setDelaiJours(e.target.value)}
+          className="max-w-[140px]"
+        />
+        <p className="text-xs text-slate-500">
+          {delayLabel(declencheur, Number(delaiJours) || rule.delai_jours)}
+        </p>
+      </div>
+
+      <fieldset className="space-y-3 rounded-lg border border-slate-200 p-4">
+        <legend className="px-1 text-sm font-medium text-slate-900">
+          Types d&apos;événement concernés
+        </legend>
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={allEventTypes}
+            onChange={(e) => {
+              setAllEventTypes(e.target.checked);
+              if (e.target.checked) setSelectedTypes([]);
+            }}
+            className="h-4 w-4 rounded border-slate-300 text-[#4F46E5]"
+          />
+          Tous les types
+        </label>
+        {!allEventTypes && (
+          <div className="flex flex-wrap gap-2">
+            {eventTypeOptions.map((type) => (
+              <CheckboxChip
+                key={type.slug}
+                label={type.label}
+                checked={selectedTypes.includes(type.slug)}
+                onChange={(checked) => toggleType(type.slug, checked)}
+              />
+            ))}
+          </div>
+        )}
+        {!allEventTypes && !selectedTypes.length && (
+          <p className="text-xs text-amber-700">
+            Sélectionnez au moins un type ou cochez « Tous les types ».
+          </p>
+        )}
+      </fieldset>
+
+      <fieldset className="space-y-3 rounded-lg border border-slate-200 p-4">
+        <legend className="px-1 text-sm font-medium text-slate-900">
+          Statuts de dossier éligibles
+        </legend>
+        <div className="flex flex-wrap gap-2">
+          {(
+            Object.entries(RELANCE_STATUT_LABELS) as [EventStatus, string][]
+          ).map(([statut, label]) => (
+            <CheckboxChip
+              key={statut}
+              label={label}
+              checked={selectedStatuts.includes(statut)}
+              onChange={(checked) => toggleStatut(statut, checked)}
+            />
+          ))}
+        </div>
+        {!selectedStatuts.length && (
+          <p className="text-xs text-amber-700">
+            Sélectionnez au moins un statut.
+          </p>
+        )}
+      </fieldset>
 
       <label className="flex items-center gap-3 rounded-lg border border-slate-200 p-4">
         <input

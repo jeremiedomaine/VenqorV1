@@ -3,6 +3,7 @@ import {
   automationFromWorkspace,
   depositAutomationFromWorkspace,
 } from "@/lib/automation-settings";
+import { listEventTypeOptions } from "@/lib/event-types";
 import { loadRelanceRulesForWorkspace } from "@/lib/load-relance-rules";
 import { loadWorkspace } from "@/lib/load-workspace";
 import { createClient } from "@/lib/supabase/server";
@@ -62,6 +63,7 @@ export default async function AutomatisationsPage() {
         relancesActives={workspace.relances_actives ?? true}
         rules={relanceRules}
         relancesUnavailable={relancesUnavailable}
+        eventTypeOptions={listEventTypeOptions(workspace.types_evenement_custom)}
       />
     </div>
   );

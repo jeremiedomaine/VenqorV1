@@ -10,6 +10,7 @@ import {
   interpolateEmailTemplate,
   relanceEmailHtml,
 } from "@/lib/email/templates";
+import { eventMatchesRelanceFilters } from "@/lib/relance-filters";
 import {
   relanceEmailContent,
   type RelanceDeclencheur,
@@ -38,6 +39,8 @@ type EventRow = {
   portal_token: string;
   contrat_statut: string;
   contrat_envoye_at: string | null;
+  type_evenement: string;
+  statut: string;
 };
 
 type PaymentRow = {
@@ -153,10 +156,9 @@ export async function processRelanceEmails(): Promise<RelanceCronResult> {
     const { data: events, error: evError } = await supabase
       .from("events")
       .select(
-        "id, email, nom_des_maries, portal_token, contrat_statut, contrat_envoye_at",
+        "id, email, nom_des_maries, portal_token, contrat_statut, contrat_envoye_at, type_evenement, statut",
       )
       .eq("workspace_id", workspace.id)
-      .in("statut", ["option", "confirme"])
       .is("archived_at", null)
       .is("cloture_at", null);
 
@@ -167,6 +169,11 @@ export async function processRelanceEmails(): Promise<RelanceCronResult> {
 
     for (const event of (events ?? []) as EventRow[]) {
       for (const rule of activeRules) {
+        if (!eventMatchesRelanceFilters(event, rule)) {
+          result.skipped += 1;
+          continue;
+        }
+
         if (rule.declencheur === "contrat_jours_apres") {
           if (
             event.contrat_statut !== "en_cours" ||

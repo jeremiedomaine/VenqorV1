@@ -33,6 +33,8 @@ export async function ensureDefaultRelanceRules(
         email_titre: preset.email_title,
         email_cta_label: preset.cta_label,
         email_footer_note: null,
+        types_evenement: [],
+        statuts_evenement: ["option", "confirme"],
       })),
     );
   }

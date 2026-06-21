@@ -23,11 +23,21 @@ export default function SignupPage({
             Créer votre espace
           </CardTitle>
           <p className="text-sm text-slate-500">
-            Votre domaine et workspace seront créés automatiquement
+            Accès sur invitation — votre domaine sera créé automatiquement
           </p>
         </CardHeader>
         <CardContent>
           <form action={signUp} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="invite_code">Code d&apos;invitation</Label>
+              <Input
+                id="invite_code"
+                name="invite_code"
+                required
+                autoComplete="off"
+                placeholder="Code fourni par Venqor"
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="workspace_name">Nom du domaine / lieu</Label>
               <Input

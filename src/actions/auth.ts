@@ -2,14 +2,20 @@
 
 import { redirect } from "next/navigation";
 import { signUpErrorCode } from "@/lib/auth-errors";
+import { isValidSignupInviteCode } from "@/lib/signup-invite";
 import { createClient } from "@/lib/supabase/server";
 
 export async function signUp(formData: FormData): Promise<void> {
   const supabase = createClient();
+  const inviteCode = String(formData.get("invite_code") ?? "");
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const fullName = String(formData.get("full_name") ?? "").trim();
   const workspaceName = String(formData.get("workspace_name") ?? "").trim();
+
+  if (!isValidSignupInviteCode(inviteCode)) {
+    redirect("/signup?error=invite_invalid");
+  }
 
   if (!email || !password || !workspaceName) {
     redirect("/signup?error=signup_failed");

@@ -3,6 +3,7 @@ export type AuthErrorCode =
   | "email_taken"
   | "weak_password"
   | "invalid_email"
+  | "invite_invalid"
   | "signup_failed";
 
 export function signUpErrorCode(message: string): AuthErrorCode {
@@ -36,6 +37,8 @@ const SIGNUP_MESSAGES: Record<AuthErrorCode, string> = {
     "Un compte existe déjà avec cet email. Connectez-vous ou utilisez une autre adresse.",
   weak_password: "Le mot de passe doit contenir au moins 6 caractères.",
   invalid_email: "Adresse email invalide.",
+  invite_invalid:
+    "Code d'invitation invalide. Venqor est en accès privé — contactez-nous pour obtenir un code.",
   signup_failed:
     "Impossible de créer le compte. Vérifiez vos informations ou réessayez.",
 };

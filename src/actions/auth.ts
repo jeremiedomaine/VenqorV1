@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { signUpErrorCode } from "@/lib/auth-errors";
+import { getPostAuthRedirectPath } from "@/lib/venqor-admin";
 import { isValidSignupInviteCode } from "@/lib/signup-invite";
 import { createClient } from "@/lib/supabase/server";
 
@@ -33,12 +34,12 @@ export async function signUp(formData: FormData): Promise<void> {
   });
 
   if (error) redirect(`/signup?error=${signUpErrorCode(error.message)}`);
-  redirect("/");
+  redirect(getPostAuthRedirectPath(email));
 }
 
 export async function signIn(formData: FormData): Promise<void> {
   const supabase = createClient();
-  const email = String(formData.get("email") ?? "");
+  const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
 
   const { error } = await supabase.auth.signInWithPassword({
@@ -47,7 +48,7 @@ export async function signIn(formData: FormData): Promise<void> {
   });
 
   if (error) redirect("/login?error=auth");
-  redirect("/");
+  redirect(getPostAuthRedirectPath(email));
 }
 
 export async function signOut(): Promise<void> {

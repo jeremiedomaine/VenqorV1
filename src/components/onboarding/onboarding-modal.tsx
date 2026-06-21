@@ -1,12 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { PartyPopper, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { PartyPopper, Sparkles, X } from "lucide-react";
 import { saveOnboardingDomain, saveOnboardingIban } from "@/actions/onboarding";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  readOnboardingSkipped,
+  writeOnboardingSkipped,
+} from "@/lib/onboarding-skip";
 import { cn } from "@/lib/utils";
 
 function ConfettiBurst() {
@@ -47,17 +51,28 @@ const STEPS = [
 ] as const;
 
 export function OnboardingModal({
+  workspaceId,
   initialDomainName,
 }: {
+  workspaceId: string;
   initialDomainName: string;
 }) {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [domainName, setDomainName] = useState(initialDomainName);
   const [iban, setIban] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setOpen(!readOnboardingSkipped(workspaceId));
+  }, [workspaceId]);
+
+  function handleSkip() {
+    writeOnboardingSkipped(workspaceId);
+    setOpen(false);
+  }
 
   if (!open) return null;
 
@@ -111,7 +126,16 @@ export function OnboardingModal({
       <div className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
         {step === 3 && <ConfettiBurst />}
 
-        <div className="relative border-b border-slate-100 px-6 py-5">
+        <button
+          type="button"
+          onClick={handleSkip}
+          className="absolute right-4 top-4 z-10 rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+          aria-label="Passer la configuration"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        <div className="relative border-b border-slate-100 px-6 py-5 pr-12">
           <div className="mb-4 flex items-center gap-2">
             {STEPS.map((item, index) => (
               <div key={item.id} className="flex flex-1 items-center gap-2">

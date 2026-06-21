@@ -18,6 +18,18 @@ const config: Config = {
           slate: "#0F172A",
         },
       },
+      keyframes: {
+        "onboarding-confetti": {
+          "0%": { transform: "translateY(0) rotate(0deg)", opacity: "1" },
+          "100%": {
+            transform: "translateY(420px) rotate(720deg)",
+            opacity: "0",
+          },
+        },
+      },
+      animation: {
+        "onboarding-confetti": "onboarding-confetti 2.2s ease-out forwards",
+      },
     },
   },
   plugins: [],

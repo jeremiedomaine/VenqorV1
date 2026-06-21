@@ -18,9 +18,10 @@ import { loadWorkspaceEventTypes } from "@/lib/load-workspace";
 export default async function PipelinePage({
   searchParams,
 }: {
-  searchParams: { vue?: string };
+  searchParams: { vue?: string; nouveau?: string };
 }) {
   const view = searchParams.vue;
+  const openNewEvent = searchParams.nouveau === "1";
   const showArchives = view === "archives";
   const showNotifs = view === "notifs";
 
@@ -62,6 +63,7 @@ export default async function PipelinePage({
         <NewLeadButton
           customEventTypes={customEventTypes}
           blockedDates={blockedDates}
+          defaultOpen={openNewEvent}
         />
       </div>
 

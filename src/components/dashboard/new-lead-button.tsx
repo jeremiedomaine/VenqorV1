@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 import { createEvent } from "@/actions/events";
@@ -12,16 +12,22 @@ import type { CustomEventType } from "@/lib/types";
 export function NewLeadButton({
   customEventTypes = [],
   blockedDates = [],
+  defaultOpen = false,
 }: {
   customEventTypes?: CustomEventType[];
   blockedDates?: string[];
+  defaultOpen?: boolean;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const formRef = useRef<HTMLFormElement>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const blockedDateSet = useMemo(() => new Set(blockedDates), [blockedDates]);
+
+  useEffect(() => {
+    if (defaultOpen) setOpen(true);
+  }, [defaultOpen]);
 
   return (
     <>

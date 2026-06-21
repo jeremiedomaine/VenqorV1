@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { requireWorkspaceClient } from "@/lib/workspace-session";
 import {
   DEFAULT_ACOMPTE_EMAIL_INTRO,
   DEFAULT_ACOMPTE_EMAIL_SUBJECT,
@@ -15,28 +15,10 @@ import {
   DEFAULT_PAYMENT_EMAIL_TITLE,
 } from "@/lib/automation-settings";
 
-async function getWorkspaceId() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Non authentifié");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("workspace_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile) throw new Error("Profil introuvable");
-  return profile.workspace_id;
-}
-
 export async function updatePaymentAutomationSettings(
   formData: FormData,
 ): Promise<{ error?: string }> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
 
   const automation_paiement_active =
     formData.get("automation_paiement_active") === "on";
@@ -92,8 +74,7 @@ export async function updatePaymentAutomationSettings(
 export async function updateDepositAutomationSettings(
   formData: FormData,
 ): Promise<{ error?: string }> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
 
   const automation_acompte_active =
     formData.get("automation_acompte_active") === "on";

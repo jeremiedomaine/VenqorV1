@@ -2,35 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import { actionError, type ActionResult } from "@/lib/action-result";
-import { createClient } from "@/lib/supabase/server";
 import {
   parseCustomEventTypes,
   RESERVED_EVENT_TYPE_SLUGS,
   slugifyEventType,
 } from "@/lib/event-types";
-
-async function getWorkspaceId() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Non authentifié");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("workspace_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile) throw new Error("Profil introuvable");
-  return profile.workspace_id;
-}
+import { requireWorkspaceClient } from "@/lib/workspace-session";
 
 export async function updateWorkspaceBilling(
   formData: FormData,
 ): Promise<ActionResult> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
 
   const acomptePct = Number(formData.get("facturation_acompte_pct") || 30);
   const soldePct = Number(formData.get("facturation_solde_pct") || 70);
@@ -68,8 +50,7 @@ export async function updateWorkspaceBilling(
 export async function updateWorkspaceGoals(
   formData: FormData,
 ): Promise<{ error?: string }> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
 
   const dossiersRaw = String(
     formData.get("objectif_dossiers_annuel") ?? "",
@@ -115,8 +96,7 @@ export async function updateWorkspaceGoals(
 export async function updateWorkspaceEncaissements(
   formData: FormData,
 ): Promise<{ error?: string }> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
 
   const iban = String(formData.get("iban") ?? "").replace(/\s/g, "").trim();
   const bic = String(formData.get("bic") ?? "").trim();
@@ -147,8 +127,7 @@ export async function updateWorkspaceEncaissements(
 export async function addCustomEventType(
   formData: FormData,
 ): Promise<ActionResult> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
   const label = String(formData.get("label") ?? "").trim();
   if (!label) return actionError("Indiquez un nom pour le type.");
 
@@ -185,8 +164,7 @@ export async function addCustomEventType(
 export async function removeCustomEventType(
   formData: FormData,
 ): Promise<ActionResult> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
   const slug = String(formData.get("slug") ?? "").trim();
   if (!slug) return actionError("Type introuvable.");
 

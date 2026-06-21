@@ -9,40 +9,27 @@ import {
 } from "@/lib/contrat-template";
 import { ContratMergeError } from "@/lib/contrat-merge";
 import { ContratPdfConvertError } from "@/lib/contrat-pdf-convert";
-import { isVenqorAdminEmail } from "@/lib/venqor-admin";
-import { createClient } from "@/lib/supabase/server";
+import { requireWorkspaceClient } from "@/lib/workspace-session";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 
 async function getVenqorContratContext() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Non authentifié");
-  if (!isVenqorAdminEmail(user.email)) {
+  const { session, workspaceId, supabase } = await requireWorkspaceClient();
+  if (!session.isVenqorAdmin) {
     throw new Error("Accès réservé à l'équipe Venqor.");
   }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("workspace_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile) throw new Error("Profil introuvable");
 
   const { data: workspace } = await supabase
     .from("workspaces")
     .select(
       "nom_domaine, contact_nom, contact_email, contact_telephone, facturation_acompte_label, facturation_acompte_pct, facturation_solde_label, facturation_solde_pct",
     )
-    .eq("id", profile.workspace_id)
+    .eq("id", workspaceId)
     .single();
 
   if (!workspace) throw new Error("Workspace introuvable");
 
-  return { workspaceId: profile.workspace_id, supabase, workspace };
+  return { workspaceId, supabase, workspace };
 }
 
 function clearSignatureZonesUpdate() {

@@ -6,7 +6,7 @@ import {
 import { listEventTypeOptions } from "@/lib/event-types";
 import { loadRelanceRulesForWorkspace } from "@/lib/load-relance-rules";
 import { loadWorkspace } from "@/lib/load-workspace";
-import { createClient } from "@/lib/supabase/server";
+import { createScopedClient } from "@/lib/workspace-session";
 import { getAuthContext } from "@/lib/auth-context";
 
 export default async function AutomatisationsPage() {
@@ -25,7 +25,7 @@ export default async function AutomatisationsPage() {
   const acompteSettings = depositAutomationFromWorkspace(workspace);
 
   const auth = await getAuthContext();
-  const supabase = createClient();
+  const supabase = await createScopedClient();
   let relanceRules: Awaited<
     ReturnType<typeof loadRelanceRulesForWorkspace>
   > = [];

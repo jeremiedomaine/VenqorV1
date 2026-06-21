@@ -3,31 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { notifyPaymentConfirmed, notifyPaymentRejected } from "@/actions/payment-emails";
 import { actionError, type ActionResult } from "@/lib/action-result";
-import { createClient } from "@/lib/supabase/server";
+import { requireWorkspaceClient } from "@/lib/workspace-session";
 import { runInBackground } from "@/lib/run-in-background";
 import { buildTransferReference } from "@/lib/payment-utils";
 import type { PaymentStatus } from "@/lib/types";
 
-async function getWorkspaceId() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Non authentifié");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("workspace_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile) throw new Error("Profil introuvable");
-  return profile.workspace_id;
-}
-
 export async function createPayment(formData: FormData): Promise<ActionResult> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
   const eventId = String(formData.get("event_id"));
   const label = String(formData.get("label") ?? "").trim();
   const montant = Number(formData.get("montant") || 0);
@@ -63,8 +45,7 @@ export async function updatePaymentStatus(
   eventId: string,
   statut: PaymentStatus,
 ): Promise<ActionResult> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
   const now = new Date().toISOString();
 
   const patch: Record<string, unknown> = { statut };
@@ -102,8 +83,7 @@ export async function confirmDeclaredPayment(
   paymentId: string,
   eventId: string,
 ): Promise<ActionResult> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
   const now = new Date().toISOString();
 
   const { data, error } = await supabase
@@ -134,8 +114,7 @@ export async function rejectDeclaredPayment(
   paymentId: string,
   eventId: string,
 ): Promise<ActionResult> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
   const now = new Date().toISOString();
 
   const { data, error } = await supabase
@@ -166,8 +145,7 @@ export async function deletePayment(
   paymentId: string,
   eventId: string,
 ): Promise<ActionResult> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
 
   const { error } = await supabase
     .from("payments")

@@ -1,14 +1,14 @@
 import { parseContratSignatureZones } from "@/lib/contrat-signature-zones";
 import { parseCustomEventTypes } from "@/lib/event-types";
 import { getAuthContext } from "@/lib/auth-context";
-import { createClient } from "@/lib/supabase/server";
+import { createScopedClient } from "@/lib/workspace-session";
 import type { CustomEventType } from "@/lib/types";
 
 export async function loadWorkspace() {
   const auth = await getAuthContext();
   if (!auth) return { workspace: null };
 
-  const supabase = createClient();
+  const supabase = await createScopedClient();
   const { data: workspace } = await supabase
     .from("workspaces")
     .select("*")
@@ -36,7 +36,7 @@ export async function loadWorkspaceEventTypes(): Promise<CustomEventType[]> {
   const auth = await getAuthContext();
   if (!auth) return [];
 
-  const supabase = createClient();
+  const supabase = await createScopedClient();
   const { data } = await supabase
     .from("workspaces")
     .select("types_evenement_custom")

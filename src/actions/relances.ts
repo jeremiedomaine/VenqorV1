@@ -1,30 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { requireWorkspaceClient } from "@/lib/workspace-session";
 import { parseRelanceStringArray } from "@/lib/relance-filters";
 import {
   BLANK_RELANCE_DEFAULTS,
   type RelanceCible,
   type RelanceDeclencheur,
 } from "@/lib/relance-presets";
-
-async function getWorkspaceId() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Non authentifié");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("workspace_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile) throw new Error("Profil introuvable");
-  return profile.workspace_id;
-}
 
 function parseDeclencheur(raw: string): RelanceDeclencheur | null {
   if (
@@ -44,8 +27,7 @@ function parseCible(raw: string): RelanceCible | null {
 export async function updateRelancesMasterSwitch(
   formData: FormData,
 ): Promise<{ error?: string }> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
   const relances_actives = formData.get("relances_actives") === "on";
 
   const { error } = await supabase
@@ -61,8 +43,7 @@ export async function updateRelancesMasterSwitch(
 export async function updateRelanceRule(
   formData: FormData,
 ): Promise<{ error?: string }> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
 
   const ruleId = String(formData.get("rule_id") ?? "");
   const nom = String(formData.get("nom") ?? "").trim();
@@ -126,8 +107,7 @@ export async function updateRelanceRule(
 }
 
 export async function createRelanceRule(): Promise<{ error?: string; id?: string }> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
 
   const { data, error } = await supabase
     .from("relance_regles")
@@ -158,8 +138,7 @@ export async function createRelanceRule(): Promise<{ error?: string; id?: string
 export async function deleteRelanceRule(
   formData: FormData,
 ): Promise<{ error?: string }> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
   const ruleId = String(formData.get("rule_id") ?? "");
   if (!ruleId) return { error: "Règle introuvable." };
 

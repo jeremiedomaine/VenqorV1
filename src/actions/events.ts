@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { actionError, type ActionResult } from "@/lib/action-result";
-import { createClient } from "@/lib/supabase/server";
+import { requireWorkspaceClient } from "@/lib/workspace-session";
 import { parseEventFormData } from "@/lib/event-utils";
 import { loadWorkspaceEventTypes } from "@/lib/load-workspace";
 import { syncAutoPayments } from "@/lib/sync-payments";
@@ -11,25 +12,8 @@ import { isEventRangeBlocked } from "@/lib/calendar-events";
 import { runInBackground } from "@/lib/run-in-background";
 import type { EventStatus } from "@/lib/types";
 
-async function getWorkspaceId() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Non authentifié");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("workspace_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile) throw new Error("Profil introuvable");
-  return profile.workspace_id;
-}
-
 async function loadBlockingEvents(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   workspaceId: string,
 ) {
   const { data } = await supabase
@@ -66,8 +50,7 @@ function eventPayloadFromForm(
 export async function createEvent(
   formData: FormData,
 ): Promise<{ error?: string; eventId?: string }> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
   const customTypes = await loadWorkspaceEventTypes();
 
   const payload = eventPayloadFromForm(formData, "prospect", customTypes);
@@ -129,8 +112,7 @@ export async function createEvent(
 export async function updateEvent(
   formData: FormData,
 ): Promise<{ error?: string; success?: boolean }> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
   const eventId = String(formData.get("event_id"));
   const customTypes = await loadWorkspaceEventTypes();
 
@@ -219,8 +201,7 @@ export async function updateEvent(
 export async function archiveEvent(
   eventId: string,
 ): Promise<{ error?: string; success?: boolean }> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
 
   const { data: event } = await supabase
     .from("events")
@@ -252,8 +233,7 @@ export async function archiveEvent(
 export async function restoreEvent(
   eventId: string,
 ): Promise<{ error?: string; success?: boolean }> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
 
   const { error } = await supabase
     .from("events")
@@ -273,8 +253,7 @@ export async function restoreEvent(
 export async function closeEventDossier(
   eventId: string,
 ): Promise<{ error?: string; success?: boolean }> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
 
   const { data: event } = await supabase
     .from("events")
@@ -336,8 +315,7 @@ export async function closeEventDossier(
 export async function blockEventDate(
   eventId: string,
 ): Promise<{ error?: string; success?: boolean }> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
 
   const { data: event } = await supabase
     .from("events")
@@ -395,8 +373,7 @@ export async function blockEventDate(
 export async function confirmDepositPaid(
   eventId: string,
 ): Promise<{ error?: string; success?: boolean }> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
 
   const { data: event } = await supabase
     .from("events")
@@ -473,8 +450,7 @@ export async function confirmDepositPaid(
 export async function regenerateEventPayments(
   eventId: string,
 ): Promise<ActionResult> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
 
   const { data: event } = await supabase
     .from("events")

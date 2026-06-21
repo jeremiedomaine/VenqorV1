@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { isVenqorAdminEmail } from "@/lib/venqor-admin";
+import { createServiceClient } from "@/lib/supabase/service";
+import { getWorkspaceSession } from "@/lib/workspace-session";
 
 export type AuthContext = {
   userId: string;
@@ -8,33 +9,30 @@ export type AuthContext = {
   workspaceId: string;
   workspaceName: string;
   isVenqorAdmin: boolean;
+  isImpersonating: boolean;
 };
 
 /** One auth + profile fetch per request (deduped across layout + pages). */
 export const getAuthContext = cache(async (): Promise<AuthContext | null> => {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  const session = await getWorkspaceSession();
+  if (!session) return null;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("workspace_id, workspaces(nom_domaine)")
-    .eq("id", user.id)
+  const supabase = session.isImpersonating
+    ? createServiceClient()
+    : createClient();
+
+  const { data: workspace } = await supabase
+    .from("workspaces")
+    .select("nom_domaine")
+    .eq("id", session.workspaceId)
     .single();
 
-  if (!profile?.workspace_id) return null;
-
-  const workspace = profile.workspaces as unknown as {
-    nom_domaine: string;
-  } | null;
-
   return {
-    userId: user.id,
-    email: user.email ?? "",
-    workspaceId: profile.workspace_id,
+    userId: session.userId,
+    email: session.email,
+    workspaceId: session.workspaceId,
     workspaceName: workspace?.nom_domaine ?? "Mon domaine",
-    isVenqorAdmin: isVenqorAdminEmail(user.email),
+    isVenqorAdmin: session.isVenqorAdmin,
+    isImpersonating: session.isImpersonating,
   };
 });

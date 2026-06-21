@@ -1,5 +1,5 @@
 import { getAuthContext } from "@/lib/auth-context";
-import { createClient } from "@/lib/supabase/server";
+import { createScopedClient } from "@/lib/workspace-session";
 import { computeDashboardStats } from "@/lib/dashboard-stats";
 import type { Event, Payment } from "@/lib/types";
 
@@ -18,7 +18,7 @@ export async function loadDashboardStats(selectedYear?: number) {
     };
   }
 
-  const supabase = createClient();
+  const supabase = await createScopedClient();
   const [{ data: events }, { data: payments }] = await Promise.all([
     supabase
       .from("events")

@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { requireWorkspaceClient } from "@/lib/workspace-session";
 import { emailForTestPreview } from "@/lib/email/recipients";
 import { sendEmail } from "@/lib/email/send-email";
 import {
@@ -12,23 +12,11 @@ import {
 import { formatCurrency } from "@/lib/utils";
 
 async function getWorkspaceContext() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Non authentifié");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("workspace_id")
-    .eq("id", user.id)
-    .single();
-  if (!profile) throw new Error("Profil introuvable");
-
+  const { workspaceId, supabase } = await requireWorkspaceClient();
   const { data: workspace } = await supabase
     .from("workspaces")
     .select("nom_domaine, contact_email")
-    .eq("id", profile.workspace_id)
+    .eq("id", workspaceId)
     .single();
   if (!workspace) throw new Error("Workspace introuvable");
 

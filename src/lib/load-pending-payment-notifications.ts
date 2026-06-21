@@ -1,5 +1,5 @@
 import { getAuthContext } from "@/lib/auth-context";
-import { createClient } from "@/lib/supabase/server";
+import { createScopedClient } from "@/lib/workspace-session";
 
 export interface PendingPaymentNotification {
   id: string;
@@ -18,7 +18,7 @@ export async function loadPendingPaymentNotificationCount(): Promise<number> {
   const auth = await getAuthContext();
   if (!auth) return 0;
 
-  const supabase = createClient();
+  const supabase = await createScopedClient();
   const { count } = await supabase
     .from("payments")
     .select("id", { count: "exact", head: true })
@@ -34,7 +34,7 @@ export async function loadPendingPaymentNotifications(): Promise<
   const auth = await getAuthContext();
   if (!auth) return [];
 
-  const supabase = createClient();
+  const supabase = await createScopedClient();
   const { data } = await supabase
     .from("payments")
     .select(

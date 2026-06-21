@@ -2,24 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { actionError, type ActionResult } from "@/lib/action-result";
-import { createClient } from "@/lib/supabase/server";
-
-async function getWorkspaceId() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Non authentifié");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("workspace_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile) throw new Error("Profil introuvable");
-  return profile.workspace_id;
-}
+import { requireWorkspaceClient } from "@/lib/workspace-session";
 
 function revalidateWorkspacePaths() {
   revalidatePath("/", "layout");
@@ -36,8 +19,7 @@ export async function saveOnboardingDomain(
     return actionError("Indiquez le nom de votre domaine.");
   }
 
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
 
   const { error } = await supabase
     .from("workspaces")
@@ -63,8 +45,7 @@ export async function saveOnboardingIban(
     return actionError("Format IBAN invalide.");
   }
 
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
 
   const { error } = await supabase
     .from("workspaces")

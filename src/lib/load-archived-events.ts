@@ -1,5 +1,5 @@
 import { getAuthContext } from "@/lib/auth-context";
-import { createClient } from "@/lib/supabase/server";
+import { createScopedClient } from "@/lib/workspace-session";
 import type { Event } from "@/lib/types";
 
 const ARCHIVED_COLUMNS =
@@ -9,7 +9,7 @@ export async function loadArchivedEventCount(): Promise<number> {
   const auth = await getAuthContext();
   if (!auth) return 0;
 
-  const supabase = createClient();
+  const supabase = await createScopedClient();
   const { count } = await supabase
     .from("events")
     .select("id", { count: "exact", head: true })
@@ -23,7 +23,7 @@ export async function loadArchivedEvents(): Promise<Event[]> {
   const auth = await getAuthContext();
   if (!auth) return [];
 
-  const supabase = createClient();
+  const supabase = await createScopedClient();
   const { data } = await supabase
     .from("events")
     .select(ARCHIVED_COLUMNS)

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { requireWorkspaceClient } from "@/lib/workspace-session";
 import {
   automationFromWorkspace,
   eventDashboardUrl,
@@ -26,23 +27,6 @@ import {
 } from "@/lib/payment-schedule";
 import { formatCurrency } from "@/lib/utils";
 import { sendDepositPaymentRequest } from "@/lib/deposit-payment-email";
-
-async function getWorkspaceId() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Non authentifié");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("workspace_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile) throw new Error("Profil introuvable");
-  return profile.workspace_id;
-}
 
 type PaymentRow = {
   id: string;
@@ -92,8 +76,7 @@ export async function sendPaymentRequestEmail(
   eventId: string,
   paymentId?: string,
 ): Promise<{ ok: boolean; error?: string; skipped?: boolean }> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
 
   const [{ data: workspace }, { data: event }] = await Promise.all([
     supabase.from("workspaces").select("*").eq("id", workspaceId).single(),
@@ -208,8 +191,7 @@ export async function sendDepositPaymentRequestEmail(
   eventId: string,
   paymentId?: string,
 ): Promise<{ ok: boolean; error?: string; skipped?: boolean }> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
 
   const result = await sendDepositPaymentRequest({
     supabase,
@@ -236,8 +218,7 @@ export async function notifyPaymentConfirmed(
   paymentId: string,
   eventId: string,
 ): Promise<void> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
 
   const { data: payment } = await supabase
     .from("payments")
@@ -353,8 +334,7 @@ export async function notifyPaymentRejected(
   paymentId: string,
   eventId: string,
 ): Promise<void> {
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
 
   const { data: payment } = await supabase
     .from("payments")

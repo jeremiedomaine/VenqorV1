@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { requireWorkspaceClient } from "@/lib/workspace-session";
 import {
   distinctSignerEmails,
   sendYousignContract,
@@ -17,23 +17,6 @@ import { ContratPdfConvertError } from "@/lib/contrat-pdf-convert";
 import { parseContratSignatureZones } from "@/lib/contrat-signature-zones";
 import { syncAutoPayments } from "@/lib/sync-payments";
 import { createServiceClient } from "@/lib/supabase/service";
-
-async function getWorkspaceId() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Non authentifié");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("workspace_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile) throw new Error("Profil introuvable");
-  return profile.workspace_id;
-}
 
 function trimName(value: string | null | undefined, fallback: string) {
   const trimmed = value?.trim();
@@ -54,8 +37,7 @@ export async function sendContractForEvent(
     return { error: "Yousign non configuré (YOUSIGN_API_KEY manquant)." };
   }
 
-  const workspaceId = await getWorkspaceId();
-  const supabase = createClient();
+  const { workspaceId, supabase } = await requireWorkspaceClient();
 
   const { data: event } = await supabase
     .from("events")

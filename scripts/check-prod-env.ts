@@ -34,9 +34,8 @@ function main() {
     "EMAIL_FROM",
     "NEXT_PUBLIC_SITE_URL",
     "CRON_SECRET",
-    "YOUSIGN_API_KEY",
-    "YOUSIGN_API_BASE",
-    "YOUSIGN_WEBHOOK_SECRET",
+    "SIGNABLE_API_KEY",
+    "SIGNABLE_API_BASE",
     "NEXT_PUBLIC_SUPABASE_URL",
     "SUPABASE_SERVICE_ROLE_KEY",
     "VENQOR_ADMIN_EMAILS",
@@ -85,12 +84,12 @@ function main() {
 
   try {
     const whStatus = execSync(
-      'curl -s -o /dev/null -w "%{http_code}" -X POST https://app.venqor.app/api/webhooks/yousign -H "Content-Type: application/json" -d "{}"',
+      'curl -s -o /dev/null -w "%{http_code}" -X POST https://app.venqor.app/api/webhooks/signable -H "Content-Type: application/x-www-form-urlencoded" -d "action=signed-envelope"',
       { encoding: "utf8" },
     ).trim();
-    const whOk = whStatus === "401";
+    const whOk = whStatus === "400" || whStatus === "200";
     console.log(
-      `${whOk ? "✓" : "✗"} Webhook Yousign sans signature → ${whStatus} (attendu 401)`,
+      `${whOk ? "✓" : "✗"} Webhook Signable → ${whStatus} (attendu 400 sans fingerprint)`,
     );
     if (!whOk) failed++;
   } catch {
@@ -102,7 +101,7 @@ function main() {
     "\nNote: vérifiez manuellement que NEXT_PUBLIC_SITE_URL = https://app.venqor.app",
   );
   console.log(
-    "      et YOUSIGN_API_BASE = prod (https://api.yousign.app/v3) quand vous signez de vrais contrats.\n",
+    "      et SIGNABLE_API_BASE = https://api.signable.co.uk/v1 en production.\n",
   );
 
   if (failed > 0) {

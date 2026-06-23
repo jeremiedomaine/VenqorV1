@@ -115,7 +115,7 @@ Consultez le dossier dans Venqor pour relancer le couple si besoin.`,
     preset_key: "couple_contrat_relance",
     nom: "Relance signature contrat",
     description:
-      "Rappelle au couple de signer le contrat Yousign si la signature est toujours en attente.",
+      "Rappelle au couple de signer le contrat Signable si la signature est toujours en attente.",
     cible: "couple",
     declencheur: "contrat_jours_apres",
     delai_jours: 7,
@@ -125,7 +125,7 @@ Consultez le dossier dans Venqor pour relancer le couple si besoin.`,
 
 Votre contrat de réservation chez {domaine} est en attente de signature.
 
-Si vous n'avez pas reçu l'email Yousign, vérifiez vos spams ou contactez-nous à {contact_domaine}.`,
+Si vous n'avez pas reçu l'email Signable, vérifiez vos spams ou contactez-nous à {contact_domaine}.`,
     email_title: "Signature du contrat",
     cta_label: "Mon espace couple",
   },
@@ -170,7 +170,7 @@ export const DECLENCHEUR_OPTIONS: Array<{
   {
     value: "contrat_jours_apres",
     label: "Après envoi du contrat",
-    hint: "N jours après l'envoi Yousign si non signé.",
+    hint: "N jours après l'envoi Signable si non signé.",
   },
 ];
 

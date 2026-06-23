@@ -127,7 +127,7 @@ export default async function ParametresPage() {
           description={
             showContratSetup
               ? "Configuration interne Venqor — modèle et signatures pour ce domaine."
-              : "Signature électronique du contrat de mariage via Yousign."
+              : "Signature électronique du contrat de mariage via Signable."
           }
         >
           <div className="space-y-6">

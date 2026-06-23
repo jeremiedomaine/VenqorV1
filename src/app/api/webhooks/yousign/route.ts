@@ -68,7 +68,7 @@ export async function POST(request: Request) {
     const { data: event } = await supabase
       .from("events")
       .select("id, contrat_signatures_done, contrat_signatures_total, contrat_statut")
-      .eq("yousign_signature_request_id", signatureRequestId)
+      .eq("esign_envelope_id", signatureRequestId)
       .maybeSingle();
 
     if (event?.contrat_statut === "en_cours") {
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
     const { data: existing } = await supabase
       .from("events")
       .select("id, workspace_id, contrat_signatures_total")
-      .eq("yousign_signature_request_id", signatureRequestId)
+      .eq("esign_envelope_id", signatureRequestId)
       .maybeSingle();
 
     if (existing) {
@@ -121,7 +121,7 @@ export async function POST(request: Request) {
         contrat_statut: "refuse",
         contrat_signatures_done: 0,
       })
-      .eq("yousign_signature_request_id", signatureRequestId ?? "");
+      .eq("esign_envelope_id", signatureRequestId ?? "");
   }
 
   if (eventName === "signature_request.expired") {
@@ -131,7 +131,7 @@ export async function POST(request: Request) {
         contrat_statut: "expire",
         contrat_signatures_done: 0,
       })
-      .eq("yousign_signature_request_id", signatureRequestId ?? "");
+      .eq("esign_envelope_id", signatureRequestId ?? "");
   }
 
   return Response.json({ received: true });

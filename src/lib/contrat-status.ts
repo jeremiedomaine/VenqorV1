@@ -7,26 +7,24 @@ export type ContratReadiness = {
 };
 
 export function getContratReadiness(workspace: Workspace): ContratReadiness {
-  const hasTemplate = Boolean(
-    workspace.contrat_template_docx_path || workspace.contrat_template_path,
-  );
-  const hasSignatures = Boolean(workspace.contrat_signature_zones);
+  const hasDocx = Boolean(workspace.contrat_template_docx_path);
+  const hasPdf = Boolean(workspace.contrat_template_path);
 
-  if (workspace.contrat_template_docx_path && hasSignatures) {
+  if (hasDocx) {
     return {
       ready: true,
       label: "Prêt à l'envoi",
       detail:
-        "Votre contrat est configuré. Depuis un dossier en date bloquée, utilisez « Envoyer le contrat ».",
+        "Votre contrat est configuré avec les tags Signable. Depuis un dossier en date bloquée, utilisez « Envoyer le contrat ».",
     };
   }
 
-  if (hasTemplate && !hasSignatures) {
+  if (hasPdf) {
     return {
       ready: false,
-      label: "Finalisation en cours",
+      label: "Modèle PDF uniquement",
       detail:
-        "L'équipe Venqor termine la configuration de votre modèle (signatures).",
+        "Un modèle Word avec les tags Signable est requis. Contactez l'équipe Venqor pour finaliser la configuration.",
     };
   }
 

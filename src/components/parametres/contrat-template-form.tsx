@@ -7,7 +7,7 @@ import {
   uploadContratDocxTemplate,
   uploadContratTemplate,
 } from "@/actions/contrat-template";
-import { ContratSignaturePlacer } from "@/components/parametres/contrat-signature-placer";
+import { ContratSignableTagsInfo } from "@/components/parametres/contrat-signable-tags-info";
 import { Button } from "@/components/ui/button";
 import type { ContratSignatureZones } from "@/lib/types";
 import { useAsyncAction } from "@/hooks/use-async-action";
@@ -57,7 +57,7 @@ export function ContratTemplateForm({
       if (result.warning) setWarning(result.warning);
       setSuccess(
         result.previewGenerated
-          ? "Modèle Word enregistré — placez les signatures ci-dessous."
+          ? "Modèle Word enregistré — vérifiez les tags Signable ci-dessous."
           : "Modèle Word enregistré — uploadez un PDF d'aperçu si besoin.",
       );
       setPlacerKey(`${Date.now()}-docx`);
@@ -75,7 +75,7 @@ export function ContratTemplateForm({
         setError(result.error);
         return;
       }
-      setSuccess("PDF enregistré — placez les signatures si nécessaire.");
+      setSuccess("PDF enregistré.");
       setPlacerKey(`${Date.now()}-pdf`);
       if (pdfInputRef.current) pdfInputRef.current.value = "";
     });
@@ -101,8 +101,8 @@ export function ContratTemplateForm({
       <div className="rounded-lg border border-indigo-200/80 bg-indigo-50/40 p-4 text-sm text-indigo-950">
         <p className="font-medium">Configuration Venqor (interne)</p>
         <p className="mt-1 text-indigo-900/90">
-          Uploadez le modèle Word préparé avec les variables, puis placez les
-          signatures. Le domaine ne voit pas cette section.
+          Uploadez le modèle Word préparé avec les variables Venqor et les tags
+          Signable pour les signatures. Le domaine ne voit pas cette section.
         </p>
       </div>
 
@@ -184,12 +184,7 @@ export function ContratTemplateForm({
         </div>
       </form>
 
-      {(hasCustomTemplate || !hasDocxTemplate) && (
-        <ContratSignaturePlacer
-          key={placerKey}
-          initialZones={signatureZones}
-        />
-      )}
+      <ContratSignableTagsInfo />
 
       {hasDocxTemplate && !hasCustomTemplate && (
         <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">

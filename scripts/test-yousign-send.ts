@@ -4,7 +4,7 @@ import { resolve } from "path";
 config({ path: resolve(process.cwd(), ".env.local") });
 
 import { sendYousignContract } from "../src/lib/yousign/send-contract";
-import { loadDemoContractPdf } from "../src/lib/yousign/contrat-demo-pdf";
+import { loadDemoContractPdf } from "../src/lib/contrat/contrat-demo-pdf";
 
 async function main() {
   const result = await sendYousignContract({

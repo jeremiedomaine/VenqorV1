@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileSignature } from "lucide-react";
-import { sendContractForEvent } from "@/actions/yousign-contract";
+import { sendContractForEvent } from "@/actions/esign-contract";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAsyncAction } from "@/hooks/use-async-action";
@@ -47,7 +47,7 @@ export function SendContractButton({
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <FileSignature className="h-4 w-4 text-[#4F46E5]" />
-          Contrat (Yousign)
+          Contrat (Signable)
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -87,7 +87,7 @@ export function SendContractButton({
             {contratSignaturesDone > 0 &&
             contratSignaturesDone < contratSignaturesTotal
               ? `${contratSignaturesDone} marié(e) sur ${contratSignaturesTotal} a signé — en attente de l'autre signature.`
-              : "Yousign a envoyé les liens de signature par email aux deux mariés."}
+              : "Signable a envoyé les liens de signature par email aux deux mariés."}
           </p>
         )}
 
@@ -113,7 +113,7 @@ export function SendContractButton({
                     );
                   } else {
                     setMessage(
-                      "Contrat envoyé — les mariés recevront un email Yousign.",
+                      "Contrat envoyé — les mariés recevront un email Signable.",
                     );
                   }
                   if (result.depositEmailWarning) {

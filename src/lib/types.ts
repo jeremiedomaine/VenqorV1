@@ -113,7 +113,7 @@ export interface Event {
   message_accueil: string;
   archived_at: string | null;
   cloture_at: string | null;
-  yousign_signature_request_id: string | null;
+  esign_envelope_id: string | null;
   contrat_statut: ContratStatut;
   contrat_envoye_at: string | null;
   contrat_signe_at: string | null;

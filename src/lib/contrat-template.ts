@@ -6,7 +6,7 @@ import {
   buildSampleContratMergeData,
   type ContratMergeInput,
 } from "@/lib/contrat-variables";
-import { loadDemoContractPdf } from "@/lib/yousign/contrat-demo-pdf";
+import { loadDemoContractPdf } from "@/lib/contrat/contrat-demo-pdf";
 
 export const CONTRAT_STORAGE_BUCKET = "workspace-contrats";
 export const CONTRAT_STORAGE_FILENAME = "contrat.pdf";

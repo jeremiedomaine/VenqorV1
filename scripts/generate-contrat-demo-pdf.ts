@@ -84,12 +84,12 @@ async function main() {
     font,
     color: rgb(0.35, 0.37, 0.42),
   });
-  page.drawText("{{s1|signature|200|80}}", {
+  page.drawText("{signature:signer1:Signature+Marie+1}", {
     x: margin,
     y: 178,
-    size: 11,
+    size: 9,
     font,
-    color: rgb(1, 1, 1),
+    color: rgb(0.35, 0.37, 0.42),
   });
 
   page.drawText("Signature marié(e) 2", {
@@ -99,12 +99,12 @@ async function main() {
     font,
     color: rgb(0.35, 0.37, 0.42),
   });
-  page.drawText("{{s2|signature|200|80}}", {
+  page.drawText("{signature:signer2:Signature+Marie+2}", {
     x: margin,
     y: 98,
-    size: 11,
+    size: 9,
     font,
-    color: rgb(1, 1, 1),
+    color: rgb(0.35, 0.37, 0.42),
   });
 
   const pdfBytes = Buffer.from(await doc.save());
@@ -112,10 +112,9 @@ async function main() {
   mkdirSync(outDir, { recursive: true });
   writeFileSync(resolve(outDir, "contrat-demo.pdf"), pdfBytes);
 
-  const bundledPath = resolve(
-    process.cwd(),
-    "src/lib/yousign/contrat-demo-pdf.ts",
-  );
+  const bundledDir = resolve(process.cwd(), "src/lib/contrat");
+  mkdirSync(bundledDir, { recursive: true });
+  const bundledPath = resolve(bundledDir, "contrat-demo-pdf.ts");
   const base64 = pdfBytes.toString("base64");
   writeFileSync(
     bundledPath,
@@ -129,7 +128,7 @@ export function loadDemoContractPdf(): Buffer {
   );
 
   console.log("✓ assets/contrat-demo.pdf");
-  console.log("✓ src/lib/yousign/contrat-demo-pdf.ts");
+  console.log("✓ src/lib/contrat/contrat-demo-pdf.ts");
 }
 
 main().catch((err) => {

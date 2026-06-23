@@ -1,5 +1,5 @@
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
-import { loadDemoContractPdf } from "../src/lib/yousign/contrat-demo-pdf";
+import { loadDemoContractPdf } from "../src/lib/contrat/contrat-demo-pdf";
 import { detectSignatureSlots } from "../src/lib/yousign/detect-signature-slots";
 
 async function main() {

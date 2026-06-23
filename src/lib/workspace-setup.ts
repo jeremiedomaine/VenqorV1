@@ -57,7 +57,7 @@ export function computeWorkspaceSetupStatus(
     },
     {
       id: "contrat",
-      label: "Contrat Yousign",
+      label: "Contrat Signable",
       detail: contrat.label,
       done: contrat.ready,
       href: "/parametres#contrat",

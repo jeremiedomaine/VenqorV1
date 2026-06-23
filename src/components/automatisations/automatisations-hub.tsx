@@ -808,7 +808,7 @@ function PaymentEditor({
         </h2>
         <p className="mt-1 text-sm text-slate-500">
           {type === "acompte"
-            ? "Envoyé au couple pour le règlement de l'acompte, en lien avec la signature Yousign."
+            ? "Envoyé au couple pour le règlement de l'acompte, en lien avec la signature Signable."
             : "Envoyé automatiquement quand le mariage est à 30 jours ou moins."}
         </p>
       </div>
@@ -838,7 +838,7 @@ function PaymentEditor({
               {
                 value: "with_contract" as const,
                 label: "Avec le contrat",
-                hint: "Dès l'envoi Yousign depuis le dossier.",
+                hint: "Dès l'envoi Signable depuis le dossier.",
               },
             ] as const
           ).map((opt) => (

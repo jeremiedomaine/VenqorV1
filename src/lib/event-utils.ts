@@ -59,10 +59,8 @@ export function parseEventFormData(
 
   const montantAcompte = Number(formData.get("montant_acompte") || 0);
   const montantSolde = Number(formData.get("montant_solde") || 0);
-  let prix_total = Number(formData.get("prix_total") || 0);
-  if (montantAcompte > 0 || montantSolde > 0) {
-    prix_total = montantAcompte + montantSolde;
-  }
+  const prix_total = Number(formData.get("prix_total") || 0);
+  const hasCustomSplit = montantAcompte > 0 && montantSolde > 0;
 
   return {
     type_evenement,
@@ -78,9 +76,10 @@ export function parseEventFormData(
     notes_internes: String(formData.get("notes_internes") ?? "").trim(),
     date_debut: String(formData.get("date_debut") || "").trim() || null,
     date_fin: String(formData.get("date_fin") || "").trim() || null,
-    prix_total,
-    montantAcompte,
-    montantSolde,
+    prix_total: hasCustomSplit ? montantAcompte + montantSolde : prix_total,
+    montantAcompte: hasCustomSplit ? montantAcompte : 0,
+    montantSolde: hasCustomSplit ? montantSolde : 0,
+    hasCustomSplit,
   };
 }
 

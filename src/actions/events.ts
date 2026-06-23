@@ -40,7 +40,6 @@ function eventPayloadFromForm(
   return {
     ...parsed,
     statut,
-    date_fin: parsed.date_fin ?? parsed.date_debut,
     capacite_hebergement_totale: Number(
       formData.get("capacite_hebergement_totale") || 0,
     ),
@@ -101,6 +100,14 @@ export async function createEvent(
       event.id,
       payload.prix_total,
       payload.date_debut,
+      payload.hasCustomSplit
+        ? {
+            customAmounts: {
+              acompte: payload.montantAcompte,
+              solde: payload.montantSolde,
+            },
+          }
+        : undefined,
     );
   }
 
@@ -189,6 +196,14 @@ export async function updateEvent(
       eventId,
       parsed.prix_total,
       parsed.date_debut,
+      parsed.hasCustomSplit
+        ? {
+            customAmounts: {
+              acompte: parsed.montantAcompte,
+              solde: parsed.montantSolde,
+            },
+          }
+        : undefined,
     );
   }
 

@@ -11,6 +11,7 @@ import {
   isMariageType,
   listEventTypeOptions,
 } from "@/lib/event-types";
+import type { WorkspaceBilling } from "@/lib/billing";
 import {
   type CustomEventType,
   type Event,
@@ -22,11 +23,15 @@ export function EventFormFields({
   mode,
   customEventTypes = [],
   blockedDates,
+  billing,
+  facturationConfiguree = false,
 }: {
   event?: Partial<Event>;
   mode: "create" | "edit";
   customEventTypes?: CustomEventType[];
   blockedDates?: Set<string>;
+  billing?: WorkspaceBilling | null;
+  facturationConfiguree?: boolean;
 }) {
   const typeOptions = useMemo(
     () => listEventTypeOptions(customEventTypes),
@@ -36,7 +41,34 @@ export function EventFormFields({
   const [type, setType] = useState(
     event?.type_evenement ?? typeOptions[0]?.slug ?? "mariage",
   );
+  const [dateDebut, setDateDebut] = useState(event?.date_debut ?? "");
+  const [dateFin, setDateFin] = useState(event?.date_fin ?? "");
   const [dateWarning, setDateWarning] = useState<string | null>(null);
+
+  function checkDateBlocked(debut: string, fin: string) {
+    if (!blockedDates || mode !== "create") {
+      setDateWarning(null);
+      return;
+    }
+    const start = debut.trim();
+    const end = fin.trim();
+    if (!start && !end) {
+      setDateWarning(null);
+      return;
+    }
+    const blocked =
+      (start && isDateBlocked(start, blockedDates)) ||
+      (end && isDateBlocked(end, blockedDates));
+    setDateWarning(
+      blocked
+        ? "Une de ces dates est déjà bloquée par un dossier en date bloquée ou confirmé."
+        : null,
+    );
+  }
+
+  const billingHint =
+    billing &&
+    `${billing.facturation_acompte_label} ${billing.facturation_acompte_pct} % · ${billing.facturation_solde_label} ${billing.facturation_solde_pct} %`;
 
   const personLabels = useMemo(() => {
     if (isMariageType(type)) {
@@ -189,83 +221,113 @@ export function EventFormFields({
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="date_debut">Date</Label>
-          <Input
-            id="date_debut"
-            name="date_debut"
-            type="date"
-            defaultValue={event?.date_debut ?? ""}
-            onChange={(e) => {
-              if (!blockedDates || mode !== "create") {
-                setDateWarning(null);
-                return;
-              }
-              setDateWarning(
-                isDateBlocked(e.target.value, blockedDates)
-                  ? "Cette date est déjà bloquée par un dossier en date bloquée ou confirmé."
-                  : null,
-              );
-            }}
-          />
-          {dateWarning && (
-            <p className="text-xs text-amber-700">{dateWarning}</p>
-          )}
-        </div>
-        {mode === "edit" && (
+      <fieldset className="space-y-4 rounded-lg border border-slate-100 bg-slate-50/50 p-4">
+        <legend className="px-1 text-sm font-medium text-slate-700">
+          Dates estimées
+        </legend>
+        <p className="text-xs text-slate-500">
+          Facultatif — vous pourrez les préciser plus tard sur la fiche dossier.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="date_fin">Date de fin</Label>
+            <Label htmlFor="date_debut">Date estimée de début</Label>
+            <Input
+              id="date_debut"
+              name="date_debut"
+              type="date"
+              value={dateDebut}
+              onChange={(e) => {
+                setDateDebut(e.target.value);
+                checkDateBlocked(e.target.value, dateFin);
+              }}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="date_fin">Date estimée de fin</Label>
             <Input
               id="date_fin"
               name="date_fin"
               type="date"
-              defaultValue={event?.date_fin ?? ""}
+              value={dateFin}
+              onChange={(e) => {
+                setDateFin(e.target.value);
+                checkDateBlocked(dateDebut, e.target.value);
+              }}
             />
           </div>
+        </div>
+        {dateWarning && (
+          <p className="text-xs text-amber-700">{dateWarning}</p>
         )}
-      </div>
+      </fieldset>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      {mode === "create" ? (
         <div className="space-y-2">
-          <Label htmlFor="montant_acompte">Acompte (€)</Label>
-          <Input
-            id="montant_acompte"
-            name="montant_acompte"
-            type="number"
-            min={0}
-            step="0.01"
-            placeholder="1500"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="montant_solde">Solde (€)</Label>
-          <Input
-            id="montant_solde"
-            name="montant_solde"
-            type="number"
-            min={0}
-            step="0.01"
-            placeholder="3500"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="prix_total">Total (€)</Label>
+          <Label htmlFor="prix_total">Prix total (€)</Label>
           <Input
             id="prix_total"
             name="prix_total"
             type="number"
             min={0}
             step="0.01"
-            defaultValue={event?.prix_total ?? ""}
             placeholder="5000"
           />
+          {facturationConfiguree && billingHint && (
+            <p className="text-xs text-slate-500">
+              L&apos;échéancier sera généré selon vos paramètres :{" "}
+              {billingHint}.
+            </p>
+          )}
+          {!facturationConfiguree && (
+            <p className="text-xs text-slate-500">
+              Configurez la facturation (acompte / solde) dans Paramètres ou
+              lors de l&apos;onboarding pour générer l&apos;échéancier
+              automatiquement.
+            </p>
+          )}
         </div>
-      </div>
-      <p className="text-xs text-slate-500">
-        Renseignez acompte + solde ou le total directement. L&apos;échéancier se
-        génère selon vos paramètres de facturation.
-      </p>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="space-y-2">
+            <Label htmlFor="montant_acompte">Acompte (€)</Label>
+            <Input
+              id="montant_acompte"
+              name="montant_acompte"
+              type="number"
+              min={0}
+              step="0.01"
+              placeholder="1500"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="montant_solde">Solde (€)</Label>
+            <Input
+              id="montant_solde"
+              name="montant_solde"
+              type="number"
+              min={0}
+              step="0.01"
+              placeholder="3500"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="prix_total">Total (€)</Label>
+            <Input
+              id="prix_total"
+              name="prix_total"
+              type="number"
+              min={0}
+              step="0.01"
+              defaultValue={event?.prix_total ?? ""}
+              placeholder="5000"
+            />
+          </div>
+          <p className="text-xs text-slate-500 sm:col-span-3">
+            Renseignez le total seul pour appliquer vos paramètres de
+            facturation, ou acompte + solde pour un montant personnalisé.
+          </p>
+        </div>
+      )}
 
       {mode === "edit" && (
         <div className="grid gap-4 sm:grid-cols-2">

@@ -78,9 +78,19 @@ export default async function ParametresPage() {
         <SettingsSection
           id="facturation"
           title="Facturation"
-          description="Règles appliquées à la génération automatique des échéanciers (acompte et solde)."
+          description="Règles appliquées à la génération automatique des échéanciers (acompte et solde). Enregistrez pour activer la facturation sur vos nouveaux dossiers."
         >
           <div className="space-y-6">
+            {!workspace.facturation_configuree && (
+              <SettingsInfoBox title="Configuration requise">
+                <p>
+                  Tant que la facturation n&apos;est pas enregistrée, les
+                  échéanciers (acompte et solde) ne sont pas générés à la
+                  création d&apos;un dossier — même si vous saisissez un prix
+                  total.
+                </p>
+              </SettingsInfoBox>
+            )}
             <SettingsInfoBox title="Bon à savoir">
               <p>
                 Ces règles s&apos;appliquent lorsque vous saisissez un budget sur

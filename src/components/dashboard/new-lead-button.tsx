@@ -8,15 +8,20 @@ import { EventFormFields } from "@/components/events/event-form-fields";
 import { Button } from "@/components/ui/button";
 
 import type { CustomEventType } from "@/lib/types";
+import type { WorkspaceBilling } from "@/lib/billing";
 
 export function NewLeadButton({
   customEventTypes = [],
   blockedDates = [],
   defaultOpen = false,
+  billing = null,
+  facturationConfiguree = false,
 }: {
   customEventTypes?: CustomEventType[];
   blockedDates?: string[];
   defaultOpen?: boolean;
+  billing?: WorkspaceBilling | null;
+  facturationConfiguree?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(defaultOpen);
@@ -92,6 +97,8 @@ export function NewLeadButton({
                 mode="create"
                 customEventTypes={customEventTypes}
                 blockedDates={blockedDateSet}
+                billing={billing}
+                facturationConfiguree={facturationConfiguree}
               />
               {error && <p className="text-sm text-red-600">{error}</p>}
               <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">

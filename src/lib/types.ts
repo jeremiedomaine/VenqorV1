@@ -57,6 +57,8 @@ export interface Workspace {
   facturation_solde_jours: number;
   objectif_dossiers_annuel: number | null;
   objectif_ca_annuel: number | null;
+  facturation_configuree: boolean;
+  onboarding_completed_at: string | null;
   mode_paiement_defaut: PaymentMode;
   iban: string | null;
   bic: string | null;

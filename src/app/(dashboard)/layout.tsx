@@ -5,6 +5,10 @@ import { NavigationProgress } from "@/components/dashboard/navigation-progress";
 import { OnboardingModal } from "@/components/onboarding/onboarding-modal";
 import { getAuthContext } from "@/lib/auth-context";
 import { loadWorkspace } from "@/lib/load-workspace";
+import { getContratReadiness } from "@/lib/contrat-status";
+import { needsOnboarding } from "@/lib/facturation-configured";
+import { billingFromWorkspace } from "@/lib/billing";
+import { goalsFromWorkspace } from "@/lib/workspace-setup";
 import { Suspense } from "react";
 
 export default async function DashboardLayout({
@@ -19,11 +23,11 @@ export default async function DashboardLayout({
 
   const workspaceName = auth?.workspaceName ?? "Mon domaine";
   const { workspace } = await loadWorkspace();
-  const needsOnboarding =
+  const showOnboarding =
     auth &&
     !auth.isVenqorAdmin &&
     workspace &&
-    !workspace.iban?.trim();
+    needsOnboarding(workspace);
 
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -39,10 +43,13 @@ export default async function DashboardLayout({
           {children}
         </div>
       </main>
-      {needsOnboarding && (
+      {showOnboarding && (
         <OnboardingModal
-          workspaceId={workspace.id}
           initialDomainName={workspace.nom_domaine}
+          initialGoals={goalsFromWorkspace(workspace)}
+          initialBilling={billingFromWorkspace(workspace)}
+          customEventTypes={workspace.types_evenement_custom}
+          contratStatus={getContratReadiness(workspace)}
         />
       )}
     </div>

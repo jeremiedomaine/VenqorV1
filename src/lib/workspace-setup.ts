@@ -42,8 +42,10 @@ export function computeWorkspaceSetupStatus(
     {
       id: "billing",
       label: "Facturation",
-      detail: `${billing.facturation_acompte_pct} % / ${billing.facturation_solde_pct} %`,
-      done: true,
+      detail: workspace.facturation_configuree
+        ? `${billing.facturation_acompte_pct} % / ${billing.facturation_solde_pct} %`
+        : "À configurer (acompte / solde)",
+      done: workspace.facturation_configuree,
       href: "/parametres#facturation",
     },
     {

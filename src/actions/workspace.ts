@@ -38,6 +38,7 @@ export async function updateWorkspaceBilling(
       facturation_solde_jours: Number(
         formData.get("facturation_solde_jours") || -30,
       ),
+      facturation_configuree: true,
     })
     .eq("id", workspaceId);
 

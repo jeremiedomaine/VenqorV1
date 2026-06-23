@@ -13,7 +13,8 @@ import {
   loadPendingPaymentNotificationCount,
   loadPendingPaymentNotifications,
 } from "@/lib/load-pending-payment-notifications";
-import { loadWorkspaceEventTypes } from "@/lib/load-workspace";
+import { loadWorkspace, loadWorkspaceEventTypes } from "@/lib/load-workspace";
+import { billingFromWorkspace } from "@/lib/billing";
 
 export default async function PipelinePage({
   searchParams,
@@ -28,6 +29,7 @@ export default async function PipelinePage({
   const [
     { events, stats },
     customEventTypes,
+    { workspace },
     archivedEvents,
     archivedCount,
     paymentNotifications,
@@ -35,11 +37,15 @@ export default async function PipelinePage({
   ] = await Promise.all([
     loadDashboardStats(),
     loadWorkspaceEventTypes(),
+    loadWorkspace(),
     showArchives ? loadArchivedEvents() : Promise.resolve([]),
     showArchives ? Promise.resolve(0) : loadArchivedEventCount(),
     showNotifs ? loadPendingPaymentNotifications() : Promise.resolve([]),
     showNotifs ? Promise.resolve(0) : loadPendingPaymentNotificationCount(),
   ]);
+
+  const billing = workspace ? billingFromWorkspace(workspace) : null;
+  const facturationConfiguree = workspace?.facturation_configuree ?? false;
 
   const blockedDates = Array.from(getBlockedDateSet(events));
   const resolvedArchivedCount = showArchives
@@ -64,6 +70,8 @@ export default async function PipelinePage({
           customEventTypes={customEventTypes}
           blockedDates={blockedDates}
           defaultOpen={openNewEvent}
+          billing={billing}
+          facturationConfiguree={facturationConfiguree}
         />
       </div>
 

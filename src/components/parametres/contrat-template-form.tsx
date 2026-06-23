@@ -9,7 +9,6 @@ import {
 } from "@/actions/contrat-template";
 import { ContratSignableTagsInfo } from "@/components/parametres/contrat-signable-tags-info";
 import { Button } from "@/components/ui/button";
-import type { ContratSignatureZones } from "@/lib/types";
 import { useAsyncAction } from "@/hooks/use-async-action";
 
 /** Configuration contrat — visible uniquement pour l'équipe Venqor. */
@@ -19,20 +18,12 @@ export function ContratTemplateForm({
   templateMode,
   filename,
   docxFilename,
-  updatedAt,
-  docxUpdatedAt,
-  signatureZones,
-  signatureZonesUpdatedAt,
 }: {
   hasCustomTemplate: boolean;
   hasDocxTemplate: boolean;
   templateMode: "docx" | "pdf" | null;
   filename: string | null;
   docxFilename: string | null;
-  updatedAt: string | null;
-  docxUpdatedAt: string | null;
-  signatureZones: ContratSignatureZones | null;
-  signatureZonesUpdatedAt: string | null;
 }) {
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const docxInputRef = useRef<HTMLInputElement>(null);
@@ -40,9 +31,6 @@ export function ContratTemplateForm({
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [placerKey, setPlacerKey] = useState(
-    `${updatedAt ?? "default"}-${docxUpdatedAt ?? "none"}-${signatureZonesUpdatedAt ?? "zones"}`,
-  );
 
   function handleDocxUpload(formData: FormData) {
     setError(null);
@@ -60,7 +48,6 @@ export function ContratTemplateForm({
           ? "Modèle Word enregistré — vérifiez les tags Signable ci-dessous."
           : "Modèle Word enregistré — uploadez un PDF d'aperçu si besoin.",
       );
-      setPlacerKey(`${Date.now()}-docx`);
       if (docxInputRef.current) docxInputRef.current.value = "";
     });
   }
@@ -76,7 +63,6 @@ export function ContratTemplateForm({
         return;
       }
       setSuccess("PDF enregistré.");
-      setPlacerKey(`${Date.now()}-pdf`);
       if (pdfInputRef.current) pdfInputRef.current.value = "";
     });
   }
@@ -92,7 +78,6 @@ export function ContratTemplateForm({
         return;
       }
       setSuccess("Modèles retirés.");
-      setPlacerKey(`${Date.now()}-removed`);
     });
   }
 

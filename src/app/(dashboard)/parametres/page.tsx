@@ -150,12 +150,6 @@ export default async function ParametresPage() {
                 templateMode={workspace.contrat_template_mode}
                 filename={workspace.contrat_template_filename}
                 docxFilename={workspace.contrat_template_docx_filename}
-                updatedAt={workspace.contrat_template_updated_at}
-                docxUpdatedAt={workspace.contrat_template_docx_updated_at}
-                signatureZones={workspace.contrat_signature_zones}
-                signatureZonesUpdatedAt={
-                  workspace.contrat_signature_zones_updated_at
-                }
               />
             )}
           </div>

@@ -3,6 +3,11 @@ import { createServiceClient } from "@/lib/supabase/service";
 
 export const dynamic = "force-dynamic";
 
+/** Signable vérifie l'URL du webhook avec un GET (attendu : 20x). */
+export async function GET() {
+  return Response.json({ ok: true, service: "venqor-signable-webhook" });
+}
+
 type SignableWebhookMeta = {
   venqor_event_id?: string;
   venqor_workspace_id?: string;

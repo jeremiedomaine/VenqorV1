@@ -62,7 +62,7 @@ export async function processSoldePaymentRequests(): Promise<SoldeCronResult> {
   const { data: workspaces, error: wsError } = await supabase
     .from("workspaces")
     .select(
-      "id, nom_domaine, contact_email, automation_paiement_active, email_paiement_objet, email_paiement_intro, email_paiement_titre, email_paiement_cta, email_paiement_details, facturation_solde_label, facturation_solde_jours",
+      "id, nom_domaine, contact_email, automation_paiement_active, email_paiement_objet, email_paiement_intro, email_paiement_titre, email_paiement_cta, email_paiement_details, facturation_acompte_label, facturation_solde_label, facturation_solde_jours",
     )
     .eq("automation_paiement_active", true);
 
@@ -111,6 +111,7 @@ export async function processSoldePaymentRequests(): Promise<SoldeCronResult> {
       const solde = pickSoldePayment(
         (payments ?? []) as PaymentRow[],
         billing.facturation_solde_label,
+        billing.facturation_acompte_label,
       );
 
       if (!solde || solde.payment_request_sent_at) {

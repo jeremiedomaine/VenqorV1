@@ -15,10 +15,10 @@ import { SendDepositRequestButton } from "@/components/events/send-deposit-reque
 import { PaymentsSection } from "@/components/events/payments-section";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getBalancePayment } from "@/lib/event-pipeline";
 import { billingFromWorkspace } from "@/lib/billing";
 import {
   isWithinSoldeWindow,
+  paymentMatchesLabel,
   pickAcomptePayment,
   pickSoldePayment,
   soldeWindowDaysFromWorkspace,
@@ -67,7 +67,11 @@ export default async function EventDetailPage({
     : 30;
 
   const depositPayment = billing
-    ? pickAcomptePayment(paymentList, billing.facturation_acompte_label)
+    ? pickAcomptePayment(
+        paymentList,
+        billing.facturation_acompte_label,
+        billing.facturation_solde_label,
+      )
     : paymentList.length > 0
       ? [...paymentList].sort((a, b) => {
           if (!a.date_echeance) return 1;
@@ -75,10 +79,23 @@ export default async function EventDetailPage({
           return a.date_echeance.localeCompare(b.date_echeance);
         })[0]
       : null;
-  const balancePayment = getBalancePayment(paymentList, depositPayment ?? null);
   const soldePayment = billing
-    ? pickSoldePayment(paymentList, billing.facturation_solde_label)
-    : balancePayment;
+    ? pickSoldePayment(
+        paymentList,
+        billing.facturation_solde_label,
+        billing.facturation_acompte_label,
+      )
+    : pickSoldePayment(paymentList);
+  const depositPaid =
+    Number(event.prix_total) <= 0 ||
+    paymentList.some(
+      (p) =>
+        p.statut === "paye" &&
+        (!billing ||
+          paymentMatchesLabel(p.label, billing.facturation_acompte_label)),
+    );
+  const hasDepositReady =
+    depositPaid || (isOption && paymentList.length > 0);
   const withinSoldeWindow = isWithinSoldeWindow(
     event.date_debut,
     soldeWindowDays,
@@ -131,7 +148,7 @@ export default async function EventDetailPage({
         <div className="lg:shrink-0">
           <EventPipelineStepper
             event={typedEvent}
-            hasDepositPayment={Boolean(depositPayment)}
+            hasDepositPayment={hasDepositReady}
           />
         </div>
       </div>
@@ -152,7 +169,7 @@ export default async function EventDetailPage({
         <CloseDossierButton
           eventId={event.id}
           prixTotal={Number(event.prix_total)}
-          balancePayment={balancePayment}
+          balancePayment={soldePayment ?? null}
           hasPaymentSchedule={paymentList.length > 0}
         />
       )}

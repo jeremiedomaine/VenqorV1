@@ -138,6 +138,7 @@ export async function sendPaymentRequestEmail(
     payment = pickSoldePayment(
       payments ?? [],
       billing.facturation_solde_label,
+      billing.facturation_acompte_label,
     ) as PaymentRow | undefined;
   }
 

@@ -1,4 +1,5 @@
 import type { Event, Payment } from "@/lib/types";
+import { pickSoldePayment } from "@/lib/payment-schedule";
 
 export type PipelineStepId = "prospect" | "option" | "confirme" | "cloture";
 
@@ -88,13 +89,22 @@ export function getPipelineReminder(
 export function getBalancePayment(
   payments: Payment[],
   depositPayment: Payment | null,
+  soldeLabel?: string,
+  acompteLabel?: string,
 ): Payment | null {
+  const pendingSolde = pickSoldePayment(payments, soldeLabel, acompteLabel);
+  if (pendingSolde) return pendingSolde;
+
+  const pending = payments.filter((p) => p.statut === "en_attente");
+  if (pending.length === 0) return null;
+
   if (payments.length <= 1) {
     return payments[0] === depositPayment ? null : (payments[0] ?? null);
   }
-  return (
-    payments.find((p) => p.id !== depositPayment?.id) ??
-    payments[payments.length - 1] ??
-    null
-  );
+
+  if (depositPayment) {
+    return pending.find((p) => p.id !== depositPayment.id) ?? null;
+  }
+
+  return pending[pending.length - 1] ?? null;
 }

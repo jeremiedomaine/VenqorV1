@@ -9,16 +9,43 @@ export type PaymentPickRow = {
   payment_request_sent_at?: string | null;
 };
 
+function normalizePaymentLabel(label: string): string {
+  return label.trim().toLowerCase();
+}
+
+/** Correspondance souple entre libellé d'échéance et libellé facturation workspace. */
+export function paymentMatchesLabel(
+  paymentLabel: string,
+  configuredLabel?: string,
+): boolean {
+  if (!configuredLabel?.trim()) return false;
+  const label = normalizePaymentLabel(paymentLabel);
+  const configured = normalizePaymentLabel(configuredLabel);
+  return (
+    label === configured ||
+    label.includes(configured) ||
+    configured.includes(label)
+  );
+}
+
 /** Solde = dernière échéance en attente (ou libellé facturation solde). */
 export function pickSoldePayment<T extends PaymentPickRow>(
   payments: T[],
   soldeLabel?: string,
+  acompteLabel?: string,
 ): T | undefined {
-  const pending = payments.filter((p) => p.statut === "en_attente");
+  let pending = payments.filter((p) => p.statut === "en_attente");
+  if (acompteLabel) {
+    pending = pending.filter(
+      (p) => !paymentMatchesLabel(p.label, acompteLabel),
+    );
+  }
   if (pending.length === 0) return undefined;
 
   if (soldeLabel) {
-    const byLabel = pending.find((p) => p.label === soldeLabel);
+    const byLabel = pending.find((p) =>
+      paymentMatchesLabel(p.label, soldeLabel),
+    );
     if (byLabel) return byLabel;
   }
 
@@ -35,22 +62,19 @@ export function pickSoldePayment<T extends PaymentPickRow>(
 export function pickAcomptePayment<T extends PaymentPickRow>(
   payments: T[],
   acompteLabel?: string,
+  soldeLabel?: string,
 ): T | undefined {
-  const pending = payments.filter((p) => p.statut === "en_attente");
+  let pending = payments.filter((p) => p.statut === "en_attente");
+  if (soldeLabel) {
+    pending = pending.filter((p) => !paymentMatchesLabel(p.label, soldeLabel));
+  }
   if (pending.length === 0) return undefined;
 
   if (acompteLabel) {
-    const normalized = acompteLabel.trim().toLowerCase();
-    const byLabel = pending.find(
-      (p) => p.label.trim().toLowerCase() === normalized,
+    const byLabel = pending.find((p) =>
+      paymentMatchesLabel(p.label, acompteLabel),
     );
     if (byLabel) return byLabel;
-
-    const byPartial = pending.find((p) => {
-      const label = p.label.trim().toLowerCase();
-      return label.includes(normalized) || normalized.includes(label);
-    });
-    if (byPartial) return byPartial;
   }
 
   if (pending.length === 1) return pending[0];

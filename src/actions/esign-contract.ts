@@ -12,6 +12,7 @@ import {
   loadContractPdfForEvent,
 } from "@/lib/contrat-template";
 import { ContratPdfConvertError } from "@/lib/contrat-pdf-convert";
+import { getEventCopy } from "@/lib/event-copy";
 import { syncAutoPayments } from "@/lib/sync-payments";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -39,7 +40,7 @@ export async function sendContractForEvent(
   const { data: event } = await supabase
     .from("events")
     .select(
-      "id, workspace_id, statut, archived_at, cloture_at, nom_evenement, nom_des_maries, marie1_prenom, marie1_nom, marie2_prenom, marie2_nom, email, telephone, adresse_postale, contrat_statut, esign_envelope_id, prix_total, date_debut, date_fin",
+      "id, workspace_id, statut, archived_at, cloture_at, nom_evenement, nom_des_maries, marie1_prenom, marie1_nom, marie2_prenom, marie2_nom, email, telephone, adresse_postale, contrat_statut, esign_envelope_id, prix_total, date_debut, date_fin, type_evenement",
     )
     .eq("id", eventId)
     .eq("workspace_id", workspaceId)
@@ -60,7 +61,8 @@ export async function sendContractForEvent(
 
   const coupleEmail = event.email?.trim();
   if (!coupleEmail) {
-    return { error: "Renseignez l'email du couple avant d'envoyer le contrat." };
+    const copy = getEventCopy(event.type_evenement ?? "mariage");
+    return { error: copy.missingClientEmailContract };
   }
 
   const marie1First = trimName(event.marie1_prenom, "Signataire");

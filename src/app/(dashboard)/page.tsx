@@ -63,7 +63,7 @@ export default async function PipelinePage({
             Pipeline
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Gérez vos prospects et faites avancer vos dossiers
+            Gérez vos demandes et faites avancer vos dossiers
           </p>
         </div>
         <NewLeadButton

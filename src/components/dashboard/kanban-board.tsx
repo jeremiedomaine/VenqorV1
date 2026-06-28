@@ -19,8 +19,8 @@ import {
   type Event,
   type KanbanColumnId,
 } from "@/lib/types";
-import { formatCurrency, formatDate } from "@/lib/utils";
-import { cn } from "@/lib/utils";
+import { formatCurrency, formatDate, cn } from "@/lib/utils";
+import { NEUTRAL_COPY } from "@/lib/event-copy";
 
 function EventCardContent({ event }: { event: Event }) {
   const closed = isEventClosed(event);
@@ -171,7 +171,7 @@ export function KanbanBoard({ events }: { events: Event[] }) {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Rechercher un couple, une note…"
+            placeholder={NEUTRAL_COPY.searchDossier}
             className="pl-9"
           />
         </div>

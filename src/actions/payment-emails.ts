@@ -9,6 +9,7 @@ import {
   normalizeSoldeEmailSettings,
   paymentPortalUrl,
 } from "@/lib/automation-settings";
+import { getEventCopy } from "@/lib/event-copy";
 import { billingFromWorkspace } from "@/lib/billing";
 import { sendEmail } from "@/lib/email/send-email";
 import { emailForCouple, emailForDomain } from "@/lib/email/recipients";
@@ -44,6 +45,7 @@ type EventRow = {
   portal_token: string;
   statut: string;
   date_debut: string | null;
+  type_evenement: string;
 };
 
 type WorkspaceRow = {
@@ -82,7 +84,7 @@ export async function sendPaymentRequestEmail(
     supabase.from("workspaces").select("*").eq("id", workspaceId).single(),
     supabase
       .from("events")
-      .select("id, email, nom_des_maries, portal_token, statut, date_debut")
+      .select("id, email, nom_des_maries, portal_token, statut, date_debut, type_evenement")
       .eq("id", eventId)
       .eq("workspace_id", workspaceId)
       .single(),
@@ -100,19 +102,21 @@ export async function sendPaymentRequestEmail(
   }
 
   const windowDays = soldeWindowDaysFromWorkspace(workspace);
+  const copy = getEventCopy(event.type_evenement ?? "mariage");
+
   if (
     !paymentId &&
     !isWithinSoldeWindow(event.date_debut, windowDays)
   ) {
     return {
       ok: false,
-      error: `L'email solde s'envoie à J-${windowDays} du mariage (dans ${windowDays} jours ou moins).`,
+      error: copy.soldeEmailWindow(windowDays),
     };
   }
 
   const coupleTo = emailForCouple(event.email);
   if (!coupleTo) {
-    return { ok: false, error: "Renseignez l'email du couple sur le dossier." };
+    return { ok: false, error: copy.missingClientEmail };
   }
 
   const billing = billingFromWorkspace(workspace);

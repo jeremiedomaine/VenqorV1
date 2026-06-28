@@ -716,7 +716,7 @@ export function AutomatisationsHub({
                       key={rule.id}
                       active={selectedRelanceId === rule.id}
                       label={rule.nom}
-                      subtitle={`${delayLabel(rule.declencheur, rule.delai_jours)} · ${rule.cible === "couple" ? "Couple" : "Domaine"}`}
+                      subtitle={`${delayLabel(rule.declencheur, rule.delai_jours)} · ${rule.cible === "couple" ? "Client" : "Domaine"}`}
                       live={rule.active}
                       onClick={() => {
                         setSelectedRelanceId(rule.id);
@@ -808,8 +808,8 @@ function PaymentEditor({
         </h2>
         <p className="mt-1 text-sm text-slate-500">
           {type === "acompte"
-            ? "Envoyé au couple pour le règlement de l'acompte, en lien avec la signature Signable."
-            : "Envoyé automatiquement quand le mariage est à 30 jours ou moins."}
+            ? "Envoyé au client pour le règlement de l'acompte, en lien avec la signature Signable."
+            : "Envoyé automatiquement quand l'événement est à 30 jours ou moins."}
         </p>
       </div>
 
@@ -833,7 +833,7 @@ function PaymentEditor({
               {
                 value: "after_contract" as const,
                 label: "Après signature du contrat",
-                hint: "Quand les deux mariés ont signé (recommandé).",
+                hint: "Quand les signataires ont signé (recommandé).",
               },
               {
                 value: "with_contract" as const,
@@ -1070,7 +1070,7 @@ function RelanceEditor({
             onChange={(e) => setCible(e.target.value as RelanceCible)}
             className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]"
           >
-            <option value="couple">Couple</option>
+            <option value="couple">Client</option>
             <option value="domaine">Domaine (gérant)</option>
           </select>
         </div>

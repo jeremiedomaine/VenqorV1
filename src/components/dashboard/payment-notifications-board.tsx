@@ -9,6 +9,7 @@ import {
 } from "@/actions/payments";
 import { Button } from "@/components/ui/button";
 import { useAsyncActionByKey } from "@/hooks/use-async-action";
+import { NEUTRAL_COPY } from "@/lib/event-copy";
 import type { PendingPaymentNotification } from "@/lib/load-pending-payment-notifications";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -28,7 +29,7 @@ export function PaymentNotificationsBoard({
           Aucun paiement à confirmer
         </p>
         <p className="mt-2 text-sm text-slate-500">
-          Quand un couple déclare un virement, il apparaîtra ici.
+          {NEUTRAL_COPY.paymentNotificationHint}
         </p>
       </div>
     );

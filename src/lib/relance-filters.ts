@@ -8,7 +8,7 @@ export const RELANCE_EVENT_STATUSES: EventStatus[] = [
 
 /** Libellés orientés relances (option = étape contrat / date bloquée). */
 export const RELANCE_STATUT_LABELS: Record<EventStatus, string> = {
-  prospect: "Prospect",
+  prospect: "Demande",
   option: "Date bloquée (contrat)",
   confirme: "Confirmé",
 };

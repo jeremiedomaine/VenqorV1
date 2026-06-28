@@ -24,8 +24,10 @@ function ContentBlock({
 
 export function EspaceMariesSections({
   workspace,
+  portalTitle = "Espace client",
 }: {
   workspace: PortalData["workspace"];
+  portalTitle?: string;
 }) {
   const hasContent =
     workspace.guide_infos_pratiques ||
@@ -46,7 +48,7 @@ export function EspaceMariesSections({
     <section className="space-y-10">
       <div className="text-center">
         <p className="text-[11px] font-medium uppercase tracking-[0.35em] text-zinc-400">
-          Espace mariés
+          {portalTitle}
         </p>
         <h2 className="mt-3 font-portal text-3xl font-light text-zinc-900">
           Tout ce qu&apos;il faut savoir

@@ -1,5 +1,6 @@
 "use client";
 
+import { NEUTRAL_COPY } from "@/lib/event-copy";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
@@ -334,8 +335,7 @@ export function PipelineCalendar({ events }: { events: Event[] }) {
                   ))}
                   {hiddenProspectCount > 0 && (
                     <p className="px-1 text-[10px] text-slate-400">
-                      +{hiddenProspectCount} prospect
-                      {hiddenProspectCount > 1 ? "s" : ""}
+                      {NEUTRAL_COPY.calendarOverflow(hiddenProspectCount)}
                     </p>
                   )}
                 </div>
@@ -359,7 +359,7 @@ export function CalendarLegend() {
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-600">
       <span className="flex items-center gap-1.5">
         <span className="h-3 w-3 rounded border border-slate-200 bg-slate-100" />
-        Prospects (superposables)
+        {NEUTRAL_COPY.calendarLegend}
       </span>
       <span className="flex items-center gap-1.5">
         <span className="h-3 w-3 rounded border border-amber-400 bg-amber-200" />

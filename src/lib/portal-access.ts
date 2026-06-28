@@ -1,3 +1,5 @@
+import { getEventCopy, NEUTRAL_COPY } from "@/lib/event-copy";
+
 export type PortalUnavailableReason =
   | "not_found"
   | "archived"
@@ -6,19 +8,23 @@ export type PortalUnavailableReason =
 
 export function portalUnavailableMessage(
   reason: PortalUnavailableReason,
+  typeEvenement?: string,
 ): { title: string; description: string } {
+  const copy = typeEvenement ? getEventCopy(typeEvenement) : null;
+
   switch (reason) {
     case "archived":
       return {
         title: "Espace fermé",
         description:
-          "Ce dossier a été archivé par le domaine. L'espace couple n'est plus accessible.",
+          copy?.portalArchivedMessage ?? NEUTRAL_COPY.portalArchivedMessage,
       };
     case "closed":
       return {
         title: "Dossier clôturé",
         description:
-          "Ce mariage est clôturé. L'espace couple n'est plus disponible.",
+          copy?.portalClosedMessage ??
+          "Cet événement est clôturé. L'espace client n'est plus disponible.",
       };
     case "inactive":
       return {

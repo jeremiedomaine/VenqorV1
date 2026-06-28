@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAsyncAction } from "@/hooks/use-async-action";
+import { NEUTRAL_COPY } from "@/lib/event-copy";
 import type { WorkspaceEncaissements } from "@/lib/payment-utils";
 
 export function EncaissementsSettingsForm({
@@ -47,8 +48,7 @@ export function EncaissementsSettingsForm({
       <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4">
         <p className="text-sm font-medium text-slate-900">Virement bancaire</p>
         <p className="mt-1 text-xs text-slate-500">
-          Le couple paie par virement et déclare son paiement sur la page couple.
-          Vous confirmez ou rejetez depuis le dossier.
+          {NEUTRAL_COPY.settingsPortalDeclare}
         </p>
       </div>
 
@@ -57,7 +57,7 @@ export function EncaissementsSettingsForm({
           Coordonnées bancaires
         </h3>
         <p className="text-xs text-slate-500">
-          Affichées sur la page couple pour les virements.
+          Affichées sur la {NEUTRAL_COPY.portalPage.toLowerCase()} pour les virements.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2 sm:col-span-2">

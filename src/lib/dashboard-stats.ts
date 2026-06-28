@@ -1,5 +1,6 @@
 import type { Event, Payment } from "@/lib/types";
 import { SIGNED_EVENT_STATUSES } from "@/lib/types";
+import { NEUTRAL_COPY } from "@/lib/event-copy";
 
 export interface DashboardAlert {
   id: string;
@@ -16,6 +17,9 @@ export interface MonthlySlot {
   closedCount: number;
   bookedRevenue: number;
   optionCount: number;
+  /** Date bloquée + confirmés + clôturés (pilotage). */
+  engagedCount: number;
+  engagedRevenue: number;
 }
 
 export interface YearProjection {
@@ -27,6 +31,9 @@ export interface YearProjection {
   closedRevenue: number;
   optionCount: number;
   optionRevenue: number;
+  /** Date bloquée + confirmés + clôturés (pilotage). */
+  engagedCount: number;
+  engagedRevenue: number;
   prospectCount: number;
   collected: number;
   pending: number;
@@ -41,6 +48,8 @@ export interface YearDetail {
   confirmedActive: { count: number; revenue: number };
   closed: { count: number; revenue: number };
   option: { count: number; revenue: number };
+  /** Date bloquée + confirmés + clôturés — vue pilotage annuelle. */
+  engaged: { count: number; revenue: number };
   prospect: { count: number; revenue: number };
   collections: { paid: number; pending: number; rate: number };
   monthly: MonthlySlot[];
@@ -156,6 +165,11 @@ function sumPrice(list: Event[]) {
   return list.reduce((s, e) => s + Number(e.prix_total), 0);
 }
 
+/** Dossiers engagés : date bloquée ou étape suivante (confirmé, clôturé). */
+function engagedEvents(list: Event[]) {
+  return list.filter((e) => e.statut !== "prospect");
+}
+
 function computeYearDetail(
   events: Event[],
   payments: Payment[],
@@ -164,8 +178,9 @@ function computeYearDetail(
   const inYear = events.filter((e) => eventYear(e) === year);
   const { confirmedActive, closed, option, prospect, booked } =
     splitYearEvents(inYear);
+  const engaged = engagedEvents(inYear);
 
-  const signedIds = new Set([...booked, ...option].map((e) => e.id));
+  const signedIds = new Set(engaged.map((e) => e.id));
   const signedPayments = paymentsForEvents(payments, signedIds);
   const paid = signedPayments
     .filter((p) => p.statut === "paye")
@@ -179,6 +194,7 @@ function computeYearDetail(
     const month = i + 1;
     const monthEvents = inYear.filter((e) => eventMonth(e) === month);
     const monthSplit = splitYearEvents(monthEvents);
+    const monthEngaged = engagedEvents(monthEvents);
     return {
       month,
       label,
@@ -186,6 +202,8 @@ function computeYearDetail(
       closedCount: monthSplit.closed.length,
       bookedRevenue: sumPrice(monthSplit.booked),
       optionCount: monthSplit.option.length,
+      engagedCount: monthEngaged.length,
+      engagedRevenue: sumPrice(monthEngaged),
     };
   });
 
@@ -206,6 +224,10 @@ function computeYearDetail(
     option: {
       count: option.length,
       revenue: sumPrice(option),
+    },
+    engaged: {
+      count: engaged.length,
+      revenue: sumPrice(engaged),
     },
     prospect: {
       count: prospect.length,
@@ -231,8 +253,9 @@ function buildProjections(
     const inYear = events.filter((e) => eventYear(e) === year);
     const { confirmedActive, closed, option, prospect, booked } =
       splitYearEvents(inYear);
+    const engaged = engagedEvents(inYear);
 
-    const signedIds = new Set([...booked, ...option].map((e) => e.id));
+    const signedIds = new Set(engaged.map((e) => e.id));
     const signedPayments = paymentsForEvents(payments, signedIds);
     const collected = signedPayments
       .filter((p) => p.statut === "paye")
@@ -250,6 +273,8 @@ function buildProjections(
       closedRevenue: sumPrice(closed),
       optionCount: option.length,
       optionRevenue: sumPrice(option),
+      engagedCount: engaged.length,
+      engagedRevenue: sumPrice(engaged),
       prospectCount: prospect.length,
       collected,
       pending,
@@ -354,7 +379,7 @@ export function computeDashboardStats(
     alerts.push({
       id: "prospect-no-date",
       severity: "info",
-      title: `${prospectsNoDate.length} prospect${prospectsNoDate.length > 1 ? "s" : ""} sans date`,
+      title: NEUTRAL_COPY.demandesSansDate(prospectsNoDate.length),
       description: prospectsNoDate[0].nom_des_maries,
       href: `/evenements/${prospectsNoDate[0].id}`,
     });

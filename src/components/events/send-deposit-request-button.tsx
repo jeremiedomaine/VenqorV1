@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Wallet } from "lucide-react";
 import { sendDepositPaymentRequestEmail } from "@/actions/payment-emails";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAsyncAction } from "@/hooks/use-async-action";
+import { getEventCopy } from "@/lib/event-copy";
 import type { AcompteSignatureTiming } from "@/lib/types";
 
 export function SendDepositRequestButton({
   eventId,
+  typeEvenement,
   coupleEmail,
   hasPendingDeposit,
   paymentId,
@@ -18,6 +20,7 @@ export function SendDepositRequestButton({
   sentAt,
 }: {
   eventId: string;
+  typeEvenement: string;
   coupleEmail: string;
   hasPendingDeposit: boolean;
   paymentId?: string;
@@ -28,6 +31,7 @@ export function SendDepositRequestButton({
   const { pending, run } = useAsyncAction();
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const copy = useMemo(() => getEventCopy(typeEvenement), [typeEvenement]);
 
   if (!hasPendingDeposit) return null;
 
@@ -46,10 +50,10 @@ export function SendDepositRequestButton({
         <p className="text-sm text-slate-600">
           {timing === "with_contract"
             ? "Envoi automatique en même temps que le contrat si l'automation est activée."
-            : "Envoi automatique après signature du contrat par les deux mariés."}
+            : `Envoi automatique après signature du contrat par ${copy.bothSigners}.`}
           {!coupleEmail && (
             <span className="mt-1 block text-amber-700">
-              Renseignez l&apos;email du couple dans le dossier.
+              Renseignez l&apos;email de {copy.clientReference} dans le dossier.
             </span>
           )}
         </p>
@@ -82,7 +86,7 @@ export function SendDepositRequestButton({
                 setMessage(
                   result.skipped
                     ? "Email simulé (mode dev — configurez RESEND_API_KEY)."
-                    : "Email d'acompte envoyé au couple.",
+                    : `Email d'acompte envoyé à ${copy.clientReference}.`,
                 );
               } else {
                 setError(result.error ?? "Envoi impossible.");

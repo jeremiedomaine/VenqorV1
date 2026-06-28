@@ -162,6 +162,7 @@ export interface PortalData {
   };
   event: {
     nom_des_maries: string;
+    type_evenement: string;
     date_debut: string | null;
     date_fin: string | null;
     statut: EventStatus;
@@ -189,14 +190,14 @@ export const CONTRAT_STATUT_LABELS: Record<ContratStatut, string> = {
 };
 
 export const EVENT_STATUS_LABELS: Record<EventStatus, string> = {
-  prospect: "Prospects",
+  prospect: "Demandes",
   option: "Dates bloquées",
   confirme: "Confirmés",
 };
 
 /** Libellé singulier pour messages et tooltips */
 export const EVENT_STATUS_SINGULAR: Record<EventStatus, string> = {
-  prospect: "Prospect",
+  prospect: "Demande",
   option: "Date bloquée",
   confirme: "Confirmé",
 };
@@ -204,7 +205,7 @@ export const EVENT_STATUS_SINGULAR: Record<EventStatus, string> = {
 export const KANBAN_COLUMN_HINTS: Record<EventStatus, string> = {
   prospect: "Demande, visite, devis en cours",
   option: "Date réservée — acompte en attente",
-  confirme: "Acompte reçu, préparation du jour J",
+  confirme: "Acompte reçu, préparation en cours",
 };
 
 export const KANBAN_COLUMNS: EventStatus[] = [
@@ -224,7 +225,7 @@ export const KANBAN_BOARD_COLUMNS: KanbanColumnId[] = [
 ];
 
 export const KANBAN_COLUMN_LABELS: Record<KanbanColumnId, string> = {
-  prospect: "Prospects",
+  prospect: "Demandes",
   option: "Dates bloquées",
   confirme: "Confirmés",
   cloture: "Clôturés",
@@ -233,9 +234,9 @@ export const KANBAN_COLUMN_LABELS: Record<KanbanColumnId, string> = {
 export const KANBAN_BOARD_COLUMN_HINTS: Record<KanbanColumnId, string> = {
   prospect: "Demande, visite, devis en cours",
   option: "Date réservée — acompte en attente",
-  confirme: "Acompte reçu, préparation du jour J",
+  confirme: "Acompte reçu, préparation en cours",
   cloture: "Solde réglé — suivi terminé",
 };
 
-/** Statuts avec espace mariés + échéancier engagés */
+/** Statuts avec espace client + échéancier engagés */
 export const SIGNED_EVENT_STATUSES: EventStatus[] = ["option", "confirme"];

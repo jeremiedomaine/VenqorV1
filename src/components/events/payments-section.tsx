@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAsyncActionByKey } from "@/hooks/use-async-action";
+import { NEUTRAL_COPY } from "@/lib/event-copy";
 import type { ActionResult } from "@/lib/action-result";
 import type { Payment } from "@/lib/types";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -128,7 +129,8 @@ export function PaymentsSection({
                     )}
                     {payment.statut === "declare_paye" && payment.declared_at && (
                       <p className="mt-1 text-xs text-sky-700">
-                        Déclaré par le couple le {formatDate(payment.declared_at)}
+                        {NEUTRAL_COPY.paymentDeclaredBy}{" "}
+                        {formatDate(payment.declared_at)}
                       </p>
                     )}
                   </div>

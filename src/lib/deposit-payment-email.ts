@@ -3,6 +3,7 @@ import {
   depositAutomationFromWorkspace,
   paymentPortalUrl,
 } from "@/lib/automation-settings";
+import { getEventCopy } from "@/lib/event-copy";
 import { billingFromWorkspace } from "@/lib/billing";
 import { sendEmail } from "@/lib/email/send-email";
 import { emailForCouple } from "@/lib/email/recipients";
@@ -39,7 +40,7 @@ export async function sendDepositPaymentRequest(params: {
     supabase.from("workspaces").select("*").eq("id", workspaceId).single(),
     supabase
       .from("events")
-      .select("id, email, nom_des_maries, portal_token, statut, archived_at, cloture_at")
+      .select("id, email, nom_des_maries, portal_token, statut, archived_at, cloture_at, type_evenement")
       .eq("id", eventId)
       .eq("workspace_id", workspaceId)
       .single(),
@@ -72,7 +73,8 @@ export async function sendDepositPaymentRequest(params: {
 
   const coupleTo = emailForCouple(event.email);
   if (!coupleTo) {
-    return { ok: false, error: "Renseignez l'email du couple sur le dossier." };
+    const copy = getEventCopy(event.type_evenement ?? "mariage");
+    return { ok: false, error: copy.missingClientEmail };
   }
 
   const billing = billingFromWorkspace(workspace);

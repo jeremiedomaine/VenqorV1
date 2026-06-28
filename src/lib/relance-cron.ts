@@ -311,7 +311,7 @@ export async function processRelanceEmails(): Promise<RelanceCronResult> {
               footerNote:
                 emailContent.footerNote ??
                 (rule.cible === "couple"
-                  ? "Page couple sécurisée — coordonnées bancaires et déclaration de virement."
+                  ? "Page client sécurisée — coordonnées bancaires et déclaration de virement."
                   : undefined),
               paymentRelated: true,
             }),

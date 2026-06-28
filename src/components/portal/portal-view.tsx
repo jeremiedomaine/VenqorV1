@@ -6,6 +6,7 @@ import { PaymentSchedule } from "@/components/portal/payment-schedule";
 import { PortalVirementSection } from "@/components/portal/portal-payments";
 import { PortalLogo } from "@/components/portal/portal-logo";
 import { WelcomeMessage } from "@/components/portal/welcome-message";
+import { getEventCopy } from "@/lib/event-copy";
 import type { PortalData } from "@/lib/types";
 
 export function PortalView({
@@ -16,6 +17,7 @@ export function PortalView({
   portalToken: string;
 }) {
   const { workspace, event, payments } = data;
+  const copy = getEventCopy(event.type_evenement);
   const paid = payments
     .filter((p) => p.statut === "paye")
     .reduce((s, p) => s + Number(p.montant), 0);
@@ -69,12 +71,12 @@ export function PortalView({
             payments={payments}
           />
 
-          <EspaceMariesSections workspace={workspace} />
+          <EspaceMariesSections workspace={workspace} portalTitle={copy.portalTitle} />
         </div>
 
         <footer className="mt-20 border-t border-zinc-100 pt-10 text-center md:mt-28">
           <p className="text-[11px] uppercase tracking-[0.2em] text-zinc-300">
-            Espace mariés privé
+            {copy.portalTitle} privé
           </p>
           <p className="mt-1 text-[11px] text-zinc-300">
             {workspace.nom_domaine}

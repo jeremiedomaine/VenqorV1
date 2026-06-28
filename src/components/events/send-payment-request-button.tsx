@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Mail } from "lucide-react";
 import { sendPaymentRequestEmail } from "@/actions/payment-emails";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAsyncAction } from "@/hooks/use-async-action";
+import { getEventCopy } from "@/lib/event-copy";
 
 export function SendPaymentRequestButton({
   eventId,
+  typeEvenement,
   coupleEmail,
   hasPendingPayment,
   paymentId,
@@ -16,6 +18,7 @@ export function SendPaymentRequestButton({
   sentAt,
 }: {
   eventId: string;
+  typeEvenement: string;
   coupleEmail: string;
   hasPendingPayment: boolean;
   paymentId?: string;
@@ -25,6 +28,7 @@ export function SendPaymentRequestButton({
   const { pending, run } = useAsyncAction();
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const copy = useMemo(() => getEventCopy(typeEvenement), [typeEvenement]);
 
   if (!hasPendingPayment) return null;
 
@@ -38,12 +42,13 @@ export function SendPaymentRequestButton({
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-slate-600">
-          Envoie au couple l&apos;email de règlement du solde avec le lien vers
-          la page de paiement. Envoi automatique dès J-{soldeWindowDays} du
-          mariage si l&apos;automation est activée.
+          Envoie à {copy.clientReference} l&apos;email de règlement du solde avec
+          le lien vers la page de paiement. Envoi automatique dès J-
+          {soldeWindowDays} {copy.eventDateBefore} si l&apos;automation est
+          activée.
           {!coupleEmail && (
             <span className="mt-1 block text-amber-700">
-              Renseignez l&apos;email du couple dans le dossier.
+              Renseignez l&apos;email de {copy.clientReference} dans le dossier.
             </span>
           )}
         </p>
@@ -68,7 +73,7 @@ export function SendPaymentRequestButton({
                 setMessage(
                   result.skipped
                     ? "Email simulé (mode dev — configurez RESEND_API_KEY)."
-                    : "Email de solde envoyé au couple.",
+                    : `Email de solde envoyé à ${copy.clientReference}.`,
                 );
               } else {
                 setError(result.error ?? "Envoi impossible.");

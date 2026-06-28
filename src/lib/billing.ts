@@ -1,3 +1,5 @@
+import { NEUTRAL_COPY } from "@/lib/event-copy";
+
 export interface WorkspaceBilling {
   facturation_acompte_label: string;
   facturation_acompte_pct: number;
@@ -32,7 +34,7 @@ function addDays(base: Date, days: number): string {
 export function buildBillingPreview(
   billing: WorkspaceBilling,
   prixTotal: number,
-  dateMariage: string | null,
+  dateEvenement: string | null,
 ): BillingLinePreview[] {
   if (prixTotal <= 0) return [];
 
@@ -41,8 +43,8 @@ export function buildBillingPreview(
   const today = new Date();
 
   const acompteDate = addDays(today, billing.facturation_acompte_jours);
-  const soldeDate = dateMariage
-    ? addDays(new Date(dateMariage), billing.facturation_solde_jours)
+  const soldeDate = dateEvenement
+    ? addDays(new Date(dateEvenement), billing.facturation_solde_jours)
     : null;
 
   return [
@@ -59,13 +61,15 @@ export function buildBillingPreview(
       label: billing.facturation_solde_label,
       montant: soldeMontant,
       date_echeance: soldeDate,
-      hint: dateMariage
+      hint: dateEvenement
         ? billing.facturation_solde_jours === 0
-          ? "Le jour du mariage"
+          ? NEUTRAL_COPY.billingSoldeDay
           : billing.facturation_solde_jours < 0
-            ? `${Math.abs(billing.facturation_solde_jours)} jours avant le mariage`
-            : `J+${billing.facturation_solde_jours} après le mariage`
-        : "Date du mariage requise",
+            ? NEUTRAL_COPY.billingSoldeBefore(
+                Math.abs(billing.facturation_solde_jours),
+              )
+            : NEUTRAL_COPY.billingSoldeAfter(billing.facturation_solde_jours)
+        : NEUTRAL_COPY.billingDateRequired,
     },
   ];
 }

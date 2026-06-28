@@ -8,7 +8,7 @@ export interface PipelineStep {
 }
 
 export const PIPELINE_STEPS: PipelineStep[] = [
-  { id: "prospect", label: "Prospect" },
+  { id: "prospect", label: "Demande" },
   { id: "option", label: "Date bloquée" },
   { id: "confirme", label: "Confirmé" },
   { id: "cloture", label: "Clôturé" },

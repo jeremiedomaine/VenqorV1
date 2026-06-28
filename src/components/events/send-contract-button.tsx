@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileSignature } from "lucide-react";
 import { sendContractForEvent } from "@/actions/esign-contract";
@@ -8,12 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAsyncAction } from "@/hooks/use-async-action";
 import { formatContratStatutLabel } from "@/lib/contrat-display";
-import {
-  type ContratStatut,
-} from "@/lib/types";
+import { getEventCopy } from "@/lib/event-copy";
+import { type ContratStatut } from "@/lib/types";
 
 export function SendContractButton({
   eventId,
+  typeEvenement,
   coupleEmail,
   contratStatut,
   contratEnvoyeAt,
@@ -23,6 +23,7 @@ export function SendContractButton({
   hasCustomTemplate,
 }: {
   eventId: string;
+  typeEvenement: string;
   coupleEmail: string;
   contratStatut: ContratStatut;
   contratEnvoyeAt: string | null;
@@ -36,6 +37,7 @@ export function SendContractButton({
   const [message, setMessage] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const copy = useMemo(() => getEventCopy(typeEvenement), [typeEvenement]);
 
   const canSend =
     contratStatut === "non_envoye" ||
@@ -52,7 +54,8 @@ export function SendContractButton({
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-slate-600">
-          Envoie le contrat aux deux mariés pour signature électronique.
+          Envoie le {copy.contractType} à {copy.bothSigners} pour signature
+          électronique.
           {!hasCustomTemplate && (
             <span className="mt-1 block text-amber-700">
               Modèle démo Venqor — uploadez votre PDF dans Paramètres → Contrat.
@@ -60,7 +63,7 @@ export function SendContractButton({
           )}
           {!coupleEmail && (
             <span className="mt-1 block text-amber-700">
-              Renseignez l&apos;email du couple dans le dossier.
+              Renseignez l&apos;email de {copy.clientReference} dans le dossier.
             </span>
           )}
         </p>
@@ -86,8 +89,8 @@ export function SendContractButton({
           <p className="text-xs text-slate-500">
             {contratSignaturesDone > 0 &&
             contratSignaturesDone < contratSignaturesTotal
-              ? `${contratSignaturesDone} marié(e) sur ${contratSignaturesTotal} a signé — en attente de l'autre signature.`
-              : "Signable a envoyé les liens de signature par email aux deux mariés."}
+              ? `${contratSignaturesDone} ${copy.signerSingular} sur ${contratSignaturesTotal} a signé — en attente de l'autre signature.`
+              : `Signable a envoyé les liens de signature par email à ${copy.bothSigners}.`}
           </p>
         )}
 
@@ -109,11 +112,11 @@ export function SendContractButton({
                 if (result.ok) {
                   if (result.depositEmailSent) {
                     setMessage(
-                      "Contrat envoyé — email acompte envoyé au couple.",
+                      `Contrat envoyé — email acompte envoyé à ${copy.clientReference}.`,
                     );
                   } else {
                     setMessage(
-                      "Contrat envoyé — les mariés recevront un email Signable.",
+                      `Contrat envoyé — ${copy.clientsReference} recevront un email Signable.`,
                     );
                   }
                   if (result.depositEmailWarning) {

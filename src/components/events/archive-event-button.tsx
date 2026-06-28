@@ -1,5 +1,6 @@
 "use client";
 
+import { NEUTRAL_COPY } from "@/lib/event-copy";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Archive, ArchiveRestore } from "lucide-react";
@@ -76,8 +77,7 @@ export function ArchiveEventButton({
         <div>
           <p className="text-sm font-medium text-slate-900">Archiver le dossier</p>
           <p className="mt-1 text-sm text-slate-600">
-            Pour un prospect perdu ou une demande abandonnée. Le créneau redevient
-            disponible au calendrier.
+            {NEUTRAL_COPY.archiveHint}
           </p>
         </div>
         {!confirmArchive ? (

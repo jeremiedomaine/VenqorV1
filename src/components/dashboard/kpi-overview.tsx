@@ -7,6 +7,7 @@ import {
   Users,
 } from "lucide-react";
 import type { DashboardStats } from "@/lib/dashboard-stats";
+import { NEUTRAL_COPY } from "@/lib/event-copy";
 import { cn, formatCurrency, formatCurrencyCompact, formatDate } from "@/lib/utils";
 
 function KpiTile({
@@ -104,7 +105,7 @@ export function KpiOverview({ stats }: { stats: DashboardStats }) {
           href="/pilotage"
         />
         <KpiTile
-          label="Prochain mariage"
+          label="Prochain événement"
           value={
             stats.nextWedding
               ? stats.nextWedding.daysUntil === 0
@@ -117,7 +118,7 @@ export function KpiOverview({ stats }: { stats: DashboardStats }) {
           detail={
             stats.nextWedding
               ? `${stats.nextWedding.nom} · ${formatDate(stats.nextWedding.date)}`
-              : "Aucun mariage confirmé à venir"
+              : "Aucun événement confirmé à venir"
           }
           icon={CalendarHeart}
           accent="indigo"
@@ -130,7 +131,7 @@ export function KpiOverview({ stats }: { stats: DashboardStats }) {
           detail={
             stats.yearDetail.booked.count > 0
               ? `${stats.yearDetail.booked.count} dossier${stats.yearDetail.booked.count > 1 ? "s" : ""} · dont ${stats.yearDetail.closed.count} clôturé${stats.yearDetail.closed.count > 1 ? "s" : ""}`
-              : `${stats.pipeline.count} prospect${stats.pipeline.count > 1 ? "s" : ""} en cours`
+              : NEUTRAL_COPY.demandesEnCours(stats.pipeline.count)
           }
           icon={Users}
           accent="emerald"

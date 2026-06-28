@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAsyncAction } from "@/hooks/use-async-action";
+import { NEUTRAL_COPY } from "@/lib/event-copy";
 import { billingFromWorkspace, type WorkspaceBilling } from "@/lib/billing";
 
 export function BillingSettingsForm({
@@ -117,7 +118,7 @@ export function BillingSettingsForm({
             />
           </div>
           <div className="space-y-2">
-            <Label>Échéance (jours vs date du mariage)</Label>
+            <Label>{NEUTRAL_COPY.billingSoldeLabel}</Label>
             <Input
               type="number"
               value={billing.facturation_solde_jours}
@@ -128,9 +129,7 @@ export function BillingSettingsForm({
                 )
               }
             />
-            <p className="text-xs text-slate-500">
-              Ex. -30 = 30 jours avant le mariage
-            </p>
+            <p className="text-xs text-slate-500">{NEUTRAL_COPY.billingSoldeHint}</p>
           </div>
         </div>
       </div>

@@ -9,7 +9,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Venqor — Gestion de lieux de réception",
-  description: "CRM et portail mariés pour domaines et châteaux",
+  description: "CRM et portail client pour domaines et lieux de réception",
 };
 
 export default function RootLayout({

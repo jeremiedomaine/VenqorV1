@@ -20,7 +20,7 @@ export const DEFAULT_PAYMENT_EMAIL_SUBJECT =
 
 export const DEFAULT_PAYMENT_EMAIL_INTRO = `Bonjour {couple},
 
-Votre mariage chez {domaine} approche. Merci de régler votre {libelle} ({montant}) via le lien sécurisé ci-dessous.`;
+Votre événement chez {domaine} approche. Merci de régler votre {libelle} ({montant}) via le lien sécurisé ci-dessous.`;
 
 export const DEFAULT_ACOMPTE_EMAIL_SUBJECT =
   "{domaine} — Règlement de votre acompte";
@@ -89,7 +89,7 @@ export const PAYMENT_EMAIL_VARIABLES = [
   { key: "{couple}", label: "Nom du couple" },
   { key: "{montant}", label: "Montant" },
   { key: "{libelle}", label: "Libellé échéance" },
-  { key: "{lien_paiement}", label: "Lien page couple" },
+  { key: "{lien_paiement}", label: "Lien page client" },
   { key: "{contact_domaine}", label: "Email contact domaine" },
 ] as const;
 

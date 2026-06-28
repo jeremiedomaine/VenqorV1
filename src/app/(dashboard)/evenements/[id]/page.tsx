@@ -175,12 +175,14 @@ export default async function EventDetailPage({
 
           <EventPortalLink
             portalToken={typedEvent.portal_token}
+            typeEvenement={typedEvent.type_evenement}
             show={showPortalLink}
           />
 
           {isOption && (
             <SendContractButton
               eventId={event.id}
+              typeEvenement={typedEvent.type_evenement}
               coupleEmail={typedEvent.email}
               contratStatut={typedEvent.contrat_statut ?? "non_envoye"}
               contratEnvoyeAt={typedEvent.contrat_envoye_at ?? null}
@@ -194,6 +196,7 @@ export default async function EventDetailPage({
           {showDepositEmail && (
             <SendDepositRequestButton
               eventId={event.id}
+              typeEvenement={typedEvent.type_evenement}
               coupleEmail={typedEvent.email}
               hasPendingDeposit
               paymentId={depositPayment?.id}
@@ -205,6 +208,7 @@ export default async function EventDetailPage({
 
           <SendPaymentRequestButton
             eventId={event.id}
+            typeEvenement={typedEvent.type_evenement}
             coupleEmail={typedEvent.email}
             hasPendingPayment={showPaymentEmail}
             paymentId={soldePayment?.id}

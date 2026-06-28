@@ -13,6 +13,7 @@ import {
   SettingsInfoBox,
   SettingsSection,
 } from "@/components/parametres/settings-section";
+import { NEUTRAL_COPY } from "@/lib/event-copy";
 import { billingFromWorkspace } from "@/lib/billing";
 import { getContratReadiness } from "@/lib/contrat-status";
 import { encaissementsFromWorkspace } from "@/lib/payment-utils";
@@ -108,14 +109,11 @@ export default async function ParametresPage() {
         <SettingsSection
           id="encaissements"
           title="Encaissements"
-          description="Mode de paiement par défaut et coordonnées bancaires affichées sur la page couple."
+          description={NEUTRAL_COPY.settingsPortalPage}
         >
           <div className="space-y-6">
             <SettingsInfoBox title="Bon à savoir">
-              <p>
-                Le couple déclare son paiement sur la page couple ; vous
-                confirmez ou rejetez depuis le dossier.
-              </p>
+              <p>{NEUTRAL_COPY.settingsPortalDeclare}</p>
             </SettingsInfoBox>
             <EncaissementsSettingsForm encaissements={encaissements} />
           </div>
@@ -127,7 +125,7 @@ export default async function ParametresPage() {
           description={
             showContratSetup
               ? "Configuration interne Venqor — modèle et signatures pour ce domaine."
-              : "Signature électronique du contrat de mariage via Signable."
+              : NEUTRAL_COPY.settingsContractDescription
           }
         >
           <div className="space-y-6">
@@ -135,9 +133,8 @@ export default async function ParametresPage() {
               <>
                 <SettingsInfoBox title="Bon à savoir">
                   <p>
-                    Votre contrat type est préparé avec l&apos;équipe Venqor.
-                    Depuis un dossier en date bloquée, utilisez « Envoyer le
-                    contrat » — les deux mariés signent en ligne.
+                    Votre contrat type est préparé avec l&apos;équipe Venqor.{" "}
+                    {NEUTRAL_COPY.settingsContractIntro}
                   </p>
                 </SettingsInfoBox>
                 <ContratDomainStatus status={contratStatus} />
@@ -163,7 +160,7 @@ export default async function ParametresPage() {
           <div className="space-y-6">
             <SettingsInfoBox>
               <p>
-                Utilisés à la création d&apos;un prospect. Supprimer un type
+                Utilisés à la création d&apos;une demande. Supprimer un type
                 personnalisé ne supprime pas les dossiers existants qui
                 l&apos;utilisent.
               </p>

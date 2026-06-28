@@ -44,9 +44,7 @@ function DeltaBadge({
 function MonthlyCalendar({ yearDetail }: { yearDetail: YearDetail }) {
   const maxCount = Math.max(
     1,
-    ...yearDetail.monthly.map(
-      (m) => m.confirmedActiveCount + m.closedCount + m.optionCount,
-    ),
+    ...yearDetail.monthly.map((m) => m.engagedCount),
   );
 
   return (
@@ -78,8 +76,7 @@ function MonthlyCalendar({ yearDetail }: { yearDetail: YearDetail }) {
 
       <div className="mt-6 grid h-32 grid-cols-12 items-end gap-1.5 sm:gap-2">
         {yearDetail.monthly.map((slot) => {
-          const bookedCount = slot.confirmedActiveCount + slot.closedCount;
-          const total = bookedCount + slot.optionCount;
+          const total = slot.engagedCount;
           const barHeight =
             total > 0 ? Math.max(16, (total / maxCount) * 100) : 4;
 
@@ -129,6 +126,11 @@ function MonthlyCalendar({ yearDetail }: { yearDetail: YearDetail }) {
               <span className="text-[10px] font-medium text-slate-500 sm:text-xs">
                 {slot.label}
               </span>
+              {slot.engagedRevenue > 0 && (
+                <span className="text-[9px] font-semibold tabular-nums text-slate-700 sm:text-[10px]">
+                  {formatCurrencyCompact(slot.engagedRevenue)}
+                </span>
+              )}
             </div>
           );
         })}
@@ -158,7 +160,7 @@ function YearPipelineBreakdown({ yearDetail }: { yearDetail: YearDetail }) {
       color: "bg-amber-400",
     },
     {
-      label: "Prospects datés",
+      label: "Demandes datées",
       count: yearDetail.prospect.count,
       value: yearDetail.prospect.revenue,
       color: "bg-slate-300",
@@ -177,7 +179,7 @@ function YearPipelineBreakdown({ yearDetail }: { yearDetail: YearDetail }) {
 
       {total === 0 ? (
         <p className="mt-6 text-sm text-slate-500">
-          Aucun dossier daté pour cette année. Les prospects sans date
+          Aucun dossier daté pour cette année. Les demandes sans date
           n&apos;apparaissent pas ici.
         </p>
       ) : (
@@ -262,7 +264,7 @@ function MultiYearProjection({
               <th className="px-5 py-2.5 font-medium text-right">
                 {EVENT_STATUS_LABELS.option}
               </th>
-              <th className="px-5 py-2.5 font-medium text-right">Prospects</th>
+              <th className="px-5 py-2.5 font-medium text-right">Demandes</th>
               <th className="px-5 py-2.5 font-medium text-right">Encaissé</th>
               <th className="px-5 py-2.5 font-medium text-right">Reste</th>
             </tr>
@@ -301,8 +303,8 @@ function MultiYearProjection({
                     : "—"}
                 </td>
                 <td className="px-5 py-3 text-right tabular-nums text-slate-600">
-                  {row.optionCount > 0
-                    ? `${row.optionCount} · ${formatCurrencyCompact(row.optionRevenue)}`
+                  {row.engagedCount > 0
+                    ? `${row.engagedCount} · ${formatCurrencyCompact(row.engagedRevenue)}`
                     : "—"}
                 </td>
                 <td className="px-5 py-3 text-right tabular-nums text-slate-600">
@@ -392,7 +394,7 @@ function GlobalPipelineSnapshot({ stats }: { stats: DashboardStats }) {
       </div>
       {totalActive === 0 && stats.closedCount === 0 && (
         <p className="mt-3 text-sm text-slate-500">
-          Aucun dossier actif — commencez par ajouter un prospect.
+          Aucun dossier actif — commencez par ajouter une demande.
         </p>
       )}
     </div>
@@ -444,11 +446,11 @@ export function KpiPilotage({
           />
           <KpiCard
             label={EVENT_STATUS_LABELS.option}
-            value={String(yearDetail.option.count)}
+            value={String(yearDetail.engaged.count)}
             sub={
-              yearDetail.option.revenue > 0
-                ? `${formatCurrencyCompact(yearDetail.option.revenue)} — acompte en attente`
-                : "Dates réservées, acompte non reçu"
+              yearDetail.engaged.revenue > 0
+                ? `${formatCurrencyCompact(yearDetail.engaged.revenue)} — date bloquée, confirmés et clôturés`
+                : "Aucun dossier engagé cette année"
             }
             icon={CalendarRange}
             accent="amber"
@@ -463,7 +465,7 @@ export function KpiPilotage({
           <KpiCard
             label={`Reste à encaisser ${stats.selectedYear}`}
             value={formatCurrencyCompact(yearDetail.collections.pending)}
-            sub="Sur dossiers date bloquée & confirmés"
+            sub="Sur dossiers engagés (date bloquée et au-delà)"
             icon={CircleDollarSign}
             accent={
               yearDetail.collections.pending > 0 ? "amber" : "slate"

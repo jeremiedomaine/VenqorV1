@@ -509,7 +509,7 @@ export function OnboardingModal({
               <StepHeader
                 step="iban"
                 title="Sur quel IBAN recevoir les acomptes ?"
-                description="Les mariés verront ces coordonnées sur leur espace de paiement."
+                description="Les clients verront ces coordonnées sur leur espace de paiement."
               />
               <form onSubmit={submitIban} className="space-y-4 px-6 py-5">
                 <div className="space-y-2">
@@ -547,7 +547,7 @@ export function OnboardingModal({
               <StepHeader
                 step="domain"
                 title="Quel est le nom de votre domaine ?"
-                description="Ce nom apparaîtra sur vos portails mariés et vos emails."
+                description="Ce nom apparaîtra sur vos portails clients et vos emails."
               />
               <form onSubmit={submitDomain} className="space-y-4 px-6 py-5">
                 <div className="space-y-2">
@@ -583,7 +583,7 @@ export function OnboardingModal({
                   <div className="flex items-start gap-2">
                     <FileCheck className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
                     <p>
-                      Les deux mariés signent en ligne via Signable. Vous serez
+                      Les signataires signent en ligne via Signable. Vous serez
                       notifié une fois le contrat signé.
                     </p>
                   </div>

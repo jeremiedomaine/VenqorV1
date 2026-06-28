@@ -7,10 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { isDateBlocked } from "@/lib/calendar-events";
-import {
-  isMariageType,
-  listEventTypeOptions,
-} from "@/lib/event-types";
+import { getEventCopy } from "@/lib/event-copy";
+import { listEventTypeOptions } from "@/lib/event-types";
 import type { WorkspaceBilling } from "@/lib/billing";
 import {
   type CustomEventType,
@@ -70,12 +68,12 @@ export function EventFormFields({
     billing &&
     `${billing.facturation_acompte_label} ${billing.facturation_acompte_pct} % · ${billing.facturation_solde_label} ${billing.facturation_solde_pct} %`;
 
-  const personLabels = useMemo(() => {
-    if (isMariageType(type)) {
-      return { p1: "Marié(e) 1", p2: "Marié(e) 2" };
-    }
-    return { p1: "Contact 1", p2: "Contact 2" };
-  }, [type]);
+  const copy = useMemo(() => getEventCopy(type), [type]);
+
+  const personLabels = useMemo(
+    () => ({ p1: copy.person1, p2: copy.person2 }),
+    [copy],
+  );
 
   return (
     <div className="space-y-6">
@@ -121,7 +119,7 @@ export function EventFormFields({
           id="nom_evenement"
           name="nom_evenement"
           defaultValue={event?.nom_evenement ?? ""}
-          placeholder="Ex : Mariage Laura & Mehdi"
+          placeholder={copy.eventNamePlaceholder}
         />
         <p className="text-xs text-slate-500">
           Laissé vide : généré automatiquement à partir des contacts.
@@ -130,7 +128,7 @@ export function EventFormFields({
 
       <fieldset className="space-y-4 rounded-lg border border-slate-100 bg-slate-50/50 p-4">
         <legend className="px-1 text-sm font-medium text-slate-700">
-          {type === "mariage" ? "Les mariés" : "Les contacts"}
+          {copy.clientsSection}
         </legend>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-3">
@@ -185,7 +183,7 @@ export function EventFormFields({
         <div className="space-y-2 sm:col-span-2">
           <p className="text-sm font-medium text-slate-800">Coordonnées</p>
           <p className="text-xs text-slate-500">
-            Email et téléphone pour contacter le couple.
+            {copy.coordinateHint}
           </p>
         </div>
         <div className="space-y-2">

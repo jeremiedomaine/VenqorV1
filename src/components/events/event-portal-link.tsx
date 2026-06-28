@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getEventCopy } from "@/lib/event-copy";
 import { Check, Copy, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -20,12 +21,15 @@ function portalBaseUrl(): string {
 
 export function EventPortalLink({
   portalToken,
+  typeEvenement,
   show,
 }: {
   portalToken: string;
+  typeEvenement: string;
   show: boolean;
 }) {
   const [copied, setCopied] = useState(false);
+  const copy = getEventCopy(typeEvenement);
 
   if (!show) return null;
 
@@ -44,12 +48,12 @@ export function EventPortalLink({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Page couple</CardTitle>
+        <CardTitle className="text-base">{copy.portalPageTitle}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-slate-600">
-          Lien privé pour consulter l&apos;échéancier et déclarer un virement.
-          Partagez-le au couple par email ou message.
+          Lien privé pour consulter l&apos;échéancier et déclarer un virement.{" "}
+          {copy.portalShareHint}
         </p>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Input readOnly value={portalUrl} className="font-mono text-xs" />

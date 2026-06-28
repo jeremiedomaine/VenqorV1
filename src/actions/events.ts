@@ -342,10 +342,10 @@ export async function blockEventDate(
   if (!event) return { error: "Événement introuvable" };
   if (event.archived_at) return { error: "Dossier archivé" };
   if (event.statut !== "prospect") {
-    return { error: "Seuls les prospects peuvent bloquer une date" };
+    return { error: "Seules les demandes en cours peuvent bloquer une date" };
   }
   if (!event.date_debut) {
-    return { error: "Renseignez une date de mariage avant de bloquer" };
+    return { error: "Renseignez une date d'événement avant de bloquer" };
   }
 
   const blockingEvents = await loadBlockingEvents(supabase, workspaceId);

@@ -98,7 +98,6 @@ export async function sendDepositPaymentRequest(params: {
     payment = pickAcomptePayment(
       (payments ?? []) as PaymentRow[],
       billing.facturation_acompte_label,
-      billing.facturation_solde_label,
     );
   }
 

@@ -18,11 +18,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { billingFromWorkspace } from "@/lib/billing";
 import {
   isWithinSoldeWindow,
-  paymentMatchesLabel,
   pickAcomptePayment,
   pickSoldePayment,
   soldeWindowDaysFromWorkspace,
 } from "@/lib/payment-schedule";
+import { getBalancePayment } from "@/lib/event-pipeline";
 import { createClient } from "@/lib/supabase/server";
 import { getEventTypeLabel } from "@/lib/event-types";
 import { loadWorkspace } from "@/lib/load-workspace";
@@ -67,11 +67,7 @@ export default async function EventDetailPage({
     : 30;
 
   const depositPayment = billing
-    ? pickAcomptePayment(
-        paymentList,
-        billing.facturation_acompte_label,
-        billing.facturation_solde_label,
-      )
+    ? pickAcomptePayment(paymentList, billing.facturation_acompte_label)
     : paymentList.length > 0
       ? [...paymentList].sort((a, b) => {
           if (!a.date_echeance) return 1;
@@ -79,23 +75,10 @@ export default async function EventDetailPage({
           return a.date_echeance.localeCompare(b.date_echeance);
         })[0]
       : null;
+  const balancePayment = getBalancePayment(paymentList, depositPayment ?? null);
   const soldePayment = billing
-    ? pickSoldePayment(
-        paymentList,
-        billing.facturation_solde_label,
-        billing.facturation_acompte_label,
-      )
-    : pickSoldePayment(paymentList);
-  const depositPaid =
-    Number(event.prix_total) <= 0 ||
-    paymentList.some(
-      (p) =>
-        p.statut === "paye" &&
-        (!billing ||
-          paymentMatchesLabel(p.label, billing.facturation_acompte_label)),
-    );
-  const hasDepositReady =
-    depositPaid || (isOption && paymentList.length > 0);
+    ? pickSoldePayment(paymentList, billing.facturation_solde_label)
+    : balancePayment;
   const withinSoldeWindow = isWithinSoldeWindow(
     event.date_debut,
     soldeWindowDays,
@@ -148,7 +131,7 @@ export default async function EventDetailPage({
         <div className="lg:shrink-0">
           <EventPipelineStepper
             event={typedEvent}
-            hasDepositPayment={hasDepositReady}
+            hasDepositPayment={Boolean(depositPayment)}
           />
         </div>
       </div>

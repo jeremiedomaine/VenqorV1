@@ -52,7 +52,7 @@ export function CloseDossierButton({
             {prixTotal <= 0
               ? "Marquer le dossier comme terminé — il sortira du pipeline actif."
               : balancePayment
-                ? `Marquer le ${balancePayment.label.toLowerCase()} (${formatCurrency(Number(balancePayment.montant))}) comme payé et clôturer.`
+                ? `Marquer le solde (${balancePayment.label}, ${formatCurrency(Number(balancePayment.montant))}) comme payé et clôturer.`
                 : "Tous les paiements sont réglés — vous pouvez clôturer le dossier."}
           </p>
         </div>
@@ -63,7 +63,11 @@ export function CloseDossierButton({
           className="shrink-0 gap-2"
         >
           <CircleCheck className="h-4 w-4" />
-          {pending ? "En cours…" : balancePayment ? `${balancePayment.label} payé — clôturer` : "Clôturer le dossier"}
+          {pending
+            ? "En cours…"
+            : balancePayment
+              ? `${balancePayment.label} payé — clôturer`
+              : "Clôturer le dossier"}
         </Button>
       </div>
     </div>

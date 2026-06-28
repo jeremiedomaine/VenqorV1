@@ -4,7 +4,10 @@ export type AuthErrorCode =
   | "weak_password"
   | "invalid_email"
   | "invite_invalid"
-  | "signup_failed";
+  | "signup_failed"
+  | "password_mismatch"
+  | "reset_failed"
+  | "session_expired";
 
 export function signUpErrorCode(message: string): AuthErrorCode {
   const m = message.toLowerCase();
@@ -41,6 +44,12 @@ const SIGNUP_MESSAGES: Record<AuthErrorCode, string> = {
     "Code d'invitation invalide. Venqor est en accès privé — contactez-nous pour obtenir un code.",
   signup_failed:
     "Impossible de créer le compte. Vérifiez vos informations ou réessayez.",
+  password_mismatch:
+    "Les mots de passe ne correspondent pas ou sont trop courts (6 caractères minimum).",
+  reset_failed:
+    "Impossible de mettre à jour le mot de passe. Réessayez ou demandez un nouveau lien.",
+  session_expired:
+    "Ce lien a expiré. Demandez un nouveau email de réinitialisation.",
 };
 
 export function authErrorMessage(code: string | undefined): string | null {

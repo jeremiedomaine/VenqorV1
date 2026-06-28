@@ -34,7 +34,8 @@ export async function updateSession(request: NextRequest) {
 
   const isAuthPage =
     request.nextUrl.pathname.startsWith("/login") ||
-    request.nextUrl.pathname.startsWith("/signup");
+    request.nextUrl.pathname.startsWith("/signup") ||
+    request.nextUrl.pathname.startsWith("/forgot-password");
   const isPublic =
     request.nextUrl.pathname.startsWith("/portail") ||
     request.nextUrl.pathname.startsWith("/auth") ||

@@ -1,17 +1,28 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { VenqorLogo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signIn } from "@/actions/auth";
+import { updatePassword } from "@/actions/auth";
 import { authErrorMessage } from "@/lib/auth-errors";
+import { createClient } from "@/lib/supabase/server";
 
-export default function LoginPage({
+export default async function ResetPasswordPage({
   searchParams,
 }: {
   searchParams: { error?: string };
 }) {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/forgot-password?error=session_expired");
+  }
+
   const errorMessage = authErrorMessage(searchParams.error);
 
   return (
@@ -20,40 +31,35 @@ export default function LoginPage({
         <CardHeader className="space-y-4 text-center">
           <VenqorLogo className="mx-auto text-2xl" />
           <CardTitle className="text-xl font-semibold text-slate-900">
-            Connexion
+            Nouveau mot de passe
           </CardTitle>
           <p className="text-sm text-slate-500">
-            Accédez à votre espace gérant
+            Choisissez un mot de passe pour{" "}
+            <span className="font-medium text-slate-700">{user.email}</span>
           </p>
         </CardHeader>
         <CardContent>
-          <form action={signIn} className="space-y-4">
+          <form action={updatePassword} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                required
-                placeholder="vous@domaine.fr"
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Mot de passe</Label>
-                <Link
-                  href="/forgot-password"
-                  className="text-xs font-medium text-[#4F46E5] hover:underline"
-                >
-                  Mot de passe oublié ?
-                </Link>
-              </div>
+              <Label htmlFor="password">Nouveau mot de passe</Label>
               <Input
                 id="password"
                 name="password"
                 type="password"
                 required
                 minLength={6}
+                autoComplete="new-password"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password_confirm">Confirmer le mot de passe</Label>
+              <Input
+                id="password_confirm"
+                name="password_confirm"
+                type="password"
+                required
+                minLength={6}
+                autoComplete="new-password"
               />
             </div>
             {errorMessage && (
@@ -62,13 +68,15 @@ export default function LoginPage({
               </p>
             )}
             <Button type="submit" className="w-full">
-              Se connecter
+              Enregistrer
             </Button>
           </form>
           <p className="mt-6 text-center text-sm text-slate-500">
-            Pas encore de compte ?{" "}
-            <Link href="/signup" className="font-medium text-[#4F46E5] hover:underline">
-              Créer un espace
+            <Link
+              href="/login"
+              className="font-medium text-[#4F46E5] hover:underline"
+            >
+              Retour à la connexion
             </Link>
           </p>
         </CardContent>

@@ -16,6 +16,7 @@ import {
   type RelanceDeclencheur,
   type RelanceRegle,
 } from "@/lib/relance-presets";
+import { ensureDefaultRelanceRules } from "@/lib/load-relance-rules";
 import { createServiceClient } from "@/lib/supabase/service";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -139,6 +140,8 @@ export async function processRelanceEmails(): Promise<RelanceCronResult> {
   }
 
   for (const workspace of (workspaces ?? []) as WorkspaceRow[]) {
+    await ensureDefaultRelanceRules(supabase, workspace.id);
+
     const { data: rules, error: rulesError } = await supabase
       .from("relance_regles")
       .select("*")

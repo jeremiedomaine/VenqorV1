@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 
 export const SETTINGS_NAV_SECTIONS = [
   { id: "apercu", label: "Vue d'ensemble" },
+  { id: "domaine", label: "Contact" },
   { id: "objectifs", label: "Objectifs" },
   { id: "facturation", label: "Facturation" },
   { id: "encaissements", label: "Encaissements" },

@@ -12,9 +12,11 @@ import {
   loadContractPdfForEvent,
 } from "@/lib/contrat-template";
 import { ContratPdfConvertError } from "@/lib/contrat-pdf-convert";
+import { getContratReadiness } from "@/lib/contrat-status";
 import { getEventCopy } from "@/lib/event-copy";
 import { syncAutoPayments } from "@/lib/sync-payments";
 import { createServiceClient } from "@/lib/supabase/service";
+import type { Workspace } from "@/lib/types";
 
 function trimName(value: string | null | undefined, fallback: string) {
   const trimmed = value?.trim();
@@ -80,6 +82,13 @@ export async function sendContractForEvent(
     .single();
 
   if (!workspace) return { error: "Workspace introuvable" };
+
+  const contratReadiness = getContratReadiness(workspace as Workspace);
+  if (!contratReadiness.ready) {
+    return {
+      error: `${contratReadiness.label} — ${contratReadiness.detail}`,
+    };
+  }
 
   const { data: payments } = await supabase
     .from("payments")

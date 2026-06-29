@@ -25,6 +25,7 @@ import {
 import { getBalancePayment } from "@/lib/event-pipeline";
 import { createClient } from "@/lib/supabase/server";
 import { getEventTypeLabel } from "@/lib/event-types";
+import { getContratReadiness } from "@/lib/contrat-status";
 import { loadWorkspace } from "@/lib/load-workspace";
 import {
   EVENT_STATUS_LABELS,
@@ -79,6 +80,8 @@ export default async function EventDetailPage({
   const soldePayment = billing
     ? pickSoldePayment(paymentList, billing.facturation_solde_label)
     : balancePayment;
+  const unpaidPayment =
+    paymentList.find((p) => p.statut !== "paye") ?? null;
   const withinSoldeWindow = isWithinSoldeWindow(
     event.date_debut,
     soldeWindowDays,
@@ -152,7 +155,7 @@ export default async function EventDetailPage({
         <CloseDossierButton
           eventId={event.id}
           prixTotal={Number(event.prix_total)}
-          balancePayment={soldePayment ?? null}
+          balancePayment={unpaidPayment}
           hasPaymentSchedule={paymentList.length > 0}
         />
       )}
@@ -189,7 +192,9 @@ export default async function EventDetailPage({
               contratSigneAt={typedEvent.contrat_signe_at ?? null}
               contratSignaturesDone={typedEvent.contrat_signatures_done ?? 0}
               contratSignaturesTotal={typedEvent.contrat_signatures_total ?? 2}
-              hasCustomTemplate={Boolean(workspace?.contrat_template_path)}
+              contratReady={
+                workspace ? getContratReadiness(workspace).ready : false
+              }
             />
           )}
 

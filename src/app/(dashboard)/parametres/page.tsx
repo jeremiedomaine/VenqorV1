@@ -1,4 +1,5 @@
 import { BillingSettingsForm } from "@/components/parametres/billing-settings-form";
+import { DomainContactSettingsForm } from "@/components/parametres/domain-contact-settings-form";
 import { ContratDomainStatus } from "@/components/parametres/contrat-domain-status";
 import { ContratTemplateForm } from "@/components/parametres/contrat-template-form";
 import { EncaissementsSettingsForm } from "@/components/parametres/encaissements-settings-form";
@@ -67,6 +68,26 @@ export default async function ParametresPage() {
         <section id="apercu" className="scroll-mt-24 lg:scroll-mt-8">
           <SettingsOverview workspace={workspace} setup={setup} />
         </section>
+
+        <SettingsSection
+          id="domaine"
+          title="Contact du domaine"
+          description="Email et coordonnées affichées sur le portail client et utilisées pour vos notifications."
+        >
+          <div className="space-y-6">
+            <SettingsInfoBox title="Bon à savoir">
+              <p>
+                Cet email reçoit les alertes quand un client déclare un virement
+                et sert d&apos;adresse de réponse sur les emails automatiques.
+              </p>
+            </SettingsInfoBox>
+            <DomainContactSettingsForm
+              contactEmail={workspace.contact_email}
+              contactNom={workspace.contact_nom}
+              contactTelephone={workspace.contact_telephone}
+            />
+          </div>
+        </SettingsSection>
 
         <SettingsSection
           id="objectifs"

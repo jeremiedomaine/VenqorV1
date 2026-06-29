@@ -289,7 +289,7 @@ export async function closeEventDossier(
   if (prixTotal > 0) {
     const { data: payments } = await supabase
       .from("payments")
-      .select("id, statut")
+      .select("id, statut, label")
       .eq("event_id", eventId)
       .eq("workspace_id", workspaceId);
 
@@ -299,16 +299,10 @@ export async function closeEventDossier(
 
     const unpaid = payments.filter((p) => p.statut !== "paye");
     if (unpaid.length > 0) {
-      const { error: payError } = await supabase
-        .from("payments")
-        .update({ statut: "paye" })
-        .in(
-          "id",
-          unpaid.map((p) => p.id),
-        )
-        .eq("workspace_id", workspaceId);
-
-      if (payError) return { error: payError.message };
+      const labels = unpaid.map((p) => p.label).join(", ");
+      return {
+        error: `Impossible de clôturer : ${unpaid.length} paiement${unpaid.length > 1 ? "s" : ""} non réglé${unpaid.length > 1 ? "s" : ""} (${labels}). Marquez-les comme payés ou confirmez les virements déclarés.`,
+      };
     }
   }
 

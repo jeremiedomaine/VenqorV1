@@ -35,12 +35,13 @@ export function CloseDossierButton({
         setError(result.error);
         return;
       }
-      setSuccess("Dossier clôturé — solde enregistré, suivi actif terminé.");
+      setSuccess("Dossier clôturé — suivi actif terminé.");
       router.refresh();
     });
   }
 
   const needsSchedule = prixTotal > 0 && !hasPaymentSchedule;
+  const hasUnpaidBalance = Boolean(balancePayment);
 
   return (
     <div className="rounded-lg border border-indigo-200/80 bg-indigo-50/40 p-4">
@@ -51,23 +52,19 @@ export function CloseDossierButton({
           <p className="mt-1 text-sm text-slate-600">
             {prixTotal <= 0
               ? "Marquer le dossier comme terminé — il sortira du pipeline actif."
-              : balancePayment
-                ? `Marquer le solde (${balancePayment.label}, ${formatCurrency(Number(balancePayment.montant))}) comme payé et clôturer.`
+              : hasUnpaidBalance && balancePayment
+                ? `Réglez d'abord ${balancePayment.label} (${formatCurrency(Number(balancePayment.montant))}) dans l'échéancier ci-dessous, puis clôturez.`
                 : "Tous les paiements sont réglés — vous pouvez clôturer le dossier."}
           </p>
         </div>
         <Button
           type="button"
           onClick={handleClick}
-          disabled={pending || needsSchedule}
+          disabled={pending || needsSchedule || hasUnpaidBalance}
           className="shrink-0 gap-2"
         >
           <CircleCheck className="h-4 w-4" />
-          {pending
-            ? "En cours…"
-            : balancePayment
-              ? `${balancePayment.label} payé — clôturer`
-              : "Clôturer le dossier"}
+          {pending ? "En cours…" : "Clôturer le dossier"}
         </Button>
       </div>
     </div>

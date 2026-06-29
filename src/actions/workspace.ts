@@ -94,6 +94,38 @@ export async function updateWorkspaceGoals(
   return {};
 }
 
+export async function updateWorkspaceContact(
+  formData: FormData,
+): Promise<{ error?: string }> {
+  const { workspaceId, supabase } = await requireWorkspaceClient();
+
+  const contactEmail = String(formData.get("contact_email") ?? "").trim();
+  const contactNom = String(formData.get("contact_nom") ?? "").trim();
+  const contactTelephone = String(formData.get("contact_telephone") ?? "").trim();
+
+  if (!contactEmail) {
+    return { error: "Renseignez l'email de contact du domaine." };
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+    return { error: "Format d'email invalide." };
+  }
+
+  const { error } = await supabase
+    .from("workspaces")
+    .update({
+      contact_email: contactEmail,
+      contact_nom: contactNom,
+      contact_telephone: contactTelephone,
+    })
+    .eq("id", workspaceId);
+
+  if (error) return { error: error.message };
+  revalidatePath("/parametres");
+  revalidatePath("/automatisations");
+  return {};
+}
+
 export async function updateWorkspaceEncaissements(
   formData: FormData,
 ): Promise<{ error?: string }> {

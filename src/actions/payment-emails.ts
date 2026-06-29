@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
 import { requireWorkspaceClient } from "@/lib/workspace-session";
 import {
   automationFromWorkspace,
@@ -12,6 +11,7 @@ import {
 import { getEventCopy } from "@/lib/event-copy";
 import { billingFromWorkspace } from "@/lib/billing";
 import { sendEmail } from "@/lib/email/send-email";
+import { createServiceClient } from "@/lib/supabase/service";
 import { emailForCouple, emailForDomain } from "@/lib/email/recipients";
 import {
   interpolateEmailTemplate,
@@ -286,7 +286,7 @@ export async function notifyPaymentDeclaredFromPortal(
   portalToken: string,
   paymentId: string,
 ): Promise<void> {
-  const supabase = createClient();
+  const supabase = createServiceClient();
 
   const { data: event } = await supabase
     .from("events")

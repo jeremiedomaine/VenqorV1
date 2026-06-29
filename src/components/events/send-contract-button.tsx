@@ -20,7 +20,7 @@ export function SendContractButton({
   contratSigneAt,
   contratSignaturesDone,
   contratSignaturesTotal,
-  hasCustomTemplate,
+  contratReady,
 }: {
   eventId: string;
   typeEvenement: string;
@@ -30,7 +30,7 @@ export function SendContractButton({
   contratSigneAt: string | null;
   contratSignaturesDone: number;
   contratSignaturesTotal: number;
-  hasCustomTemplate: boolean;
+  contratReady: boolean;
 }) {
   const router = useRouter();
   const { pending, run } = useAsyncAction();
@@ -56,9 +56,10 @@ export function SendContractButton({
         <p className="text-sm text-slate-600">
           Envoie le {copy.contractType} à {copy.bothSigners} pour signature
           électronique.
-          {!hasCustomTemplate && (
+          {!contratReady && (
             <span className="mt-1 block text-amber-700">
-              Modèle démo Venqor — uploadez votre PDF dans Paramètres → Contrat.
+              Contrat non configuré — contactez l&apos;équipe Venqor pour
+              finaliser votre modèle avant envoi.
             </span>
           )}
           {!coupleEmail && (
@@ -102,7 +103,7 @@ export function SendContractButton({
           <Button
             type="button"
             variant="outline"
-            disabled={pending || !coupleEmail}
+            disabled={pending || !coupleEmail || !contratReady}
             onClick={() =>
               void run(async () => {
                 setMessage(null);
@@ -121,13 +122,6 @@ export function SendContractButton({
                   }
                   if (result.depositEmailWarning) {
                     setWarning(result.depositEmailWarning);
-                  }
-                  if (result.usingDefaultTemplate) {
-                    setWarning(
-                      (w) =>
-                        w ??
-                        "Contrat envoyé avec le modèle démo — uploadez le vôtre dans Paramètres.",
-                    );
                   }
                   router.refresh();
                 } else {

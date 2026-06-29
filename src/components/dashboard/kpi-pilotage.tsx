@@ -42,9 +42,9 @@ function DeltaBadge({
 }
 
 function MonthlyCalendar({ yearDetail }: { yearDetail: YearDetail }) {
-  const maxCount = Math.max(
+  const maxRevenue = Math.max(
     1,
-    ...yearDetail.monthly.map((m) => m.engagedCount),
+    ...yearDetail.monthly.map((m) => m.engagedRevenue),
   );
 
   return (
@@ -55,7 +55,7 @@ function MonthlyCalendar({ yearDetail }: { yearDetail: YearDetail }) {
             Calendrier {yearDetail.year}
           </p>
           <p className="mt-1 text-sm text-slate-600">
-            Répartition des événements par mois
+            CA engagé par mois (hauteur des barres)
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 text-xs text-slate-500">
@@ -76,9 +76,9 @@ function MonthlyCalendar({ yearDetail }: { yearDetail: YearDetail }) {
 
       <div className="mt-6 grid h-32 grid-cols-12 items-end gap-1.5 sm:gap-2">
         {yearDetail.monthly.map((slot) => {
-          const total = slot.engagedCount;
+          const revenue = slot.engagedRevenue;
           const barHeight =
-            total > 0 ? Math.max(16, (total / maxCount) * 100) : 4;
+            revenue > 0 ? Math.max(16, (revenue / maxRevenue) * 100) : 4;
 
           return (
             <div
@@ -89,34 +89,34 @@ function MonthlyCalendar({ yearDetail }: { yearDetail: YearDetail }) {
                 className="relative flex w-full flex-col justify-end overflow-hidden rounded-sm bg-slate-100"
                 style={{ height: `${barHeight}%` }}
                 title={
-                  total > 0
-                    ? `${slot.label} : ${slot.optionCount} ${slot.optionCount > 1 ? "dates bloquées" : "date bloquée"}, ${slot.confirmedActiveCount} confirmé${slot.confirmedActiveCount > 1 ? "s" : ""}, ${slot.closedCount} clôturé${slot.closedCount > 1 ? "s" : ""}`
-                    : `${slot.label} : aucun événement`
+                  revenue > 0
+                    ? `${slot.label} : ${formatCurrencyCompact(revenue)} — ${slot.optionCount} date${slot.optionCount > 1 ? "s" : ""} bloquée${slot.optionCount > 1 ? "s" : ""}, ${slot.confirmedActiveCount} confirmé${slot.confirmedActiveCount > 1 ? "s" : ""}, ${slot.closedCount} clôturé${slot.closedCount > 1 ? "s" : ""}`
+                    : `${slot.label} : aucun CA engagé`
                 }
               >
-                {total > 0 && (
+                {revenue > 0 && (
                   <div className="flex h-full w-full flex-col justify-end">
-                    {slot.optionCount > 0 && (
+                    {slot.optionRevenue > 0 && (
                       <div
                         className="w-full bg-amber-400"
                         style={{
-                          height: `${(slot.optionCount / total) * 100}%`,
+                          height: `${(slot.optionRevenue / revenue) * 100}%`,
                         }}
                       />
                     )}
-                    {slot.confirmedActiveCount > 0 && (
+                    {slot.confirmedActiveRevenue > 0 && (
                       <div
                         className="w-full bg-emerald-500"
                         style={{
-                          height: `${(slot.confirmedActiveCount / total) * 100}%`,
+                          height: `${(slot.confirmedActiveRevenue / revenue) * 100}%`,
                         }}
                       />
                     )}
-                    {slot.closedCount > 0 && (
+                    {slot.closedRevenue > 0 && (
                       <div
                         className="w-full bg-blue-500"
                         style={{
-                          height: `${(slot.closedCount / total) * 100}%`,
+                          height: `${(slot.closedRevenue / revenue) * 100}%`,
                         }}
                       />
                     )}

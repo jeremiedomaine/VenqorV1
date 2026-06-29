@@ -1,14 +1,23 @@
 "use client";
 
+import { Suspense, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Archive, Bell, CalendarDays, LayoutGrid } from "lucide-react";
 import { ArchivesBoard } from "@/components/dashboard/archives-board";
 import { KanbanBoard } from "@/components/dashboard/kanban-board";
 import { PaymentNotificationsBoard } from "@/components/dashboard/payment-notifications-board";
 import { PipelineCalendar } from "@/components/dashboard/pipeline-calendar";
+import { PipelineYearSelector } from "@/components/dashboard/pipeline-year-selector";
 import { Button } from "@/components/ui/button";
 import type { PendingPaymentNotification } from "@/lib/load-pending-payment-notifications";
 import type { Event } from "@/lib/types";
+import {
+  ALL_YEARS_VALUE,
+  buildYearOptionsFromEvents,
+  filterEventsByYear,
+  parseYearFilterParam,
+  yearFilterLabel,
+} from "@/lib/year-filter";
 import { cn } from "@/lib/utils";
 
 type PipelineViewMode = "kanban" | "calendar" | "archives" | "notifs";
@@ -66,6 +75,17 @@ export function PipelineView({
   const router = useRouter();
   const searchParams = useSearchParams();
   const view = viewFromParam(searchParams.get("vue"));
+  const yearFilter = parseYearFilterParam(searchParams.get("annee"));
+  const availableYears = useMemo(
+    () => buildYearOptionsFromEvents(events),
+    [events],
+  );
+  const filteredEvents = useMemo(
+    () => filterEventsByYear(events, yearFilter),
+    [events, yearFilter],
+  );
+  const calendarFocusYear =
+    yearFilter === ALL_YEARS_VALUE ? undefined : yearFilter;
 
   function setView(next: PipelineViewMode) {
     const params = new URLSearchParams(searchParams.toString());
@@ -81,7 +101,7 @@ export function PipelineView({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100/80 p-1">
           <Button
             type="button"
@@ -146,8 +166,31 @@ export function PipelineView({
         </Button>
       </div>
 
-      {view === "kanban" && <KanbanBoard events={events} />}
-      {view === "calendar" && <PipelineCalendar events={events} />}
+      {(view === "kanban" || view === "calendar") && (
+        <Suspense
+          fallback={
+            <div className="h-10 w-64 animate-pulse rounded-lg bg-slate-100" />
+          }
+        >
+          <PipelineYearSelector
+            years={availableYears}
+            selectedFilter={yearFilter}
+          />
+        </Suspense>
+      )}
+
+      {yearFilter !== ALL_YEARS_VALUE && (view === "kanban" || view === "calendar") && (
+        <p className="text-xs text-slate-500">
+          {filteredEvents.length} dossier{filteredEvents.length !== 1 ? "s" : ""}{" "}
+          en {yearFilterLabel(yearFilter).toLowerCase()}
+          {filteredEvents.length === 0 && " — élargissez la période ou choisissez « Toutes »"}
+        </p>
+      )}
+
+      {view === "kanban" && <KanbanBoard events={filteredEvents} />}
+      {view === "calendar" && (
+        <PipelineCalendar events={filteredEvents} focusYear={calendarFocusYear} />
+      )}
       {view === "archives" && <ArchivesBoard events={archivedEvents} />}
       {view === "notifs" && (
         <PaymentNotificationsBoard notifications={paymentNotifications} />

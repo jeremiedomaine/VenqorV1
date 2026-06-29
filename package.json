@@ -11,6 +11,7 @@
     "lint": "next lint",
     "db:migrate": "tsx scripts/run-migration.ts",
     "db:seed": "tsx scripts/seed-demo-events.ts",
+    "db:setup-demo": "tsx scripts/setup-demo-account.ts",
     "prod:check": "tsx scripts/check-prod-env.ts"
   },
   "dependencies": {

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { DEFAULT_BILLING } from "@/lib/billing";
 import { actionError, type ActionResult } from "@/lib/action-result";
 import {
   parseCustomEventTypes,
@@ -14,8 +15,14 @@ export async function updateWorkspaceBilling(
 ): Promise<ActionResult> {
   const { workspaceId, supabase } = await requireWorkspaceClient();
 
-  const acomptePct = Number(formData.get("facturation_acompte_pct") || 30);
-  const soldePct = Number(formData.get("facturation_solde_pct") || 70);
+  const acomptePct = Number(
+    formData.get("facturation_acompte_pct") ||
+      DEFAULT_BILLING.facturation_acompte_pct,
+  );
+  const soldePct = Number(
+    formData.get("facturation_solde_pct") ||
+      DEFAULT_BILLING.facturation_solde_pct,
+  );
 
   if (acomptePct + soldePct !== 100) {
     return actionError("Acompte et solde doivent totaliser 100 %.");

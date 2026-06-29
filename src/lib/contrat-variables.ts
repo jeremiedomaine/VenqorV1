@@ -24,7 +24,7 @@ export const CONTRAT_VARIABLES: ContratVariableDef[] = [
   { key: "date_mariage", label: "Date du mariage", example: "14 juin 2026" },
   { key: "date_mariage_fin", label: "Date de fin", example: "15 juin 2026" },
   { key: "prix_total", label: "Montant total", example: "24 000 €" },
-  { key: "acompte_label", label: "Libellé acompte", example: "Acompte 30 %" },
+  { key: "acompte_label", label: "Libellé acompte", example: "Acompte 50 %" },
   { key: "acompte_montant", label: "Montant acompte", example: "7 200 €" },
   { key: "solde_label", label: "Libellé solde", example: "Solde" },
   { key: "solde_montant", label: "Montant solde", example: "16 800 €" },

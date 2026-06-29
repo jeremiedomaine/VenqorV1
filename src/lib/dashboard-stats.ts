@@ -20,6 +20,9 @@ export interface MonthlySlot {
   /** Date bloquée + confirmés + clôturés (pilotage). */
   engagedCount: number;
   engagedRevenue: number;
+  optionRevenue: number;
+  confirmedActiveRevenue: number;
+  closedRevenue: number;
 }
 
 export interface YearProjection {
@@ -204,6 +207,9 @@ function computeYearDetail(
       optionCount: monthSplit.option.length,
       engagedCount: monthEngaged.length,
       engagedRevenue: sumPrice(monthEngaged),
+      optionRevenue: sumPrice(monthSplit.option),
+      confirmedActiveRevenue: sumPrice(monthSplit.confirmedActive),
+      closedRevenue: sumPrice(monthSplit.closed),
     };
   });
 

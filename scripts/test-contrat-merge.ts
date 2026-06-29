@@ -24,10 +24,10 @@ async function main() {
     contact_nom: "Sophie Martin",
     contact_email: "contact@test.fr",
     contact_telephone: "05 56 00 00 00",
-    facturation_acompte_label: "Acompte 30 %",
-    facturation_acompte_pct: 30,
+    facturation_acompte_label: "Acompte 50 %",
+    facturation_acompte_pct: 50,
     facturation_solde_label: "Solde",
-    facturation_solde_pct: 70,
+    facturation_solde_pct: 50,
   };
 
   const data = buildSampleContratMergeData(workspace);

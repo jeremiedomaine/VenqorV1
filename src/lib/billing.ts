@@ -11,10 +11,10 @@ export interface WorkspaceBilling {
 
 export const DEFAULT_BILLING: WorkspaceBilling = {
   facturation_acompte_label: "Acompte",
-  facturation_acompte_pct: 30,
+  facturation_acompte_pct: 50,
   facturation_acompte_jours: 0,
   facturation_solde_label: "Solde",
-  facturation_solde_pct: 70,
+  facturation_solde_pct: 50,
   facturation_solde_jours: -30,
 };
 

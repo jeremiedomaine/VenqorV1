@@ -201,9 +201,23 @@ function CalendarEventChip({ event }: { event: Event }) {
   );
 }
 
-export function PipelineCalendar({ events }: { events: Event[] }) {
+export function PipelineCalendar({
+  events,
+  focusYear,
+}: {
+  events: Event[];
+  focusYear?: number;
+}) {
   const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(new Date()));
   const availableYears = useMemo(() => calendarYearBounds(events), [events]);
+
+  useEffect(() => {
+    if (focusYear === undefined) return;
+    setCurrentMonth((prev) => {
+      if (prev.getFullYear() === focusYear) return prev;
+      return startOfMonth(new Date(focusYear, 0, 1));
+    });
+  }, [focusYear]);
 
   const datedEvents = useMemo(
     () => events.filter((event) => event.date_debut),

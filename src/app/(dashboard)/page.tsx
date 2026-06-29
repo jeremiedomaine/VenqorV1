@@ -22,7 +22,7 @@ import { billingFromWorkspace } from "@/lib/billing";
 export default async function PipelinePage({
   searchParams,
 }: {
-  searchParams: { vue?: string; nouveau?: string };
+  searchParams: { vue?: string; nouveau?: string; annee?: string };
 }) {
   const view = searchParams.vue;
   const openNewEvent = searchParams.nouveau === "1";

@@ -2,7 +2,7 @@
 
 import { requireWorkspaceClient } from "@/lib/workspace-session";
 import { emailForTestPreview } from "@/lib/email/recipients";
-import { sendEmail } from "@/lib/email/send-email";
+import { sendTrackedEmail } from "@/lib/email/send-tracked-email";
 import {
   depositRequestEmailHtml,
   interpolateEmailTemplate,
@@ -20,7 +20,7 @@ async function getWorkspaceContext() {
     .single();
   if (!workspace) throw new Error("Workspace introuvable");
 
-  return workspace;
+  return { workspaceId, workspace };
 }
 
 const DEMO_VARS = {
@@ -37,7 +37,7 @@ const DEMO_VARS = {
 export async function sendAutomationTestEmail(
   formData: FormData,
 ): Promise<{ error?: string; sentTo?: string }> {
-  const workspace = await getWorkspaceContext();
+  const { workspaceId, workspace } = await getWorkspaceContext();
   const to = emailForTestPreview(workspace.contact_email);
   if (!to) {
     return {
@@ -108,11 +108,13 @@ export async function sendAutomationTestEmail(
     return { error: "Type d'email test inconnu." };
   }
 
-  const result = await sendEmail({
+  const result = await sendTrackedEmail({
     to,
     subject,
     html,
     replyTo: workspace.contact_email || undefined,
+    category: "automation_test",
+    workspaceId,
   });
 
   if (!result.ok) {

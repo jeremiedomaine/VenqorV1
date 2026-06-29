@@ -4,7 +4,7 @@ import {
   paymentPortalUrl,
 } from "@/lib/automation-settings";
 import { billingFromWorkspace } from "@/lib/billing";
-import { sendEmail } from "@/lib/email/send-email";
+import { sendTrackedEmail } from "@/lib/email/send-tracked-email";
 import { emailForCouple } from "@/lib/email/recipients";
 import {
   interpolateEmailTemplate,
@@ -144,11 +144,15 @@ export async function processSoldePaymentRequests(): Promise<SoldeCronResult> {
         footerNote: settings.email_paiement_details,
       });
 
-      const sendResult = await sendEmail({
+      const sendResult = await sendTrackedEmail({
         to: coupleTo,
         subject,
         html,
         replyTo: workspace.contact_email || undefined,
+        category: "solde_request",
+        workspaceId: workspace.id,
+        eventId: event.id,
+        paymentId: solde.id,
       });
 
       if (!sendResult.ok) {

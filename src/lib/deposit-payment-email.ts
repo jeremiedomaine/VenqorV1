@@ -5,7 +5,7 @@ import {
 } from "@/lib/automation-settings";
 import { getEventCopy } from "@/lib/event-copy";
 import { billingFromWorkspace } from "@/lib/billing";
-import { sendEmail } from "@/lib/email/send-email";
+import { sendTrackedEmail } from "@/lib/email/send-tracked-email";
 import { emailForCouple } from "@/lib/email/recipients";
 import {
   interpolateEmailTemplate,
@@ -141,11 +141,15 @@ export async function sendDepositPaymentRequest(params: {
     footerNote: depositSettings.email_acompte_details,
   });
 
-  const sendResult = await sendEmail({
+  const sendResult = await sendTrackedEmail({
     to: coupleTo,
     subject,
     html,
     replyTo: workspace.contact_email || undefined,
+    category: "acompte_request",
+    workspaceId,
+    eventId,
+    paymentId: payment.id,
   });
 
   if (!sendResult.ok) {

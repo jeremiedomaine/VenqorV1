@@ -11,6 +11,7 @@ export const SETTINGS_NAV_SECTIONS = [
   { id: "encaissements", label: "Encaissements" },
   { id: "contrat", label: "Contrat" },
   { id: "types-evenement", label: "Types" },
+  { id: "emails", label: "Emails" },
 ] as const;
 
 function scrollToSection(id: string) {

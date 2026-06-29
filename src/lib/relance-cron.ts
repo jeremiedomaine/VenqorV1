@@ -4,7 +4,7 @@ import {
   paymentPortalUrl,
   portalUrl,
 } from "@/lib/automation-settings";
-import { sendEmail } from "@/lib/email/send-email";
+import { sendTrackedEmail } from "@/lib/email/send-tracked-email";
 import { emailForCouple, emailForDomain } from "@/lib/email/recipients";
 import {
   interpolateEmailTemplate,
@@ -211,7 +211,7 @@ export async function processRelanceEmails(): Promise<RelanceCronResult> {
             continue;
           }
 
-          const sendResult = await sendEmail({
+          const sendResult = await sendTrackedEmail({
             to,
             subject: interpolateEmailTemplate(rule.email_objet, vars),
             html: relanceEmailHtml({
@@ -224,6 +224,10 @@ export async function processRelanceEmails(): Promise<RelanceCronResult> {
               footerNote: emailContent.footerNote,
             }),
             replyTo: workspace.contact_email || undefined,
+            category: "relance",
+            workspaceId: workspace.id,
+            eventId: event.id,
+            idempotencyKey: `relance:${rule.id}:${event.id}:contract`,
           });
 
           if (!sendResult.ok) {
@@ -302,7 +306,7 @@ export async function processRelanceEmails(): Promise<RelanceCronResult> {
             continue;
           }
 
-          const sendResult = await sendEmail({
+          const sendResult = await sendTrackedEmail({
             to,
             subject: interpolateEmailTemplate(rule.email_objet, vars),
             html: relanceEmailHtml({
@@ -319,6 +323,11 @@ export async function processRelanceEmails(): Promise<RelanceCronResult> {
               paymentRelated: true,
             }),
             replyTo: workspace.contact_email || undefined,
+            category: "relance",
+            workspaceId: workspace.id,
+            eventId: event.id,
+            paymentId: payment.id,
+            idempotencyKey: `relance:${rule.id}:${event.id}:${payment.id}`,
           });
 
           if (!sendResult.ok) {

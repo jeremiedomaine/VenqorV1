@@ -9,7 +9,6 @@ import { loadWorkspaceEventTypes } from "@/lib/load-workspace";
 import { syncAutoPayments } from "@/lib/sync-payments";
 import { notifyPaymentConfirmed } from "@/actions/payment-emails";
 import { isEventRangeBlocked } from "@/lib/calendar-events";
-import { runInBackground } from "@/lib/run-in-background";
 import type { EventStatus } from "@/lib/types";
 
 async function loadBlockingEvents(
@@ -438,7 +437,7 @@ export async function confirmDepositPaid(
         .eq("workspace_id", workspaceId);
 
       if (paymentError) return { error: paymentError.message };
-      runInBackground(notifyPaymentConfirmed(deposit.id, eventId));
+      await notifyPaymentConfirmed(deposit.id, eventId);
     }
   }
 

@@ -1,6 +1,7 @@
 import {
   PipelineView,
 } from "@/components/dashboard/pipeline-view";
+import { DomainReadinessBanner } from "@/components/dashboard/domain-readiness-banner";
 import { KpiOverview } from "@/components/dashboard/kpi-overview";
 import { NewLeadButton } from "@/components/dashboard/new-lead-button";
 import { getBlockedDateSet } from "@/lib/calendar-events";
@@ -14,6 +15,8 @@ import {
   loadPendingPaymentNotifications,
 } from "@/lib/load-pending-payment-notifications";
 import { loadWorkspace, loadWorkspaceEventTypes } from "@/lib/load-workspace";
+import { loadRecentEmailFailureCount } from "@/lib/load-email-logs";
+import { computeDomainReadiness } from "@/lib/workspace-setup";
 import { billingFromWorkspace } from "@/lib/billing";
 
 export default async function PipelinePage({
@@ -46,6 +49,10 @@ export default async function PipelinePage({
 
   const billing = workspace ? billingFromWorkspace(workspace) : null;
   const facturationConfiguree = workspace?.facturation_configuree ?? false;
+  const readiness = workspace ? computeDomainReadiness(workspace) : null;
+  const emailFailureCount = workspace
+    ? await loadRecentEmailFailureCount(workspace.id)
+    : 0;
 
   const blockedDates = Array.from(getBlockedDateSet(events));
   const resolvedArchivedCount = showArchives
@@ -74,6 +81,13 @@ export default async function PipelinePage({
           facturationConfiguree={facturationConfiguree}
         />
       </div>
+
+      {readiness && (
+        <DomainReadinessBanner
+          readiness={readiness}
+          emailFailureCount={emailFailureCount}
+        />
+      )}
 
       <KpiOverview stats={stats} />
 

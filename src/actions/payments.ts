@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { notifyPaymentConfirmed, notifyPaymentRejected } from "@/actions/payment-emails";
 import { actionError, type ActionResult } from "@/lib/action-result";
 import { requireWorkspaceClient } from "@/lib/workspace-session";
-import { runInBackground } from "@/lib/run-in-background";
 import { buildTransferReference } from "@/lib/payment-utils";
 import type { PaymentStatus } from "@/lib/types";
 
@@ -66,7 +65,7 @@ export async function updatePaymentStatus(
 
   if (error) return actionError("Impossible de mettre à jour le paiement.");
   if (statut === "paye") {
-    runInBackground(notifyPaymentConfirmed(paymentId, eventId));
+    await notifyPaymentConfirmed(paymentId, eventId);
   }
   revalidatePath(`/evenements/${eventId}`);
   return {};
@@ -104,7 +103,7 @@ export async function confirmDeclaredPayment(
     return actionError("Ce paiement n'est plus en attente de confirmation.");
   }
 
-  runInBackground(notifyPaymentConfirmed(paymentId, eventId));
+  await notifyPaymentConfirmed(paymentId, eventId);
   revalidatePath(`/evenements/${eventId}`);
   revalidatePath("/");
   return {};
@@ -135,7 +134,7 @@ export async function rejectDeclaredPayment(
     return actionError("Ce paiement n'est plus en attente de confirmation.");
   }
 
-  runInBackground(notifyPaymentRejected(paymentId, eventId));
+  await notifyPaymentRejected(paymentId, eventId);
   revalidatePath(`/evenements/${eventId}`);
   revalidatePath("/");
   return {};

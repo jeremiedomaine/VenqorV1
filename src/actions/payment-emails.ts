@@ -10,7 +10,7 @@ import {
 } from "@/lib/automation-settings";
 import { getEventCopy } from "@/lib/event-copy";
 import { billingFromWorkspace } from "@/lib/billing";
-import { sendEmail } from "@/lib/email/send-email";
+import { sendTrackedEmail } from "@/lib/email/send-tracked-email";
 import { createServiceClient } from "@/lib/supabase/service";
 import { emailForCouple, emailForDomain } from "@/lib/email/recipients";
 import {
@@ -166,11 +166,15 @@ export async function sendPaymentRequestEmail(
     footerNote: settings.email_paiement_details,
   });
 
-  const result = await sendEmail({
+  const result = await sendTrackedEmail({
     to: coupleTo,
     subject,
     html,
     replyTo: workspace.contact_email || undefined,
+    category: "solde_request",
+    workspaceId,
+    eventId,
+    paymentId: payment.id,
   });
 
   if (!result.ok) {
@@ -254,7 +258,7 @@ export async function notifyPaymentConfirmed(
   const domainTo = emailForDomain(workspace.contact_email);
 
   if (coupleTo) {
-    await sendEmail({
+    await sendTrackedEmail({
       to: coupleTo,
       subject: `${workspace.nom_domaine} — Paiement enregistré`,
       html: paymentConfirmedCoupleEmailHtml({
@@ -264,11 +268,16 @@ export async function notifyPaymentConfirmed(
         amount,
       }),
       replyTo: workspace.contact_email || undefined,
+      category: "payment_confirmed_couple",
+      workspaceId,
+      eventId,
+      paymentId,
+      idempotencyKey: `payment_confirmed_couple:${paymentId}`,
     });
   }
 
   if (domainTo) {
-    await sendEmail({
+    await sendTrackedEmail({
       to: domainTo,
       subject: `Venqor — Paiement reçu · ${event.nom_des_maries}`,
       html: paymentConfirmedDomainEmailHtml({
@@ -278,6 +287,11 @@ export async function notifyPaymentConfirmed(
         amount,
         eventUrl: eventDashboardUrl(eventId),
       }),
+      category: "payment_confirmed_domain",
+      workspaceId,
+      eventId,
+      paymentId,
+      idempotencyKey: `payment_confirmed_domain:${paymentId}`,
     });
   }
 }
@@ -320,7 +334,7 @@ export async function notifyPaymentDeclaredFromPortal(
 
   const amount = formatCurrency(Number(payment.montant));
 
-  await sendEmail({
+  await sendTrackedEmail({
     to: domainTo,
     subject: `Venqor — Paiement déclaré · ${event.nom_des_maries}`,
     html: paymentDeclaredDomainEmailHtml({
@@ -331,6 +345,11 @@ export async function notifyPaymentDeclaredFromPortal(
       eventUrl: eventDashboardUrl(event.id),
     }),
     replyTo: workspace.contact_email || undefined,
+    category: "payment_declared_domain",
+    workspaceId: event.workspace_id,
+    eventId: event.id,
+    paymentId,
+    idempotencyKey: `payment_declared_domain:${paymentId}`,
   });
 }
 
@@ -370,7 +389,7 @@ export async function notifyPaymentRejected(
 
   const amount = formatCurrency(Number(payment.montant));
 
-  await sendEmail({
+  await sendTrackedEmail({
     to: coupleTo,
     subject: `${workspace.nom_domaine} — Virement non reçu`,
     html: paymentRejectedCoupleEmailHtml({
@@ -381,5 +400,10 @@ export async function notifyPaymentRejected(
       portalUrl: paymentPortalUrl(event.portal_token, paymentId),
     }),
     replyTo: workspace.contact_email || undefined,
+    category: "payment_rejected_couple",
+    workspaceId,
+    eventId,
+    paymentId,
+    idempotencyKey: `payment_rejected_couple:${paymentId}`,
   });
 }

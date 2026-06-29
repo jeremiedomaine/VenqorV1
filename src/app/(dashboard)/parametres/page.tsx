@@ -9,7 +9,10 @@ import {
   SettingsSubNavBar,
   SettingsSubNavRail,
 } from "@/components/parametres/settings-subnav";
-import { SettingsOverview } from "@/components/parametres/settings-overview";
+import {
+  EmailActivityPanel,
+  SettingsOverview,
+} from "@/components/parametres/settings-overview";
 import {
   SettingsInfoBox,
   SettingsSection,
@@ -20,8 +23,9 @@ import { getContratReadiness } from "@/lib/contrat-status";
 import { encaissementsFromWorkspace } from "@/lib/payment-utils";
 import { getAuthContext } from "@/lib/auth-context";
 import { loadWorkspace } from "@/lib/load-workspace";
+import { loadRecentEmailLogs } from "@/lib/load-email-logs";
 import {
-  computeWorkspaceSetupStatus,
+  computeDomainReadiness,
   goalsFromWorkspace,
 } from "@/lib/workspace-setup";
 
@@ -44,7 +48,8 @@ export default async function ParametresPage() {
 
   const billing = billingFromWorkspace(workspace);
   const encaissements = encaissementsFromWorkspace(workspace);
-  const setup = computeWorkspaceSetupStatus(workspace);
+  const readiness = computeDomainReadiness(workspace);
+  const emailLogs = await loadRecentEmailLogs(workspace.id, 12);
   const goals = goalsFromWorkspace(workspace);
   const contratStatus = getContratReadiness(workspace);
   const showContratSetup = auth?.isVenqorAdmin ?? false;
@@ -66,7 +71,7 @@ export default async function ParametresPage() {
         <SettingsSubNavBar />
 
         <section id="apercu" className="scroll-mt-24 lg:scroll-mt-8">
-          <SettingsOverview workspace={workspace} setup={setup} />
+          <SettingsOverview workspace={workspace} readiness={readiness} />
         </section>
 
         <SettingsSection
@@ -189,6 +194,8 @@ export default async function ParametresPage() {
             <EventTypesSettings customTypes={workspace.types_evenement_custom} />
           </div>
         </SettingsSection>
+
+        <EmailActivityPanel logs={emailLogs} />
       </div>
     </div>
   );

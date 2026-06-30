@@ -42,7 +42,7 @@ export function ArchivesBoard({ events }: { events: Event[] }) {
         setFeedback({ error: result.error });
         return;
       }
-      setFeedback({ success: "Dossier restauré dans le pipeline." });
+      setFeedback({ success: "Dossier restauré sur le tableau de bord." });
       router.refresh();
     });
   }
@@ -56,7 +56,7 @@ export function ArchivesBoard({ events }: { events: Event[] }) {
       />
 
       <p className="text-sm text-slate-600">
-        Dossiers retirés du pipeline actif. Restaurez-les pour reprendre le suivi
+        Dossiers retirés du tableau de bord. Restaurez-les pour reprendre le suivi
         ou consultez la fiche en lecture seule.
       </p>
 

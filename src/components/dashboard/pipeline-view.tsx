@@ -161,7 +161,7 @@ export function PipelineView({
         >
           <Archive className="h-4 w-4" />
           {view === "archives"
-            ? "Retour au pipeline"
+            ? "Retour au tableau de bord"
             : `Voir les archivés${archivedCountDisplay > 0 ? ` (${archivedCountDisplay})` : ""}`}
         </Button>
       </div>

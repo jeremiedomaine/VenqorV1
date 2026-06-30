@@ -32,7 +32,7 @@ export function ArchiveEventButton({
         setConfirmArchive(false);
         return;
       }
-      setSuccess("Dossier archivé — il n'apparaît plus dans le pipeline.");
+      setSuccess("Dossier archivé — il n'apparaît plus sur le tableau de bord.");
       setConfirmArchive(false);
       router.refresh();
     });
@@ -47,7 +47,7 @@ export function ArchiveEventButton({
         setError(result.error);
         return;
       }
-      setSuccess("Dossier restauré dans le pipeline.");
+      setSuccess("Dossier restauré sur le tableau de bord.");
       router.refresh();
     });
   }

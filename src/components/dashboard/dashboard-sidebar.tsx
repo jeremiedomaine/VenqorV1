@@ -15,7 +15,7 @@ import { signOut } from "@/actions/auth";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Pipeline", icon: LayoutGrid, match: "exact" as const },
+  { href: "/", label: "Tableau de bord", icon: LayoutGrid, match: "exact" as const },
   {
     href: "/pilotage",
     label: "Pilotage",

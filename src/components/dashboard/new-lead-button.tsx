@@ -111,7 +111,7 @@ export function NewLeadButton({
                 </Button>
                 <Button type="submit" className="gap-2" disabled={pending}>
                   <Plus className="h-4 w-4" />
-                  {pending ? "Création…" : "Ajouter au pipeline"}
+                  {pending ? "Création…" : "Ajouter un dossier"}
                 </Button>
               </div>
             </form>

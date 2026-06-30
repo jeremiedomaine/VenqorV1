@@ -51,7 +51,7 @@ export function CloseDossierButton({
           <p className="text-sm font-medium text-slate-900">Clôturer le dossier</p>
           <p className="mt-1 text-sm text-slate-600">
             {prixTotal <= 0
-              ? "Marquer le dossier comme terminé — il sortira du pipeline actif."
+              ? "Marquer le dossier comme terminé — il sortira du tableau de bord actif."
               : hasUnpaidBalance && balancePayment
                 ? `Réglez d'abord ${balancePayment.label} (${formatCurrency(Number(balancePayment.montant))}) dans l'échéancier ci-dessous, puis clôturez.`
                 : "Tous les paiements sont réglés — vous pouvez clôturer le dossier."}

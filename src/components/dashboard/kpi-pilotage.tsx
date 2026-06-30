@@ -250,7 +250,7 @@ function MultiYearProjection({
           Projection pluriannuelle
         </p>
         <p className="mt-0.5 text-sm text-slate-500">
-          CA confirmé et pipeline par année — pour anticiper le remplissage
+          CA confirmé et dossiers par année — pour anticiper le remplissage
         </p>
       </div>
       <div className="overflow-x-auto">
@@ -336,7 +336,7 @@ function GlobalPipelineSnapshot({ stats }: { stats: DashboardStats }) {
   return (
     <div className="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
       <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-        Pipeline global (aujourd&apos;hui)
+        Vue globale (aujourd&apos;hui)
       </p>
       <p className="mt-1 text-sm text-slate-600">
         Tous dossiers actifs, toutes années confondues
@@ -511,7 +511,7 @@ export function KpiPilotage({
             Suivi opérationnel
           </h2>
           <p className="mt-0.5 text-sm text-slate-500">
-            État du pipeline et trésorerie globale, indépendamment de
+            État des dossiers et trésorerie globale, indépendamment de
             l&apos;année sélectionnée
           </p>
         </div>

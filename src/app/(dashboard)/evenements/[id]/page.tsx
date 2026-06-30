@@ -107,7 +107,7 @@ export default async function EventDetailPage({
         <Link href="/">
           <Button variant="ghost" size="sm" className="gap-2">
             <ArrowLeft className="h-4 w-4" />
-            Retour au pipeline
+            Retour au tableau de bord
           </Button>
         </Link>
       </div>

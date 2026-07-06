@@ -20,9 +20,11 @@ export function stripeConnectRefreshUrl(): string {
 }
 
 export async function createStripeConnectOnboardingUrl(
-  _workspaceId: string,
-  _existingAccountId: string | null,
+  workspaceId: string,
+  existingAccountId: string | null,
 ): Promise<{ url: string; accountId: string }> {
+  void workspaceId;
+  void existingAccountId;
   if (!isStripePlatformConfigured()) {
     throw new Error(
       "Stripe n'est pas configuré sur la plateforme (STRIPE_SECRET_KEY manquant).",

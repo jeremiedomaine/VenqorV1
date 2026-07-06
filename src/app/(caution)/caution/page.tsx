@@ -1,6 +1,4 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight } from "lucide-react";
 import { CautionDemoHub } from "@/components/caution/caution-demo-hub";
 import { getAuthContext } from "@/lib/auth-context";
 import { loadWorkspace } from "@/lib/load-workspace";

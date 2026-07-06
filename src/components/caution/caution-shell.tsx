@@ -40,13 +40,18 @@ export function CautionShell({
             <ShieldCheck className="h-4 w-4 shrink-0" />
             Cautions
           </Link>
-          <span
-            className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-400"
-            title="Bientôt — connexion Stripe Connect"
+          <Link
+            href="/caution/parametres"
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+              pathname.startsWith("/caution/parametres")
+                ? "bg-[#4F46E5]/10 text-[#4F46E5]"
+                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
+            )}
           >
-            <Settings className="h-4 w-4 shrink-0 opacity-60" />
+            <Settings className="h-4 w-4 shrink-0" />
             Paramètres Stripe
-          </span>
+          </Link>
         </nav>
 
         <div className="border-t border-slate-100 px-4 py-4">

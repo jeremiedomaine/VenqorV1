@@ -68,6 +68,11 @@ export interface Workspace {
   titulaire_compte: string | null;
   instructions_virement: string;
   stripe_active: boolean;
+  stripe_connect_account_id: string | null;
+  stripe_connect_onboarded_at: string | null;
+  stripe_connect_charges_enabled: boolean;
+  stripe_connect_payouts_enabled: boolean;
+  caution_montant_defaut: number | null;
   automation_paiement_active: boolean;
   email_paiement_objet: string;
   email_paiement_intro: string;

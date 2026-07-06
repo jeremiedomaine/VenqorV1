@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
+  ArrowRight,
   ArrowUpRight,
   CheckCircle2,
   Clock3,
@@ -69,7 +71,17 @@ function KpiTile({
   );
 }
 
-export function CautionDemoHub({ workspaceName }: { workspaceName: string }) {
+export function CautionDemoHub({
+  workspaceName,
+  stripeReady,
+  stripeIsDemo,
+  defaultAmount,
+}: {
+  workspaceName: string;
+  stripeReady: boolean;
+  stripeIsDemo: boolean;
+  defaultAmount: number;
+}) {
   const [requests, setRequests] =
     useState<CautionDemoRequest[]>(DEMO_CAUTION_REQUESTS);
   const [open, setOpen] = useState(false);
@@ -142,20 +154,39 @@ export function CautionDemoHub({ workspaceName }: { workspaceName: string }) {
         </Button>
       </div>
 
-      <section className="overflow-hidden rounded-xl border border-[#4F46E5]/20 bg-[#4F46E5]/5 shadow-sm">
-        <div className="flex items-start gap-3 px-5 py-4 sm:px-6">
-          <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-[#4F46E5]" />
-          <div>
-            <h2 className="text-base font-semibold text-slate-900">
-              Espace démo
-            </h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Stripe Connect n&apos;est pas encore branché. Les actions simulent
-              l&apos;envoi de lien, la relance et la libération de caution.
-            </p>
+      {!stripeReady ? (
+        <Link
+          href="/caution/parametres"
+          className="flex items-center gap-3 overflow-hidden rounded-xl border border-amber-200 bg-amber-50/80 px-5 py-4 shadow-sm transition-colors hover:bg-amber-50 sm:px-6"
+        >
+          <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-base font-semibold text-slate-900">
+              Connectez Stripe pour activer les cautions
+            </span>
+            <span className="mt-1 block text-sm text-slate-600">
+              Liez le compte bancaire du domaine — nécessaire avant d&apos;envoyer
+              un lien de caution à un client.
+            </span>
+          </span>
+          <ArrowRight className="h-4 w-4 shrink-0 text-slate-400" />
+        </Link>
+      ) : stripeIsDemo ? (
+        <section className="overflow-hidden rounded-xl border border-[#4F46E5]/20 bg-[#4F46E5]/5 shadow-sm">
+          <div className="flex items-start gap-3 px-5 py-4 sm:px-6">
+            <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-[#4F46E5]" />
+            <div>
+              <h2 className="text-base font-semibold text-slate-900">
+                Mode démo actif
+              </h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Stripe Connect est simulé. Les actions (lien, relance, libération)
+                restent en démo jusqu&apos;au branchement Stripe réel.
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
       {feedback && (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
@@ -412,7 +443,7 @@ export function CautionDemoHub({ workspaceName }: { workspaceName: string }) {
                     type="number"
                     min={1}
                     step={50}
-                    defaultValue={2500}
+                    defaultValue={defaultAmount}
                     required
                   />
                 </div>

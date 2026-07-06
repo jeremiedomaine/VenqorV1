@@ -1,0 +1,466 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import {
+  ArrowUpRight,
+  CheckCircle2,
+  Clock3,
+  Copy,
+  Link2,
+  Plus,
+  Shield,
+  Sparkles,
+  Wallet,
+  X,
+} from "lucide-react";
+import { CautionStatusBadge } from "@/components/caution/caution-status-badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  DEMO_CAUTION_REQUESTS,
+  type CautionDemoRequest,
+} from "@/lib/caution-demo-data";
+import { cn, formatCurrency, formatDate } from "@/lib/utils";
+
+function StatCard({
+  label,
+  value,
+  detail,
+  icon: Icon,
+  accent,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  icon: React.ElementType;
+  accent: "emerald" | "amber" | "indigo" | "slate";
+}) {
+  const accents = {
+    emerald: "from-emerald-500/20 to-emerald-500/5 text-emerald-300",
+    amber: "from-amber-500/20 to-amber-500/5 text-amber-300",
+    indigo: "from-indigo-500/20 to-indigo-500/5 text-indigo-300",
+    slate: "from-slate-500/20 to-slate-500/5 text-slate-300",
+  };
+
+  return (
+    <Card className="border-white/10 bg-white/5 text-white shadow-none backdrop-blur-sm">
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+              {label}
+            </p>
+            <p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight">
+              {value}
+            </p>
+            <p className="mt-1 text-sm text-slate-400">{detail}</p>
+          </div>
+          <div
+            className={cn(
+              "flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br",
+              accents[accent],
+            )}
+          >
+            <Icon className="h-5 w-5" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function CautionDemoHub({ workspaceName }: { workspaceName: string }) {
+  const [requests, setRequests] =
+    useState<CautionDemoRequest[]>(DEMO_CAUTION_REQUESTS);
+  const [open, setOpen] = useState(false);
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(
+    DEMO_CAUTION_REQUESTS[0]?.id ?? null,
+  );
+
+  const stats = useMemo(() => {
+    const active = requests.filter((r) => r.status === "empreinte");
+    const pending = requests.filter((r) => r.status === "en_attente");
+    const released = requests.filter((r) => r.status === "liberee");
+    const blocked = active.reduce((s, r) => s + r.amount, 0);
+    return {
+      activeCount: active.length,
+      blocked,
+      pendingCount: pending.length,
+      releasedCount: released.length,
+    };
+  }, [requests]);
+
+  const selected = requests.find((r) => r.id === selectedId) ?? requests[0];
+
+  function showFeedback(message: string) {
+    setFeedback(message);
+    window.setTimeout(() => setFeedback(null), 2800);
+  }
+
+  function handleCreate(formData: FormData) {
+    const clientName = String(formData.get("clientName") ?? "").trim();
+    const clientEmail = String(formData.get("clientEmail") ?? "").trim();
+    const eventLabel = String(formData.get("eventLabel") ?? "").trim();
+    const eventDate = String(formData.get("eventDate") ?? "");
+    const amount = Number(formData.get("amount") ?? 0);
+
+    if (!clientName || amount <= 0) return;
+
+    const newRequest: CautionDemoRequest = {
+      id: `c-${Date.now()}`,
+      clientName,
+      clientEmail,
+      eventLabel: eventLabel || "Événement",
+      eventDate: eventDate || new Date().toISOString().slice(0, 10),
+      amount,
+      status: "en_attente",
+      createdAt: new Date().toISOString().slice(0, 10),
+      linkSentAt: new Date().toISOString().slice(0, 10),
+    };
+
+    setRequests((prev) => [newRequest, ...prev]);
+    setSelectedId(newRequest.id);
+    setOpen(false);
+    showFeedback("Demande créée — lien de paiement prêt à envoyer (démo).");
+  }
+
+  return (
+    <div className="space-y-8">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-indigo-400/30 bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-200">
+            <Sparkles className="h-3.5 w-3.5" />
+            Espace démo — Stripe Connect non connecté
+          </div>
+          <h1 className="text-3xl font-semibold tracking-tight text-white">
+            Cautions & dépôts de garantie
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
+            {workspaceName} — Encaissez une empreinte bancaire en quelques clics.
+            Saisissez le nom du client, envoyez le lien, suivez le statut et
+            libérez la caution après l&apos;événement.
+          </p>
+        </div>
+        <Button
+          className="gap-2 bg-emerald-500 text-white hover:bg-emerald-400"
+          onClick={() => setOpen(true)}
+        >
+          <Plus className="h-4 w-4" />
+          Nouvelle demande
+        </Button>
+      </div>
+
+      {feedback && (
+        <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+          {feedback}
+        </div>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label="Empreintes actives"
+          value={String(stats.activeCount)}
+          detail={`${formatCurrency(stats.blocked)} bloqués`}
+          icon={Shield}
+          accent="emerald"
+        />
+        <StatCard
+          label="En attente client"
+          value={String(stats.pendingCount)}
+          detail="Lien envoyé, paiement non finalisé"
+          icon={Clock3}
+          accent="amber"
+        />
+        <StatCard
+          label="Libérées"
+          value={String(stats.releasedCount)}
+          detail="Cautions restituées"
+          icon={CheckCircle2}
+          accent="slate"
+        />
+        <StatCard
+          label="Montant type"
+          value="2 500 €"
+          detail="Configurable par événement"
+          icon={Wallet}
+          accent="indigo"
+        />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+        <Card className="border-white/10 bg-white/5 shadow-none backdrop-blur-sm">
+          <CardHeader className="border-b border-white/10 pb-4">
+            <CardTitle className="text-base font-semibold text-white">
+              Demandes récentes
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <ul className="divide-y divide-white/10">
+              {requests.map((request) => (
+                <li key={request.id}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedId(request.id)}
+                    className={cn(
+                      "flex w-full items-start justify-between gap-4 px-5 py-4 text-left transition-colors",
+                      selected?.id === request.id
+                        ? "bg-white/10"
+                        : "hover:bg-white/5",
+                    )}
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium text-white">{request.clientName}</p>
+                      <p className="mt-0.5 truncate text-sm text-slate-400">
+                        {request.eventLabel} · {formatDate(request.eventDate)}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end gap-2">
+                      <span className="text-sm font-semibold tabular-nums text-white">
+                        {formatCurrency(request.amount)}
+                      </span>
+                      <CautionStatusBadge status={request.status} />
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+
+        {selected && (
+          <Card className="border-white/10 bg-gradient-to-b from-white/10 to-white/5 shadow-none backdrop-blur-sm">
+            <CardHeader>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <CardTitle className="text-lg text-white">
+                    {selected.clientName}
+                  </CardTitle>
+                  <p className="mt-1 text-sm text-slate-400">
+                    {selected.eventLabel}
+                  </p>
+                </div>
+                <CautionStatusBadge status={selected.status} />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <dl className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <dt className="text-slate-500">Montant caution</dt>
+                  <dd className="mt-1 text-xl font-semibold tabular-nums text-white">
+                    {formatCurrency(selected.amount)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">Date événement</dt>
+                  <dd className="mt-1 font-medium text-slate-200">
+                    {formatDate(selected.eventDate)}
+                  </dd>
+                </div>
+                <div className="col-span-2">
+                  <dt className="text-slate-500">Email client</dt>
+                  <dd className="mt-1 font-medium text-slate-200">
+                    {selected.clientEmail || "—"}
+                  </dd>
+                </div>
+              </dl>
+
+              <div className="rounded-lg border border-white/10 bg-black/20 p-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                  Parcours caution
+                </p>
+                <ol className="mt-3 space-y-2 text-sm text-slate-300">
+                  <li className="flex items-center gap-2">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-xs text-emerald-300">
+                      1
+                    </span>
+                    Lien envoyé au client
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-xs text-emerald-300">
+                      2
+                    </span>
+                    Empreinte bancaire validée (Stripe)
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs text-slate-400">
+                      3
+                    </span>
+                    Libération après l&apos;événement
+                  </li>
+                </ol>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 border-white/15 bg-white/5 text-white hover:bg-white/10"
+                  onClick={() =>
+                    showFeedback("Lien copié (démo — Stripe non connecté).")
+                  }
+                >
+                  <Copy className="h-4 w-4" />
+                  Copier le lien
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 border-white/15 bg-white/5 text-white hover:bg-white/10"
+                  onClick={() =>
+                    showFeedback("Relance envoyée (démo).")
+                  }
+                >
+                  <Link2 className="h-4 w-4" />
+                  Relancer
+                </Button>
+                {selected.status === "empreinte" && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="gap-2 bg-emerald-500 text-white hover:bg-emerald-400"
+                    onClick={() => {
+                      setRequests((prev) =>
+                        prev.map((r) =>
+                          r.id === selected.id
+                            ? { ...r, status: "liberee" as const }
+                            : r,
+                        ),
+                      );
+                      showFeedback("Caution libérée (simulation démo).");
+                    }}
+                  >
+                    <ArrowUpRight className="h-4 w-4" />
+                    Libérer la caution
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 py-[8vh]">
+          <div
+            className="absolute inset-0"
+            onClick={() => setOpen(false)}
+            aria-hidden
+          />
+          <div className="relative my-auto w-full max-w-lg rounded-xl border border-white/10 bg-[#111827] p-6 shadow-2xl">
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-semibold text-white">
+                  Nouvelle demande de caution
+                </h2>
+                <p className="mt-1 text-sm text-slate-400">
+                  Le client recevra un lien sécurisé pour valider son empreinte.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="rounded-md p-1 text-slate-500 hover:bg-white/10 hover:text-slate-300"
+                aria-label="Fermer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleCreate(new FormData(e.currentTarget));
+              }}
+              className="space-y-4"
+            >
+              <div className="space-y-2">
+                <Label htmlFor="clientName" className="text-slate-300">
+                  Nom du client
+                </Label>
+                <Input
+                  id="clientName"
+                  name="clientName"
+                  required
+                  placeholder="Ex. Sophie & Thomas"
+                  className="border-white/10 bg-white/5 text-white placeholder:text-slate-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="clientEmail" className="text-slate-300">
+                  Email (optionnel)
+                </Label>
+                <Input
+                  id="clientEmail"
+                  name="clientEmail"
+                  type="email"
+                  placeholder="client@email.com"
+                  className="border-white/10 bg-white/5 text-white placeholder:text-slate-500"
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="amount" className="text-slate-300">
+                    Montant (€)
+                  </Label>
+                  <Input
+                    id="amount"
+                    name="amount"
+                    type="number"
+                    min={1}
+                    step={50}
+                    defaultValue={2500}
+                    required
+                    className="border-white/10 bg-white/5 text-white"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="eventDate" className="text-slate-300">
+                    Date événement
+                  </Label>
+                  <Input
+                    id="eventDate"
+                    name="eventDate"
+                    type="date"
+                    className="border-white/10 bg-white/5 text-white"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="eventLabel" className="text-slate-300">
+                  Libellé (optionnel)
+                </Label>
+                <Input
+                  id="eventLabel"
+                  name="eventLabel"
+                  placeholder="Mariage, séminaire…"
+                  className="border-white/10 bg-white/5 text-white placeholder:text-slate-500"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="text-slate-400 hover:bg-white/10 hover:text-white"
+                  onClick={() => setOpen(false)}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-emerald-500 text-white hover:bg-emerald-400"
+                >
+                  Créer et générer le lien
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

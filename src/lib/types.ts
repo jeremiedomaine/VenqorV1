@@ -29,9 +29,12 @@ export interface CustomEventType {
   label: string;
 }
 
+export type ProductMode = "full" | "caution_only";
+
 export interface Workspace {
   id: string;
   nom_domaine: string;
+  product_mode: ProductMode;
   logo_url: string | null;
   contrat_template_path: string | null;
   contrat_template_filename: string | null;

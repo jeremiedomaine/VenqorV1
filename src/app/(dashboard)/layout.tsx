@@ -9,6 +9,7 @@ import { getContratReadiness } from "@/lib/contrat-status";
 import { needsOnboarding } from "@/lib/facturation-configured";
 import { billingFromWorkspace } from "@/lib/billing";
 import { goalsFromWorkspace } from "@/lib/workspace-setup";
+import { getProductMode } from "@/lib/workspace-capabilities";
 import { Suspense } from "react";
 
 export default async function DashboardLayout({
@@ -23,6 +24,11 @@ export default async function DashboardLayout({
 
   const workspaceName = auth?.workspaceName ?? "Mon domaine";
   const { workspace } = await loadWorkspace();
+
+  if (workspace && getProductMode(workspace) === "caution_only") {
+    redirect("/caution");
+  }
+
   const showOnboarding =
     auth &&
     !auth.isVenqorAdmin &&

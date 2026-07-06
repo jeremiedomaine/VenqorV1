@@ -24,7 +24,7 @@ import {
 } from "@/lib/caution-demo-data";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 
-function StatCard({
+function KpiTile({
   label,
   value,
   detail,
@@ -35,39 +35,37 @@ function StatCard({
   value: string;
   detail: string;
   icon: React.ElementType;
-  accent: "emerald" | "amber" | "indigo" | "slate";
+  accent: "indigo" | "amber" | "emerald" | "slate";
 }) {
   const accents = {
-    emerald: "from-emerald-500/20 to-emerald-500/5 text-emerald-300",
-    amber: "from-amber-500/20 to-amber-500/5 text-amber-300",
-    indigo: "from-indigo-500/20 to-indigo-500/5 text-indigo-300",
-    slate: "from-slate-500/20 to-slate-500/5 text-slate-300",
+    indigo: "bg-[#4F46E5]/10 text-[#4F46E5]",
+    amber: "bg-amber-50 text-amber-700",
+    emerald: "bg-emerald-50 text-emerald-700",
+    slate: "bg-slate-100 text-slate-600",
   };
 
   return (
-    <Card className="border-white/10 bg-white/5 text-white shadow-none backdrop-blur-sm">
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-              {label}
-            </p>
-            <p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight">
-              {value}
-            </p>
-            <p className="mt-1 text-sm text-slate-400">{detail}</p>
-          </div>
-          <div
-            className={cn(
-              "flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br",
-              accents[accent],
-            )}
-          >
-            <Icon className="h-5 w-5" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="flex h-full items-start gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div
+        className={cn(
+          "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+          accents[accent],
+        )}
+      >
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+          {label}
+        </p>
+        <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-slate-900">
+          {value}
+        </p>
+        <p className="mt-1 line-clamp-2 text-sm leading-snug text-slate-600">
+          {detail}
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -129,76 +127,85 @@ export function CautionDemoHub({ workspaceName }: { workspaceName: string }) {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-indigo-400/30 bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-200">
-            <Sparkles className="h-3.5 w-3.5" />
-            Espace démo — Stripe Connect non connecté
-          </div>
-          <h1 className="text-3xl font-semibold tracking-tight text-white">
-            Cautions & dépôts de garantie
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+            Cautions
           </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
-            {workspaceName} — Encaissez une empreinte bancaire en quelques clics.
-            Saisissez le nom du client, envoyez le lien, suivez le statut et
-            libérez la caution après l&apos;événement.
+          <p className="mt-1 text-sm text-slate-500">
+            {workspaceName} — Empreintes bancaires et dépôts de garantie
           </p>
         </div>
-        <Button
-          className="gap-2 bg-emerald-500 text-white hover:bg-emerald-400"
-          onClick={() => setOpen(true)}
-        >
+        <Button className="gap-2" onClick={() => setOpen(true)}>
           <Plus className="h-4 w-4" />
           Nouvelle demande
         </Button>
       </div>
 
+      <section className="overflow-hidden rounded-xl border border-[#4F46E5]/20 bg-[#4F46E5]/5 shadow-sm">
+        <div className="flex items-start gap-3 px-5 py-4 sm:px-6">
+          <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-[#4F46E5]" />
+          <div>
+            <h2 className="text-base font-semibold text-slate-900">
+              Espace démo
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Stripe Connect n&apos;est pas encore branché. Les actions simulent
+              l&apos;envoi de lien, la relance et la libération de caution.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {feedback && (
-        <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
           {feedback}
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label="Empreintes actives"
-          value={String(stats.activeCount)}
-          detail={`${formatCurrency(stats.blocked)} bloqués`}
-          icon={Shield}
-          accent="emerald"
-        />
-        <StatCard
-          label="En attente client"
-          value={String(stats.pendingCount)}
-          detail="Lien envoyé, paiement non finalisé"
-          icon={Clock3}
-          accent="amber"
-        />
-        <StatCard
-          label="Libérées"
-          value={String(stats.releasedCount)}
-          detail="Cautions restituées"
-          icon={CheckCircle2}
-          accent="slate"
-        />
-        <StatCard
-          label="Montant type"
-          value="2 500 €"
-          detail="Configurable par événement"
-          icon={Wallet}
-          accent="indigo"
-        />
-      </div>
+      <section className="space-y-3">
+        <p className="text-sm font-medium text-slate-700">Aperçu rapide</p>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <KpiTile
+            label="Empreintes actives"
+            value={String(stats.activeCount)}
+            detail={`${formatCurrency(stats.blocked)} bloqués`}
+            icon={Shield}
+            accent="emerald"
+          />
+          <KpiTile
+            label="En attente client"
+            value={String(stats.pendingCount)}
+            detail="Lien envoyé, paiement non finalisé"
+            icon={Clock3}
+            accent="amber"
+          />
+          <KpiTile
+            label="Libérées"
+            value={String(stats.releasedCount)}
+            detail="Cautions restituées"
+            icon={CheckCircle2}
+            accent="slate"
+          />
+          <KpiTile
+            label="Montant type"
+            value="2 500 €"
+            detail="Configurable par événement"
+            icon={Wallet}
+            accent="indigo"
+          />
+        </div>
+      </section>
 
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <Card className="border-white/10 bg-white/5 shadow-none backdrop-blur-sm">
-          <CardHeader className="border-b border-white/10 pb-4">
-            <CardTitle className="text-base font-semibold text-white">
+        <Card>
+          <CardHeader className="border-b border-slate-100 pb-4">
+            <CardTitle className="text-base font-semibold text-slate-900">
               Demandes récentes
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <ul className="divide-y divide-white/10">
+            <ul className="divide-y divide-slate-100">
               {requests.map((request) => (
                 <li key={request.id}>
                   <button
@@ -207,18 +214,20 @@ export function CautionDemoHub({ workspaceName }: { workspaceName: string }) {
                     className={cn(
                       "flex w-full items-start justify-between gap-4 px-5 py-4 text-left transition-colors",
                       selected?.id === request.id
-                        ? "bg-white/10"
-                        : "hover:bg-white/5",
+                        ? "bg-[#4F46E5]/5"
+                        : "hover:bg-slate-50",
                     )}
                   >
                     <div className="min-w-0">
-                      <p className="font-medium text-white">{request.clientName}</p>
-                      <p className="mt-0.5 truncate text-sm text-slate-400">
+                      <p className="font-medium text-slate-900">
+                        {request.clientName}
+                      </p>
+                      <p className="mt-0.5 truncate text-sm text-slate-500">
                         {request.eventLabel} · {formatDate(request.eventDate)}
                       </p>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-2">
-                      <span className="text-sm font-semibold tabular-nums text-white">
+                      <span className="text-sm font-semibold tabular-nums text-slate-900">
                         {formatCurrency(request.amount)}
                       </span>
                       <CautionStatusBadge status={request.status} />
@@ -231,14 +240,14 @@ export function CautionDemoHub({ workspaceName }: { workspaceName: string }) {
         </Card>
 
         {selected && (
-          <Card className="border-white/10 bg-gradient-to-b from-white/10 to-white/5 shadow-none backdrop-blur-sm">
+          <Card>
             <CardHeader>
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <CardTitle className="text-lg text-white">
+                  <CardTitle className="text-lg text-slate-900">
                     {selected.clientName}
                   </CardTitle>
-                  <p className="mt-1 text-sm text-slate-400">
+                  <p className="mt-1 text-sm text-slate-500">
                     {selected.eventLabel}
                   </p>
                 </div>
@@ -249,43 +258,43 @@ export function CautionDemoHub({ workspaceName }: { workspaceName: string }) {
               <dl className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <dt className="text-slate-500">Montant caution</dt>
-                  <dd className="mt-1 text-xl font-semibold tabular-nums text-white">
+                  <dd className="mt-1 text-xl font-semibold tabular-nums text-slate-900">
                     {formatCurrency(selected.amount)}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-slate-500">Date événement</dt>
-                  <dd className="mt-1 font-medium text-slate-200">
+                  <dd className="mt-1 font-medium text-slate-800">
                     {formatDate(selected.eventDate)}
                   </dd>
                 </div>
                 <div className="col-span-2">
                   <dt className="text-slate-500">Email client</dt>
-                  <dd className="mt-1 font-medium text-slate-200">
+                  <dd className="mt-1 font-medium text-slate-800">
                     {selected.clientEmail || "—"}
                   </dd>
                 </div>
               </dl>
 
-              <div className="rounded-lg border border-white/10 bg-black/20 p-4">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
                   Parcours caution
                 </p>
-                <ol className="mt-3 space-y-2 text-sm text-slate-300">
+                <ol className="mt-3 space-y-2 text-sm text-slate-700">
                   <li className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-xs text-emerald-300">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#4F46E5]/10 text-xs font-medium text-[#4F46E5]">
                       1
                     </span>
                     Lien envoyé au client
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-xs text-emerald-300">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#4F46E5]/10 text-xs font-medium text-[#4F46E5]">
                       2
                     </span>
                     Empreinte bancaire validée (Stripe)
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs text-slate-400">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-xs font-medium text-slate-600">
                       3
                     </span>
                     Libération après l&apos;événement
@@ -298,7 +307,7 @@ export function CautionDemoHub({ workspaceName }: { workspaceName: string }) {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="gap-2 border-white/15 bg-white/5 text-white hover:bg-white/10"
+                  className="gap-2"
                   onClick={() =>
                     showFeedback("Lien copié (démo — Stripe non connecté).")
                   }
@@ -310,10 +319,8 @@ export function CautionDemoHub({ workspaceName }: { workspaceName: string }) {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="gap-2 border-white/15 bg-white/5 text-white hover:bg-white/10"
-                  onClick={() =>
-                    showFeedback("Relance envoyée (démo).")
-                  }
+                  className="gap-2"
+                  onClick={() => showFeedback("Relance envoyée (démo).")}
                 >
                   <Link2 className="h-4 w-4" />
                   Relancer
@@ -322,7 +329,7 @@ export function CautionDemoHub({ workspaceName }: { workspaceName: string }) {
                   <Button
                     type="button"
                     size="sm"
-                    className="gap-2 bg-emerald-500 text-white hover:bg-emerald-400"
+                    className="gap-2"
                     onClick={() => {
                       setRequests((prev) =>
                         prev.map((r) =>
@@ -345,26 +352,26 @@ export function CautionDemoHub({ workspaceName }: { workspaceName: string }) {
       </div>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 py-[8vh]">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-4 py-[8vh]">
           <div
             className="absolute inset-0"
             onClick={() => setOpen(false)}
             aria-hidden
           />
-          <div className="relative my-auto w-full max-w-lg rounded-xl border border-white/10 bg-[#111827] p-6 shadow-2xl">
+          <div className="relative my-auto w-full max-w-lg rounded-lg border border-slate-200 bg-white p-6 shadow-xl">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-lg font-semibold text-white">
+                <h2 className="text-lg font-semibold text-slate-900">
                   Nouvelle demande de caution
                 </h2>
-                <p className="mt-1 text-sm text-slate-400">
+                <p className="mt-1 text-sm text-slate-500">
                   Le client recevra un lien sécurisé pour valider son empreinte.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded-md p-1 text-slate-500 hover:bg-white/10 hover:text-slate-300"
+                className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
                 aria-label="Fermer"
               >
                 <X className="h-5 w-5" />
@@ -379,34 +386,26 @@ export function CautionDemoHub({ workspaceName }: { workspaceName: string }) {
               className="space-y-4"
             >
               <div className="space-y-2">
-                <Label htmlFor="clientName" className="text-slate-300">
-                  Nom du client
-                </Label>
+                <Label htmlFor="clientName">Nom du client</Label>
                 <Input
                   id="clientName"
                   name="clientName"
                   required
                   placeholder="Ex. Sophie & Thomas"
-                  className="border-white/10 bg-white/5 text-white placeholder:text-slate-500"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="clientEmail" className="text-slate-300">
-                  Email (optionnel)
-                </Label>
+                <Label htmlFor="clientEmail">Email (optionnel)</Label>
                 <Input
                   id="clientEmail"
                   name="clientEmail"
                   type="email"
                   placeholder="client@email.com"
-                  className="border-white/10 bg-white/5 text-white placeholder:text-slate-500"
                 />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="amount" className="text-slate-300">
-                    Montant (€)
-                  </Label>
+                  <Label htmlFor="amount">Montant (€)</Label>
                   <Input
                     id="amount"
                     name="amount"
@@ -415,47 +414,30 @@ export function CautionDemoHub({ workspaceName }: { workspaceName: string }) {
                     step={50}
                     defaultValue={2500}
                     required
-                    className="border-white/10 bg-white/5 text-white"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="eventDate" className="text-slate-300">
-                    Date événement
-                  </Label>
-                  <Input
-                    id="eventDate"
-                    name="eventDate"
-                    type="date"
-                    className="border-white/10 bg-white/5 text-white"
-                  />
+                  <Label htmlFor="eventDate">Date événement</Label>
+                  <Input id="eventDate" name="eventDate" type="date" />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="eventLabel" className="text-slate-300">
-                  Libellé (optionnel)
-                </Label>
+                <Label htmlFor="eventLabel">Libellé (optionnel)</Label>
                 <Input
                   id="eventLabel"
                   name="eventLabel"
                   placeholder="Mariage, séminaire…"
-                  className="border-white/10 bg-white/5 text-white placeholder:text-slate-500"
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <Button
                   type="button"
                   variant="ghost"
-                  className="text-slate-400 hover:bg-white/10 hover:text-white"
                   onClick={() => setOpen(false)}
                 >
                   Annuler
                 </Button>
-                <Button
-                  type="submit"
-                  className="bg-emerald-500 text-white hover:bg-emerald-400"
-                >
-                  Créer et générer le lien
-                </Button>
+                <Button type="submit">Créer et générer le lien</Button>
               </div>
             </form>
           </div>

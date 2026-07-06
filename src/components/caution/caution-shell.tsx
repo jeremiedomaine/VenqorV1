@@ -18,16 +18,13 @@ export function CautionShell({
   const pathname = usePathname();
 
   return (
-    <div className="flex min-h-screen bg-[#0f172a]">
-      <aside className="flex w-64 shrink-0 flex-col border-r border-white/10 bg-[#0b1220]">
-        <div className="border-b border-white/10 px-5 py-5">
+    <div className="flex min-h-screen bg-slate-50">
+      <aside className="flex w-60 shrink-0 flex-col border-r border-slate-200 bg-white">
+        <div className="border-b border-slate-100 px-5 py-5">
           <Link href="/caution">
-            <VenqorLogo className="brightness-0 invert" />
+            <VenqorLogo />
           </Link>
-          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            Venqor Caution
-          </div>
+          <p className="mt-3 text-xs font-medium text-[#4F46E5]">Venqor Caution</p>
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-4">
@@ -36,23 +33,23 @@ export function CautionShell({
             className={cn(
               "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
               pathname === "/caution"
-                ? "bg-white/10 text-white"
-                : "text-slate-400 hover:bg-white/5 hover:text-slate-200",
+                ? "bg-[#4F46E5]/10 text-[#4F46E5]"
+                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
             )}
           >
             <ShieldCheck className="h-4 w-4 shrink-0" />
             Cautions
           </Link>
           <span
-            className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600"
+            className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-400"
             title="Bientôt — connexion Stripe Connect"
           >
-            <Settings className="h-4 w-4 shrink-0 opacity-50" />
+            <Settings className="h-4 w-4 shrink-0 opacity-60" />
             Paramètres Stripe
           </span>
         </nav>
 
-        <div className="border-t border-white/10 px-4 py-4">
+        <div className="border-t border-slate-100 px-4 py-4">
           <p className="mb-3 truncate px-1 text-xs font-medium text-slate-500">
             {workspaceName}
           </p>
@@ -61,7 +58,7 @@ export function CautionShell({
               variant="ghost"
               size="sm"
               type="submit"
-              className="w-full justify-start gap-2 text-slate-400 hover:bg-white/5 hover:text-white"
+              className="w-full justify-start gap-2 text-slate-600"
             >
               <LogOut className="h-4 w-4" />
               Déconnexion
@@ -70,10 +67,8 @@ export function CautionShell({
         </div>
       </aside>
 
-      <main className="min-w-0 flex-1 overflow-auto">
-        <div className="mx-auto max-w-6xl px-6 py-8 lg:px-10 lg:py-10">
-          {children}
-        </div>
+      <main className="min-w-0 flex-1 overflow-auto px-6 py-8 lg:px-10">
+        <div className="mx-auto max-w-7xl">{children}</div>
       </main>
     </div>
   );

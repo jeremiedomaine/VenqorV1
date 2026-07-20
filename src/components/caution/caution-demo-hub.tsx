@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import {
   Bell,
   CheckCircle2,
+  Download,
   Film,
   Link2,
   Send,
@@ -11,7 +12,6 @@ import {
   Smartphone,
   Sparkles,
   Video,
-  X,
 } from "lucide-react";
 import {
   EdlStatusBadge,
@@ -118,30 +118,81 @@ export function CautionDemoHub({
       return;
     }
     setUploading(kind);
+    const objectUrl = URL.createObjectURL(file);
     window.setTimeout(() => {
       const fileName = file.name || `edl-${kind}-${Date.now()}.mp4`;
       setSejours((prev) =>
         prev.map((s) => {
           if (s.id !== sejourId) return s;
           if (kind === "entree") {
+            if (s.edlEntreeUrl?.startsWith("blob:")) {
+              URL.revokeObjectURL(s.edlEntreeUrl);
+            }
             return {
               ...s,
               edlEntree: "enregistree" as EdlStatus,
               edlEntreeFile: fileName,
+              edlEntreeUrl: objectUrl,
             };
+          }
+          if (s.edlSortieUrl?.startsWith("blob:")) {
+            URL.revokeObjectURL(s.edlSortieUrl);
           }
           return {
             ...s,
             edlSortie: "enregistree" as EdlStatus,
             edlSortieFile: fileName,
+            edlSortieUrl: objectUrl,
           };
         }),
       );
       setUploading(null);
       toast(
-        `Vidéo ${kind === "entree" ? "d'entrée" : "de sortie"} enregistrée — prête à envoyer aux mariés.`,
+        `Vidéo ${kind === "entree" ? "d'entrée" : "de sortie"} enregistrée — téléchargeable à tout moment.`,
       );
     }, 900);
+  }
+
+  function downloadEdl(kind: "entree" | "sortie") {
+    if (!selected) return;
+    const fileName =
+      kind === "entree" ? selected.edlEntreeFile : selected.edlSortieFile;
+    const url =
+      kind === "entree" ? selected.edlEntreeUrl : selected.edlSortieUrl;
+    if (!fileName) return;
+
+    if (url) {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      toast(`Téléchargement : ${fileName}`);
+      return;
+    }
+
+    // Séjours seed démo sans fichier réel — marqueur téléchargeable
+    const blob = new Blob(
+      [
+        `Venqor — État des lieux (${kind})\n`,
+        `Couple : ${selected.couple}\n`,
+        `Fichier : ${fileName}\n`,
+        `En production, la vidéo est stockée et téléchargeable ici.\n`,
+        `Pour la démo R2 : importez une vidéo .mp4 puis recliquez sur Télécharger.\n`,
+      ],
+      { type: "text/plain;charset=utf-8" },
+    );
+    const fallbackUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = fallbackUrl;
+    a.download = fileName.replace(/\.mp4$/i, "") + "-preuve-demo.txt";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(fallbackUrl);
+    toast("Fichier preuve démo téléchargé — importez un .mp4 pour une vraie vidéo.");
   }
 
   function sendEdlToCouple(sejourId: string, kind: "entree" | "sortie") {
@@ -399,21 +450,25 @@ export function CautionDemoHub({
                 title="Entrée — vendredi"
                 status={selected.edlEntree}
                 fileName={selected.edlEntreeFile}
+                hasLocalFile={Boolean(selected.edlEntreeUrl)}
                 uploading={uploading === "entree"}
                 inputRef={entreeInputRef}
                 onPick={() => entreeInputRef.current?.click()}
                 onFile={(f) => handleVideo(selected.id, "entree", f)}
                 onSend={() => sendEdlToCouple(selected.id, "entree")}
+                onDownload={() => downloadEdl("entree")}
               />
               <EdlBlock
                 title="Sortie — dimanche"
                 status={selected.edlSortie}
                 fileName={selected.edlSortieFile}
+                hasLocalFile={Boolean(selected.edlSortieUrl)}
                 uploading={uploading === "sortie"}
                 inputRef={sortieInputRef}
                 onPick={() => sortieInputRef.current?.click()}
                 onFile={(f) => handleVideo(selected.id, "sortie", f)}
                 onSend={() => sendEdlToCouple(selected.id, "sortie")}
+                onDownload={() => downloadEdl("sortie")}
               />
             </CardContent>
           </Card>
@@ -523,21 +578,27 @@ function EdlBlock({
   title,
   status,
   fileName,
+  hasLocalFile,
   uploading,
   inputRef,
   onPick,
   onFile,
   onSend,
+  onDownload,
 }: {
   title: string;
   status: EdlStatus;
   fileName?: string;
+  hasLocalFile: boolean;
   uploading: boolean;
-  inputRef: React.RefObject<HTMLInputElement>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
   onPick: () => void;
   onFile: (file: File | null) => void;
   onSend: () => void;
+  onDownload: () => void;
 }) {
+  const canDownload = status !== "manquant" && Boolean(fileName);
+
   return (
     <div className="rounded-lg border border-slate-200 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -550,10 +611,11 @@ function EdlBlock({
       {fileName && (
         <p className="mt-2 truncate font-mono text-xs text-slate-500">
           {fileName}
+          {hasLocalFile ? " · disponible en local" : " · preuve démo"}
         </p>
       )}
       <input
-        ref={inputRef}
+        ref={inputRef as React.RefObject<HTMLInputElement>}
         type="file"
         accept="video/mp4,video/*,.mp4"
         capture="environment"
@@ -576,6 +638,19 @@ function EdlBlock({
               ? "Filmer / importer .mp4"
               : "Remplacer la vidéo"}
         </Button>
+        {canDownload && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={onDownload}
+            title="Récupérer la vidéo sur cet appareil"
+          >
+            <Download className="h-4 w-4" />
+            Télécharger
+          </Button>
+        )}
         {(status === "enregistree" || status === "envoyee") && (
           <Button
             type="button"

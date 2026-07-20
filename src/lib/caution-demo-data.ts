@@ -29,6 +29,9 @@ export type CautionSejour = {
   /** URL blob locale (démo) pour téléchargement côté domaine */
   edlEntreeUrl?: string;
   edlSortieUrl?: string;
+  /** Fichier réel pour envoi / lien téléchargement mariés */
+  edlEntreeBlob?: File;
+  edlSortieBlob?: File;
   extras: Array<{
     id: string;
     label: string;

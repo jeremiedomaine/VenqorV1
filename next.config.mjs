@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    serverActions: {
+      // Vidéos état des lieux Caution (mp4 smartphone)
+      bodySizeLimit: "100mb",
+    },
+  },
   serverExternalPackages: [
     "pdfjs-dist",
     "@sparticuz/chromium-min",

@@ -175,6 +175,7 @@ export function CautionDemoHub({
               edlEntree: "enregistree" as EdlStatus,
               edlEntreeFile: fileName,
               edlEntreeUrl: objectUrl,
+              edlEntreeBlob: file,
             };
           }
           if (s.edlSortieUrl?.startsWith("blob:")) {
@@ -185,6 +186,7 @@ export function CautionDemoHub({
             edlSortie: "enregistree" as EdlStatus,
             edlSortieFile: fileName,
             edlSortieUrl: objectUrl,
+            edlSortieBlob: file,
           };
         }),
       );
@@ -242,15 +244,26 @@ export function CautionDemoHub({
     if (!s) return;
     const fileName =
       kind === "entree" ? s.edlEntreeFile : s.edlSortieFile;
+    const video =
+      kind === "entree" ? s.edlEntreeBlob : s.edlSortieBlob;
+
+    if (!video) {
+      toast(
+        "Importez d'abord la vidéo .mp4 — les mariés pourront alors la télécharger depuis l'email.",
+      );
+      return;
+    }
 
     void runEmail(async () => {
-      const result = await sendCautionEdlEmail({
-        couple: s.couple,
-        email: s.email,
-        kind,
-        fileName,
-        sejourId: s.id,
-      });
+      const formData = new FormData();
+      formData.set("couple", s.couple);
+      formData.set("email", s.email);
+      formData.set("kind", kind);
+      formData.set("sejourId", s.id);
+      if (fileName) formData.set("fileName", fileName);
+      formData.set("video", video);
+
+      const result = await sendCautionEdlEmail(formData);
 
       if (result.error) {
         toast(result.error);
@@ -270,8 +283,8 @@ export function CautionDemoHub({
       const dest = result.sentTo ?? s.email;
       toast(
         result.testMode
-          ? `Email état des lieux envoyé (mode test → ${dest}).`
-          : `État des lieux ${kind === "entree" ? "d'entrée" : "de sortie"} envoyé à ${dest}.`,
+          ? `Email + lien téléchargement envoyés (mode test → ${dest}).`
+          : `Vidéo envoyée à ${dest} — lien de téléchargement inclus.`,
       );
     });
   }

@@ -34,6 +34,7 @@ export function buildEdlCoupleEmailHtml(input: {
   couple: string;
   kind: "entree" | "sortie";
   fileName?: string;
+  downloadUrl?: string;
 }): string {
   const label =
     input.kind === "entree"
@@ -48,7 +49,9 @@ export function buildEdlCoupleEmailHtml(input: {
         ? `Fichier : ${input.fileName}`
         : "La vidéo est conservée comme preuve par le domaine.",
       `Cette vidéo sert de preuve partagée (comme pour une location de voiture) afin d'éviter tout litige après le week-end.`,
-      `Conservez cet email. Le domaine peut vous renvoyer un extrait sur demande.`,
+      input.downloadUrl
+        ? `Vous pouvez télécharger la vidéo via le bouton ci-dessous (lien valable 30 jours). Conservez-la précieusement.`
+        : `Conservez cet email. Le domaine peut vous renvoyer la vidéo sur demande.`,
     ].join("\n\n"),
   );
 
@@ -56,6 +59,8 @@ export function buildEdlCoupleEmailHtml(input: {
     domainName: input.domainName,
     title: `État des lieux ${label}`,
     bodyHtml: body,
+    ctaLabel: input.downloadUrl ? "Télécharger la vidéo" : undefined,
+    ctaHref: input.downloadUrl,
     footerNote:
       "Message automatique Venqor Caution — ne pas répondre pour une urgence le jour J, contactez directement le domaine.",
     paymentFooter: false,

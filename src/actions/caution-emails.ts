@@ -10,11 +10,16 @@ import {
   isEmailTestMode,
 } from "@/lib/email/recipients";
 import { sendTrackedEmail } from "@/lib/email/send-tracked-email";
+import { createServiceClient } from "@/lib/supabase/service";
 import { requireWorkspaceClient } from "@/lib/workspace-session";
+
+export const CAUTION_EDL_BUCKET = "caution-edl";
+const SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 jours
 
 export type CautionEmailResult = ActionResult & {
   sentTo?: string;
   testMode?: boolean;
+  downloadUrl?: string;
 };
 
 function siteBaseUrl(): string {
@@ -32,6 +37,49 @@ function demoSwiklyUrl(amount: number, couple: string): string {
     couple,
   });
   return `${siteBaseUrl()}/caution?swikly=${encodeURIComponent(params.toString())}`;
+}
+
+function safeFileName(name: string): string {
+  return name.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 120) || "edl.mp4";
+}
+
+async function uploadEdlVideo(input: {
+  workspaceId: string;
+  sejourId: string;
+  kind: "entree" | "sortie";
+  file: File;
+}): Promise<{ path: string; downloadUrl: string } | { error: string }> {
+  const service = createServiceClient();
+  const fileName = safeFileName(input.file.name || `edl-${input.kind}.mp4`);
+  const path = `${input.workspaceId}/${input.sejourId}/${input.kind}-${Date.now()}-${fileName}`;
+
+  const bytes = Buffer.from(await input.file.arrayBuffer());
+  const contentType = input.file.type || "video/mp4";
+
+  const { error: uploadError } = await service.storage
+    .from(CAUTION_EDL_BUCKET)
+    .upload(path, bytes, {
+      contentType,
+      upsert: true,
+    });
+
+  if (uploadError) {
+    return { error: uploadError.message };
+  }
+
+  const { data: signed, error: signError } = await service.storage
+    .from(CAUTION_EDL_BUCKET)
+    .createSignedUrl(path, SIGNED_URL_TTL_SECONDS, {
+      download: fileName,
+    });
+
+  if (signError || !signed?.signedUrl) {
+    return {
+      error: signError?.message ?? "Impossible de créer le lien de téléchargement.",
+    };
+  }
+
+  return { path, downloadUrl: signed.signedUrl };
 }
 
 export async function sendCautionSwiklyEmail(input: {
@@ -84,20 +132,45 @@ export async function sendCautionSwiklyEmail(input: {
   };
 }
 
-export async function sendCautionEdlEmail(input: {
-  couple: string;
-  email: string;
-  kind: "entree" | "sortie";
-  fileName?: string;
-  sejourId: string;
-}): Promise<CautionEmailResult> {
+export async function sendCautionEdlEmail(
+  formData: FormData,
+): Promise<CautionEmailResult> {
   const { workspaceId, supabase } = await requireWorkspaceClient();
 
-  const to = emailForCouple(input.email);
+  const couple = String(formData.get("couple") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
+  const kindRaw = String(formData.get("kind") ?? "");
+  const sejourId = String(formData.get("sejourId") ?? "").trim();
+  const fileNameHint = String(formData.get("fileName") ?? "").trim();
+  const video = formData.get("video");
+
+  const kind = kindRaw === "sortie" ? "sortie" : kindRaw === "entree" ? "entree" : null;
+  if (!couple || !sejourId || !kind) {
+    return actionError("Données séjour incomplètes.");
+  }
+
+  const to = emailForCouple(email);
   if (!to) {
     return actionError(
       "Ajoutez un email sur le séjour avant d'envoyer l'état des lieux.",
     );
+  }
+
+  let downloadUrl: string | undefined;
+  let fileName = fileNameHint || undefined;
+
+  if (video instanceof File && video.size > 0) {
+    fileName = video.name || fileName;
+    const uploaded = await uploadEdlVideo({
+      workspaceId,
+      sejourId,
+      kind,
+      file: video,
+    });
+    if ("error" in uploaded) {
+      return actionError(`Upload vidéo : ${uploaded.error}`);
+    }
+    downloadUrl = uploaded.downloadUrl;
   }
 
   const { data: workspace } = await supabase
@@ -107,7 +180,7 @@ export async function sendCautionEdlEmail(input: {
     .single();
 
   const domainName = workspace?.nom_domaine ?? "Votre domaine";
-  const kindLabel = input.kind === "entree" ? "entrée" : "sortie";
+  const kindLabel = kind === "entree" ? "entrée" : "sortie";
 
   const result = await sendTrackedEmail({
     category: "caution_edl",
@@ -116,9 +189,10 @@ export async function sendCautionEdlEmail(input: {
     subject: `${domainName} — État des lieux ${kindLabel} enregistré`,
     html: buildEdlCoupleEmailHtml({
       domainName,
-      couple: input.couple,
-      kind: input.kind,
-      fileName: input.fileName,
+      couple,
+      kind,
+      fileName,
+      downloadUrl,
     }),
     replyTo: workspace?.contact_email || undefined,
   });
@@ -130,5 +204,6 @@ export async function sendCautionEdlEmail(input: {
   return {
     sentTo: to,
     testMode: isEmailTestMode(),
+    downloadUrl,
   };
 }

@@ -1,10 +1,14 @@
 /**
- * Client Swikly API v2 (prod).
- * Docs compte : Developers dans le dashboard Swikly.
+ * Client Swikly API v2.
+ * SWIKLY_ENV=sandbox → api.sandbox.swikly.com (gratuit / tests)
+ * SWIKLY_ENV=production → api.v2.swikly.com
  * Montants en centimes (500 € → 50000).
  */
 
-const DEFAULT_BASE = "https://api.v2.swikly.com/v1";
+const BASE_BY_ENV = {
+  sandbox: "https://api.sandbox.swikly.com/v1",
+  production: "https://api.v2.swikly.com/v1",
+} as const;
 
 export type SwiklyDepositRequest = {
   id: string;
@@ -18,19 +22,31 @@ export type SwiklyDepositRequest = {
   } | null;
 };
 
+function resolveEnv(): "sandbox" | "production" {
+  const raw = (process.env.SWIKLY_ENV ?? "sandbox").trim().toLowerCase();
+  if (raw === "production" || raw === "prod" || raw === "live") {
+    return "production";
+  }
+  return "sandbox";
+}
+
 function getConfig() {
   const apiKey = process.env.SWIKLY_API_KEY?.trim();
   const accountId = process.env.SWIKLY_ACCOUNT_ID?.trim();
-  const baseUrl = (process.env.SWIKLY_API_BASE?.trim() || DEFAULT_BASE).replace(
-    /\/$/,
-    "",
-  );
-  return { apiKey, accountId, baseUrl };
+  const env = resolveEnv();
+  const baseUrl = (
+    process.env.SWIKLY_API_BASE?.trim() || BASE_BY_ENV[env]
+  ).replace(/\/$/, "");
+  return { apiKey, accountId, baseUrl, env };
 }
 
 export function isSwiklyConfigured(): boolean {
   const { apiKey, accountId } = getConfig();
   return Boolean(apiKey && accountId);
+}
+
+export function getSwiklyEnv(): "sandbox" | "production" {
+  return getConfig().env;
 }
 
 async function swiklyFetch<T>(

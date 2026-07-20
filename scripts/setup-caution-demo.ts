@@ -12,7 +12,7 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const CAUTION_EMAIL = process.env.CAUTION_DEMO_EMAIL ?? "caution@venqor.app";
 const CAUTION_PASSWORD = process.env.CAUTION_DEMO_PASSWORD ?? "VenqorCaution2026!";
-const CAUTION_NAME = process.env.CAUTION_DEMO_NAME ?? "Gestionnaire caution";
+const CAUTION_NAME = process.env.CAUTION_DEMO_NAME ?? "Karine Lopez";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://app.venqor.app";
 
 async function findUserIdByEmail(email: string): Promise<string | null> {
@@ -71,11 +71,12 @@ async function main() {
     .from("workspaces")
     .update({
       product_mode: "caution_only",
-      nom_domaine: "Domaine Les Oliviers",
+      nom_domaine: "La Ferme de la Loge",
       contact_nom: CAUTION_NAME,
       contact_email: CAUTION_EMAIL,
       onboarding_completed_at: new Date().toISOString(),
       facturation_configuree: true,
+      caution_montant_defaut: 500,
     })
     .eq("id", profile.workspace_id);
 

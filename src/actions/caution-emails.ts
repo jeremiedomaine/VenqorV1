@@ -24,6 +24,7 @@ type CautionEmailResult = ActionResult & {
   sentTo?: string;
   testMode?: boolean;
   downloadUrl?: string;
+  swiklyRequestId?: string;
 };
 
 function siteBaseUrl(): string {
@@ -112,8 +113,12 @@ export async function sendCautionSwiklyEmail(input: {
   const domainName = workspace?.nom_domaine ?? "Votre domaine";
 
   let swiklyUrl = demoSwiklyUrl(input.amount, input.couple);
+  let swiklyRequestId: string | undefined;
 
   if (isSwiklyConfigured()) {
+    const siteUrl = (
+      process.env.NEXT_PUBLIC_SITE_URL ?? "https://app.venqor.app"
+    ).replace(/\/$/, "");
     const created = await createSwiklyDepositRequest({
       couple: input.couple,
       // En local (EMAIL_TEST_OVERRIDE), même destinataire que Resend
@@ -123,11 +128,27 @@ export async function sendCautionSwiklyEmail(input: {
       endDate: input.departureDate || input.arrivalDate,
       description: `${domainName} — Caution ${input.couple}`,
       sendEmail: false,
+      customId: input.sejourId,
+      callbackUrl: `${siteUrl}/api/webhooks/swikly`,
     });
     if (!created.ok) {
       return actionError(`Swikly : ${created.error}`);
     }
     swiklyUrl = created.request.link;
+    swiklyRequestId = created.request.id;
+
+    await supabase.from("caution_swikly_requests").upsert(
+      {
+        workspace_id: workspaceId,
+        sejour_id: input.sejourId,
+        swikly_request_id: created.request.id,
+        swikly_link: created.request.link,
+        deposit_status: created.request.deposit?.status ?? "Pending",
+        last_event: "created",
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "workspace_id,sejour_id" },
+    );
   }
 
   const result = await sendTrackedEmail({
@@ -152,7 +173,42 @@ export async function sendCautionSwiklyEmail(input: {
   return {
     sentTo: to,
     testMode: isEmailTestMode(),
+    swiklyRequestId,
   };
+}
+
+/** Statuts Swikly persistés (mis à jour par le webhook callback). */
+export async function getCautionSwiklyStatuses(
+  sejourIds: string[],
+): Promise<
+  ActionResult & {
+    statuses?: Record<string, "envoye" | "empreinte" | "liberee" | "expiree">;
+  }
+> {
+  const { workspaceId, supabase } = await requireWorkspaceClient();
+  if (!sejourIds.length) return { statuses: {} };
+
+  const { data, error } = await supabase
+    .from("caution_swikly_requests")
+    .select("sejour_id, deposit_status")
+    .eq("workspace_id", workspaceId)
+    .in("sejour_id", sejourIds);
+
+  if (error) return actionError(error.message);
+
+  const { mapSwiklyDepositToCautionStatus } = await import(
+    "@/lib/swikly/webhooks"
+  );
+
+  const statuses: Record<
+    string,
+    "envoye" | "empreinte" | "liberee" | "expiree"
+  > = {};
+  for (const row of data ?? []) {
+    const mapped = mapSwiklyDepositToCautionStatus(row.deposit_status);
+    if (mapped) statuses[row.sejour_id] = mapped;
+  }
+  return { statuses };
 }
 
 export async function sendCautionEdlEmail(

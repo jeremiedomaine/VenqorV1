@@ -124,6 +124,9 @@ export async function createSwiklyDepositRequest(input: {
   description: string;
   /** false = Venqor envoie le mail ; true = Swikly envoie aussi */
   sendEmail?: boolean;
+  /** ID séjour Venqor — renvoyé dans les callbacks */
+  customId?: string;
+  callbackUrl?: string;
 }): Promise<
   { ok: true; request: SwiklyDepositRequest } | { ok: false; error: string }
 > {
@@ -139,23 +142,34 @@ export async function createSwiklyDepositRequest(input: {
 
   const { firstName, lastName } = splitCoupleName(input.couple);
 
+  const body: Record<string, unknown> = {
+    description: input.description,
+    language: "fr",
+    firstName,
+    lastName,
+    email: input.email,
+    sendEmail: input.sendEmail ?? false,
+    deposit: {
+      startDate: input.startDate,
+      endDate: input.endDate,
+      amount: amountCents,
+    },
+  };
+
+  if (input.customId) {
+    body.customId = input.customId;
+    body.customIdMustBeUnique = false;
+  }
+
+  if (input.callbackUrl) {
+    body.callbacks = { url: input.callbackUrl };
+  }
+
   const result = await swiklyFetch<{ request: SwiklyDepositRequest }>(
     `/accounts/${accountId}/requests`,
     {
       method: "POST",
-      body: JSON.stringify({
-        description: input.description,
-        language: "fr",
-        firstName,
-        lastName,
-        email: input.email,
-        sendEmail: input.sendEmail ?? false,
-        deposit: {
-          startDate: input.startDate,
-          endDate: input.endDate,
-          amount: amountCents,
-        },
-      }),
+      body: JSON.stringify(body),
     },
   );
 

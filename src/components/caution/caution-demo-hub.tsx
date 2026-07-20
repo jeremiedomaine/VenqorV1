@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Bell,
   CheckCircle2,
@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import {
+  getCautionSwiklyStatuses,
   sendCautionEdlEmail,
   sendCautionSwiklyEmail,
 } from "@/actions/caution-emails";
@@ -86,6 +87,40 @@ export function CautionDemoHub({
     );
     return { aEnvoyer, empreintes, edlManquants, extras };
   }, [sejours]);
+
+  // Poll Swikly statuses updated by webhook (empreinte acceptée)
+  const pendingSwiklyIds = sejours
+    .filter((s) => s.swiklyStatus === "envoye")
+    .map((s) => s.id)
+    .join(",");
+
+  useEffect(() => {
+    const ids = pendingSwiklyIds ? pendingSwiklyIds.split(",") : [];
+    if (ids.length === 0) return;
+
+    let cancelled = false;
+    async function sync() {
+      const result = await getCautionSwiklyStatuses(ids);
+      if (cancelled || result.error || !result.statuses) return;
+      setSejours((prev) =>
+        prev.map((row) => {
+          const next = result.statuses?.[row.id];
+          if (!next || next === row.swiklyStatus) return row;
+          if (next === "empreinte" || next === "liberee" || next === "expiree") {
+            return { ...row, swiklyStatus: next };
+          }
+          return row;
+        }),
+      );
+    }
+
+    void sync();
+    const timer = window.setInterval(() => void sync(), 8000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [pendingSwiklyIds]);
 
   function toast(message: string) {
     setFeedback(message);

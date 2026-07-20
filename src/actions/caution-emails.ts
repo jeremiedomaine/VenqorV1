@@ -10,6 +10,10 @@ import {
   isEmailTestMode,
 } from "@/lib/email/recipients";
 import { sendTrackedEmail } from "@/lib/email/send-tracked-email";
+import {
+  createSwiklyDepositRequest,
+  isSwiklyConfigured,
+} from "@/lib/swikly/client";
 import { createServiceClient } from "@/lib/supabase/service";
 import { requireWorkspaceClient } from "@/lib/workspace-session";
 
@@ -87,6 +91,7 @@ export async function sendCautionSwiklyEmail(input: {
   email: string;
   amount: number;
   arrivalDate: string;
+  departureDate: string;
   sejourId: string;
 }): Promise<CautionEmailResult> {
   const { workspaceId, supabase } = await requireWorkspaceClient();
@@ -105,7 +110,25 @@ export async function sendCautionSwiklyEmail(input: {
     .single();
 
   const domainName = workspace?.nom_domaine ?? "Votre domaine";
-  const swiklyUrl = demoSwiklyUrl(input.amount, input.couple);
+
+  let swiklyUrl = demoSwiklyUrl(input.amount, input.couple);
+
+  if (isSwiklyConfigured()) {
+    const created = await createSwiklyDepositRequest({
+      couple: input.couple,
+      // Destinataire réel du séjour pour Swikly (l'email Venqor peut être override en test)
+      email: input.email.trim() || to,
+      amountEuros: input.amount,
+      startDate: input.arrivalDate,
+      endDate: input.departureDate || input.arrivalDate,
+      description: `${domainName} — Caution ${input.couple}`,
+      sendEmail: false,
+    });
+    if (!created.ok) {
+      return actionError(`Swikly : ${created.error}`);
+    }
+    swiklyUrl = created.request.link;
+  }
 
   const result = await sendTrackedEmail({
     category: "caution_swikly",

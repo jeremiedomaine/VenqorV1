@@ -102,6 +102,7 @@ export function CautionDemoHub({
         email: s.email,
         amount: s.cautionAmount,
         arrivalDate: s.dateArrivee,
+        departureDate: s.dateDepart,
         sejourId: s.id,
       });
 

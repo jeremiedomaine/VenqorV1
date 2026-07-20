@@ -16,6 +16,10 @@ import {
   X,
 } from "lucide-react";
 import {
+  sendCautionEdlEmail,
+  sendCautionSwiklyEmail,
+} from "@/actions/caution-emails";
+import {
   EdlStatusBadge,
   SwiklyStatusBadge,
 } from "@/components/caution/caution-status-badge";
@@ -23,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAsyncAction } from "@/hooks/use-async-action";
 import {
   DEMO_SEJOURS,
   type CautionSejour,
@@ -65,6 +70,7 @@ export function CautionDemoHub({
   const [uploading, setUploading] = useState<"entree" | "sortie" | null>(null);
   const entreeInputRef = useRef<HTMLInputElement>(null);
   const sortieInputRef = useRef<HTMLInputElement>(null);
+  const { pending: emailPending, run: runEmail } = useAsyncAction();
 
   const selected = sejours.find((s) => s.id === selectedId) ?? sejours[0];
 
@@ -87,21 +93,42 @@ export function CautionDemoHub({
   }
 
   function sendSwikly(sejourId: string) {
-    setSejours((prev) =>
-      prev.map((s) =>
-        s.id === sejourId
-          ? {
-              ...s,
-              swiklyStatus: "envoye" as const,
-              swiklySentAt: new Date().toISOString().slice(0, 10),
-            }
-          : s,
-      ),
-    );
     const s = sejours.find((x) => x.id === sejourId);
-    toast(
-      `Lien Swikly ${formatCurrency(s?.cautionAmount ?? defaultAmount)} envoyé à ${s?.email ?? "le couple"} (simulation).`,
-    );
+    if (!s) return;
+
+    void runEmail(async () => {
+      const result = await sendCautionSwiklyEmail({
+        couple: s.couple,
+        email: s.email,
+        amount: s.cautionAmount,
+        arrivalDate: s.dateArrivee,
+        sejourId: s.id,
+      });
+
+      if (result.error) {
+        toast(result.error);
+        return;
+      }
+
+      setSejours((prev) =>
+        prev.map((row) =>
+          row.id === sejourId
+            ? {
+                ...row,
+                swiklyStatus: "envoye" as const,
+                swiklySentAt: new Date().toISOString().slice(0, 10),
+              }
+            : row,
+        ),
+      );
+
+      const dest = result.sentTo ?? s.email;
+      toast(
+        result.testMode
+          ? `Email Swikly envoyé (mode test → ${dest}).`
+          : `Lien Swikly ${formatCurrency(s.cautionAmount)} envoyé à ${dest}.`,
+      );
+    });
   }
 
   function simulateEmpreinte(sejourId: string) {
@@ -211,18 +238,42 @@ export function CautionDemoHub({
   }
 
   function sendEdlToCouple(sejourId: string, kind: "entree" | "sortie") {
-    setSejours((prev) =>
-      prev.map((s) => {
-        if (s.id !== sejourId) return s;
-        if (kind === "entree") {
-          return { ...s, edlEntree: "envoyee" as EdlStatus };
-        }
-        return { ...s, edlSortie: "envoyee" as EdlStatus };
-      }),
-    );
-    toast(
-      `État des lieux ${kind === "entree" ? "d'entrée" : "de sortie"} envoyé aux mariés (preuve).`,
-    );
+    const s = sejours.find((x) => x.id === sejourId);
+    if (!s) return;
+    const fileName =
+      kind === "entree" ? s.edlEntreeFile : s.edlSortieFile;
+
+    void runEmail(async () => {
+      const result = await sendCautionEdlEmail({
+        couple: s.couple,
+        email: s.email,
+        kind,
+        fileName,
+        sejourId: s.id,
+      });
+
+      if (result.error) {
+        toast(result.error);
+        return;
+      }
+
+      setSejours((prev) =>
+        prev.map((row) => {
+          if (row.id !== sejourId) return row;
+          if (kind === "entree") {
+            return { ...row, edlEntree: "envoyee" as EdlStatus };
+          }
+          return { ...row, edlSortie: "envoyee" as EdlStatus };
+        }),
+      );
+
+      const dest = result.sentTo ?? s.email;
+      toast(
+        result.testMode
+          ? `Email état des lieux envoyé (mode test → ${dest}).`
+          : `État des lieux ${kind === "entree" ? "d'entrée" : "de sortie"} envoyé à ${dest}.`,
+      );
+    });
   }
 
   function markExtraFacturee(sejourId: string, extraId: string) {
@@ -352,8 +403,7 @@ export function CautionDemoHub({
             </h2>
             <p className="mt-1 text-sm text-slate-600">
               Focus : lien Swikly 500–800 € (empreinte, pas de débit) + upload
-              vidéo .mp4 depuis le téléphone. Pas de plan de table ni CRM
-              complet.
+              vidéo .mp4 depuis le téléphone. Les emails partent via Resend.
             </p>
           </div>
         </div>
@@ -489,10 +539,13 @@ export function CautionDemoHub({
                   selected.swiklyStatus === "expiree") && (
                   <Button
                     className="gap-2"
+                    disabled={emailPending}
                     onClick={() => sendSwikly(selected.id)}
                   >
                     <Link2 className="h-4 w-4" />
-                    Envoyer le lien Swikly {formatCurrency(selected.cautionAmount)}
+                    {emailPending
+                      ? "Envoi…"
+                      : `Envoyer le lien Swikly ${formatCurrency(selected.cautionAmount)}`}
                   </Button>
                 )}
                 {selected.swiklyStatus === "envoye" && (
@@ -507,10 +560,11 @@ export function CautionDemoHub({
                     <Button
                       variant="outline"
                       className="gap-2"
+                      disabled={emailPending}
                       onClick={() => sendSwikly(selected.id)}
                     >
                       <Send className="h-4 w-4" />
-                      Renvoyer le lien
+                      {emailPending ? "Envoi…" : "Renvoyer le lien"}
                     </Button>
                   </>
                 )}
@@ -550,6 +604,7 @@ export function CautionDemoHub({
                 fileName={selected.edlEntreeFile}
                 hasLocalFile={Boolean(selected.edlEntreeUrl)}
                 uploading={uploading === "entree"}
+                sending={emailPending}
                 inputRef={entreeInputRef}
                 onPick={() => entreeInputRef.current?.click()}
                 onFile={(f) => handleVideo(selected.id, "entree", f)}
@@ -562,6 +617,7 @@ export function CautionDemoHub({
                 fileName={selected.edlSortieFile}
                 hasLocalFile={Boolean(selected.edlSortieUrl)}
                 uploading={uploading === "sortie"}
+                sending={emailPending}
                 inputRef={sortieInputRef}
                 onPick={() => sortieInputRef.current?.click()}
                 onFile={(f) => handleVideo(selected.id, "sortie", f)}
@@ -818,6 +874,7 @@ function EdlBlock({
   fileName,
   hasLocalFile,
   uploading,
+  sending,
   inputRef,
   onPick,
   onFile,
@@ -829,6 +886,7 @@ function EdlBlock({
   fileName?: string;
   hasLocalFile: boolean;
   uploading: boolean;
+  sending: boolean;
   inputRef: React.RefObject<HTMLInputElement | null>;
   onPick: () => void;
   onFile: (file: File | null) => void;
@@ -866,7 +924,7 @@ function EdlBlock({
           variant={status === "manquant" ? "default" : "outline"}
           size="sm"
           className="gap-2"
-          disabled={uploading}
+          disabled={uploading || sending}
           onClick={onPick}
         >
           <Video className="h-4 w-4" />
@@ -895,11 +953,15 @@ function EdlBlock({
             variant="secondary"
             size="sm"
             className="gap-2"
-            disabled={status === "envoyee"}
+            disabled={status === "envoyee" || sending}
             onClick={onSend}
           >
             <Send className="h-4 w-4" />
-            {status === "envoyee" ? "Déjà envoyée" : "Envoyer aux mariés"}
+            {sending
+              ? "Envoi email…"
+              : status === "envoyee"
+                ? "Déjà envoyée"
+                : "Envoyer aux mariés"}
           </Button>
         )}
       </div>

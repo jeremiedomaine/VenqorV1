@@ -13,10 +13,10 @@ import { sendTrackedEmail } from "@/lib/email/send-tracked-email";
 import { createServiceClient } from "@/lib/supabase/service";
 import { requireWorkspaceClient } from "@/lib/workspace-session";
 
-export const CAUTION_EDL_BUCKET = "caution-edl";
+const CAUTION_EDL_BUCKET = "caution-edl";
 const SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 jours
 
-export type CautionEmailResult = ActionResult & {
+type CautionEmailResult = ActionResult & {
   sentTo?: string;
   testMode?: boolean;
   downloadUrl?: string;

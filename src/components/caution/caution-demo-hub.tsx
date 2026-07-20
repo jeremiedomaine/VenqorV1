@@ -265,8 +265,8 @@ export function CautionDemoHub({
 
       const result = await sendCautionEdlEmail(formData);
 
-      if (result.error) {
-        toast(result.error);
+      if (!result || result.error) {
+        toast(result?.error ?? "Envoi impossible. Réessayez.");
         return;
       }
 

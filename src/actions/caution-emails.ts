@@ -116,8 +116,8 @@ export async function sendCautionSwiklyEmail(input: {
   if (isSwiklyConfigured()) {
     const created = await createSwiklyDepositRequest({
       couple: input.couple,
-      // Destinataire réel du séjour pour Swikly (l'email Venqor peut être override en test)
-      email: input.email.trim() || to,
+      // En local (EMAIL_TEST_OVERRIDE), même destinataire que Resend
+      email: to,
       amountEuros: input.amount,
       startDate: input.arrivalDate,
       endDate: input.departureDate || input.arrivalDate,

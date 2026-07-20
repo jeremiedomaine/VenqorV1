@@ -7,11 +7,13 @@ import {
   Download,
   Film,
   Link2,
+  Plus,
   Send,
   Shield,
   Smartphone,
   Sparkles,
   Video,
+  X,
 } from "lucide-react";
 import {
   EdlStatusBadge,
@@ -19,6 +21,8 @@ import {
 } from "@/components/caution/caution-status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   DEMO_SEJOURS,
   type CautionSejour,
@@ -34,6 +38,16 @@ function daysUntil(dateStr: string): number {
   return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
+function addDaysIso(dateStr: string, days: number): string {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function subtractDaysIso(dateStr: string, days: number): string {
+  return addDaysIso(dateStr, -days);
+}
+
 export function CautionDemoHub({
   workspaceName,
   defaultAmount,
@@ -47,6 +61,7 @@ export function CautionDemoHub({
   const [sejours, setSejours] = useState<CautionSejour[]>(DEMO_SEJOURS);
   const [selectedId, setSelectedId] = useState(DEMO_SEJOURS[0]?.id ?? "");
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
   const [uploading, setUploading] = useState<"entree" | "sortie" | null>(null);
   const entreeInputRef = useRef<HTMLInputElement>(null);
   const sortieInputRef = useRef<HTMLInputElement>(null);
@@ -226,6 +241,83 @@ export function CautionDemoHub({
     toast("Demande marquée comme facturée.");
   }
 
+  function handleCreateSejour(formData: FormData) {
+    const couple = String(formData.get("couple") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim();
+    const telephone = String(formData.get("telephone") ?? "").trim();
+    const dateArrivee = String(formData.get("dateArrivee") ?? "");
+    const dateDepart = String(formData.get("dateDepart") ?? "");
+    const invitees = Number(formData.get("invitees") ?? 80);
+    const couchages = Number(formData.get("couchages") ?? 40);
+    const cautionAmount = Number(formData.get("cautionAmount") ?? defaultAmount);
+
+    if (!couple || !dateArrivee) {
+      toast("Indiquez au moins le couple et la date d'arrivée.");
+      return;
+    }
+
+    const depart =
+      dateDepart || addDaysIso(dateArrivee, 2);
+    const id = `s-${Date.now()}`;
+    const newSejour: CautionSejour = {
+      id,
+      couple,
+      email,
+      telephone,
+      dateArrivee,
+      dateDepart: depart,
+      invitees: Number.isFinite(invitees) && invitees > 0 ? invitees : 80,
+      couchages: Number.isFinite(couchages) && couchages > 0 ? couchages : 40,
+      cautionAmount:
+        Number.isFinite(cautionAmount) && cautionAmount > 0
+          ? cautionAmount
+          : defaultAmount,
+      swiklyStatus: "a_envoyer",
+      j7Date: subtractDaysIso(dateArrivee, 7),
+      edlEntree: "manquant",
+      edlSortie: "manquant",
+      extras: [],
+    };
+
+    setSejours((prev) => [newSejour, ...prev]);
+    setSelectedId(id);
+    setCreateOpen(false);
+    toast(`Événement créé — ${couple}`);
+  }
+
+  const emptyState = sejours.length === 0;
+
+  if (emptyState) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+              Séjours
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              {workspaceName} — Caution Swikly à J-7 & états des lieux vidéo
+            </p>
+          </div>
+          <Button className="gap-2" onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Nouvel événement
+          </Button>
+        </div>
+        <p className="rounded-lg border border-dashed border-slate-200 px-4 py-10 text-center text-sm text-slate-500">
+          Aucun séjour — créez votre premier événement.
+        </p>
+        {createOpen && (
+          <CreateSejourModal
+            defaultAmount={defaultAmount}
+            onClose={() => setCreateOpen(false)}
+            onSubmit={handleCreateSejour}
+          />
+        )}
+      </div>
+    );
+  }
+
   if (!selected) {
     return (
       <p className="text-sm text-slate-500">Aucun séjour pour le moment.</p>
@@ -236,13 +328,19 @@ export function CautionDemoHub({
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-          Séjours
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          {workspaceName} — Caution Swikly à J-7 & états des lieux vidéo
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+            Séjours
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            {workspaceName} — Caution Swikly à J-7 & états des lieux vidéo
+          </p>
+        </div>
+        <Button className="gap-2 shrink-0" onClick={() => setCreateOpen(true)}>
+          <Plus className="h-4 w-4" />
+          Nouvel événement
+        </Button>
       </div>
 
       <section className="overflow-hidden rounded-xl border border-[#4F46E5]/20 bg-[#4F46E5]/5 shadow-sm">
@@ -530,6 +628,146 @@ export function CautionDemoHub({
             </CardContent>
           </Card>
         </div>
+      </div>
+
+      {createOpen && (
+        <CreateSejourModal
+          defaultAmount={defaultAmount}
+          onClose={() => setCreateOpen(false)}
+          onSubmit={handleCreateSejour}
+        />
+      )}
+    </div>
+  );
+}
+
+function CreateSejourModal({
+  defaultAmount,
+  onClose,
+  onSubmit,
+}: {
+  defaultAmount: number;
+  onClose: () => void;
+  onSubmit: (formData: FormData) => void;
+}) {
+  const today = new Date().toISOString().slice(0, 10);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-4 py-[8vh]">
+      <div className="absolute inset-0" onClick={onClose} aria-hidden />
+      <div className="relative my-auto w-full max-w-lg rounded-lg border border-slate-200 bg-white p-6 shadow-xl">
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">
+              Nouvel événement
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Créez le séjour — caution Swikly et états des lieux suivront.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            aria-label="Fermer"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSubmit(new FormData(e.currentTarget));
+          }}
+          className="space-y-4"
+        >
+          <div className="space-y-2">
+            <Label htmlFor="couple">Couple / client</Label>
+            <Input
+              id="couple"
+              name="couple"
+              required
+              placeholder="Ex. Léa & Maxime"
+              autoFocus
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="couple@email.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="telephone">Téléphone</Label>
+              <Input
+                id="telephone"
+                name="telephone"
+                type="tel"
+                placeholder="06 …"
+              />
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="dateArrivee">Arrivée (vendredi)</Label>
+              <Input
+                id="dateArrivee"
+                name="dateArrivee"
+                type="date"
+                required
+                defaultValue={today}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dateDepart">Départ (dimanche)</Label>
+              <Input id="dateDepart" name="dateDepart" type="date" />
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor="cautionAmount">Caution (€)</Label>
+              <Input
+                id="cautionAmount"
+                name="cautionAmount"
+                type="number"
+                min={100}
+                step={50}
+                defaultValue={defaultAmount}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="invitees">Invités</Label>
+              <Input
+                id="invitees"
+                name="invitees"
+                type="number"
+                min={1}
+                defaultValue={100}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="couchages">Couchages</Label>
+              <Input
+                id="couchages"
+                name="couchages"
+                type="number"
+                min={1}
+                defaultValue={40}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="ghost" onClick={onClose}>
+              Annuler
+            </Button>
+            <Button type="submit">Créer l&apos;événement</Button>
+          </div>
+        </form>
       </div>
     </div>
   );

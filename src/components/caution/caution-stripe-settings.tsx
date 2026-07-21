@@ -89,8 +89,8 @@ export function CautionStripeSettings({
       )}
 
       <SettingsSection
-        title="Swikly — empreinte de caution"
-        description="Remplace les chèques papier et le malaise du TPE le vendredi. Le montant est bloqué, pas encaissé."
+        title="Swikly — caution versée"
+        description="Le couple verse la caution via Swikly. Le montant est rendu après l'état des lieux de sortie, sauf dégât."
       >
         <div className="space-y-4">
           <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50/80 px-4 py-4">
@@ -100,17 +100,18 @@ export function CautionStripeSettings({
                 Intégration Swikly
               </p>
               <p className="mt-1 text-sm text-slate-600">
-                Chaque séjour reçoit un lien Swikly unique. Le couple valide son
-                empreinte depuis chez lui, avant l&apos;arrivée.
+                Chaque séjour reçoit un lien Swikly unique. Le couple verse sa
+                caution avant l&apos;arrivée ; vous la rendez une fois
+                l&apos;ÉDL de sortie terminé.
               </p>
             </div>
           </div>
 
           <SettingsInfoBox title="Pourquoi Swikly ?">
             <p>
-              Empreinte bancaire vérifiée (pas de chèque en bois), sans débit
-              immédiat, sans présenter un terminal le jour J. Montants typiques
-              : 500 € à 800 € selon le week-end.
+              Plus de chèque papier : le montant est bien saisi, puis restitué
+              (ou partiellement encaissé en cas de litige). Montants typiques :
+              500 € à 800 € selon le week-end.
             </p>
           </SettingsInfoBox>
         </div>
@@ -250,8 +251,7 @@ export function CautionStripeSettings({
                   Relancer si non validé
                 </span>
                 <span className="mt-1 block text-sm text-slate-500">
-                  Deuxième email si l&apos;empreinte n&apos;est pas encore
-                  acceptée.
+                  Deuxième email si la caution n&apos;est pas encore versée.
                 </span>
                 <div className="mt-3 flex flex-wrap items-center gap-3">
                   <Label

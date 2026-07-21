@@ -177,7 +177,7 @@ export function CautionDemoHub({
         s.id === sejourId ? { ...s, swiklyStatus: "empreinte" as const } : s,
       ),
     );
-    toast("Empreinte bancaire validée — aucun débit (Swikly).");
+    toast("Caution versée sur Swikly — à rendre après l'état des lieux de sortie.");
   }
 
   function liberer(sejourId: string) {
@@ -186,7 +186,7 @@ export function CautionDemoHub({
         s.id === sejourId ? { ...s, swiklyStatus: "liberee" as const } : s,
       ),
     );
-    toast("Caution libérée — empreinte levée.");
+    toast("Caution rendue au couple via Swikly.");
   }
 
   function handleVideo(
@@ -457,7 +457,7 @@ export function CautionDemoHub({
               Démo R2 — La Ferme de la Loge
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              Focus : lien Swikly 500–800 € (empreinte, pas de débit) + upload
+              Focus : caution Swikly (versement, restitution après ÉDL) + upload
               vidéo .mp4 depuis le téléphone. Les emails partent via Resend.
             </p>
           </div>
@@ -478,7 +478,7 @@ export function CautionDemoHub({
           accent="amber"
         />
         <MiniStat
-          label="Empreintes actives"
+          label="Cautions versées"
           value={String(stats.empreintes)}
           icon={Shield}
           accent="emerald"
@@ -570,12 +570,12 @@ export function CautionDemoHub({
                   <Shield className="mt-0.5 h-5 w-5 shrink-0 text-[#4F46E5]" />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-slate-900">
-                      Caution Swikly — empreinte {formatCurrency(selected.cautionAmount)}
+                      Caution Swikly — {formatCurrency(selected.cautionAmount)}
                     </p>
                     <p className="mt-1 text-sm text-slate-600">
                       {autoActive ? (
                         <>
-                          Envoi automatique prévu à J−{autoJoursAvant} (
+                          Envoi automatique du lien prévu à J−{autoJoursAvant} (
                           {formatDate(
                             subtractDaysIso(
                               selected.dateArrivee,
@@ -587,10 +587,11 @@ export function CautionDemoHub({
                       ) : (
                         <>Envoi manuel — automatisation désactivée. </>
                       )}
-                      L&apos;argent n&apos;est{" "}
-                      <strong>pas débité</strong> — juste bloqué pour
-                      responsabiliser le couple. Plus de chèque papier, plus de
-                      malaise au TPE le vendredi.
+                      Le couple <strong>verse</strong> la caution sur Swikly
+                      (montant saisi). Elle est{" "}
+                      <strong>rendue</strong> une fois l&apos;état des lieux de
+                      sortie terminé, s&apos;il n&apos;y a aucun dégât. Plus de
+                      chèque papier.
                     </p>
                     {jRelatif >= 0 && jRelatif <= 10 && (
                       <p className="mt-2 text-xs font-medium text-amber-700">
@@ -623,7 +624,7 @@ export function CautionDemoHub({
                       onClick={() => simulateEmpreinte(selected.id)}
                     >
                       <CheckCircle2 className="h-4 w-4" />
-                      Simuler validation empreinte
+                      Simuler caution versée
                     </Button>
                     <Button
                       variant="outline"
@@ -642,7 +643,7 @@ export function CautionDemoHub({
                     className="gap-2"
                     onClick={() => liberer(selected.id)}
                   >
-                    Libérer la caution
+                    Rendre la caution
                   </Button>
                 )}
               </div>
@@ -660,9 +661,9 @@ export function CautionDemoHub({
                 État des lieux vidéo
               </CardTitle>
               <p className="text-sm text-slate-500">
-                Comme une location de voiture : filmez en marchant le vendredi
-                (entrée) et le dimanche (sortie). La vidéo part aux mariés comme
-                preuve.
+                Filmez en marchant le vendredi (entrée) et le dimanche (sortie).
+                Une fois l&apos;ÉDL de sortie fait, vous pouvez rendre la
+                caution Swikly au couple.
               </p>
             </CardHeader>
             <CardContent className="space-y-3">

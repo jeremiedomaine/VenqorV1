@@ -155,7 +155,7 @@ export async function sendCautionSwiklyEmail(input: {
     category: "caution_swikly",
     workspaceId,
     to,
-    subject: `${domainName} — Empreinte de caution à valider`,
+    subject: `${domainName} — Caution à verser`,
     html: buildSwiklyCautionEmailHtml({
       domainName,
       couple: input.couple,

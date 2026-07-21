@@ -11,17 +11,17 @@ export function buildSwiklyCautionEmailHtml(input: {
   const body = paragraphsFromText(
     [
       `Bonjour ${input.couple},`,
-      `Dans le cadre de votre séjour chez ${input.domainName} (arrivée le ${formatDate(input.arrivalDate)}), nous vous demandons une empreinte bancaire de caution de ${formatCurrency(input.amount)}.`,
-      `Aucun montant n'est débité : il s'agit uniquement d'une vérification / blocage temporaire (Swikly), pour remplacer le chèque de caution.`,
-      `Merci de valider votre empreinte via le bouton ci-dessous, idéalement avant votre arrivée.`,
+      `Dans le cadre de votre séjour chez ${input.domainName} (arrivée le ${formatDate(input.arrivalDate)}), nous vous demandons le versement d'une caution de ${formatCurrency(input.amount)} via Swikly.`,
+      `Le montant est débité et conservé pendant le séjour. Il vous sera intégralement rendu une fois l'état des lieux de sortie terminé, s'il n'y a aucun dégât.`,
+      `Merci de régler votre caution via le bouton ci-dessous, idéalement avant votre arrivée.`,
     ].join("\n\n"),
   );
 
   return venqorEmailLayout({
     domainName: input.domainName,
-    title: `Empreinte de caution ${formatCurrency(input.amount)}`,
+    title: `Caution ${formatCurrency(input.amount)} à verser`,
     bodyHtml: body,
-    ctaLabel: "Valider mon empreinte",
+    ctaLabel: "Verser ma caution",
     ctaHref: input.swiklyUrl,
     footerNote:
       "En cas de question, répondez à cet email pour contacter le domaine.",
@@ -41,6 +41,11 @@ export function buildEdlCoupleEmailHtml(input: {
       ? "d'entrée (vendredi)"
       : "de sortie (dimanche)";
 
+  const restitutionNote =
+    input.kind === "sortie"
+      ? `Une fois cet état des lieux de sortie validé, votre caution pourra être rendue via Swikly (sauf dégât constaté).`
+      : `À la sortie, un second état des lieux vidéo permettra de comparer et de rendre votre caution.`;
+
   const body = paragraphsFromText(
     [
       `Bonjour ${input.couple},`,
@@ -49,6 +54,7 @@ export function buildEdlCoupleEmailHtml(input: {
         ? `Fichier : ${input.fileName}`
         : "La vidéo est conservée comme preuve par le domaine.",
       `Cette vidéo sert de preuve partagée (comme pour une location de voiture) afin d'éviter tout litige après le week-end.`,
+      restitutionNote,
       input.downloadUrl
         ? `Vous pouvez télécharger la vidéo via le bouton ci-dessous (lien valable 30 jours). Conservez-la précieusement.`
         : `Conservez cet email. Le domaine peut vous renvoyer la vidéo sur demande.`,

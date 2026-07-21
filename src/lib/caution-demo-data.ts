@@ -43,8 +43,8 @@ export type CautionSejour = {
 export const SWIKLY_STATUS_LABELS: Record<SwiklyStatus, string> = {
   a_envoyer: "À envoyer",
   envoye: "Lien envoyé",
-  empreinte: "Empreinte OK",
-  liberee: "Libérée",
+  empreinte: "Caution versée",
+  liberee: "Caution rendue",
   expiree: "Expirée",
 };
 

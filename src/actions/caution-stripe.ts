@@ -103,6 +103,73 @@ export async function updateCautionDefaults(
   return {};
 }
 
+export type CautionAutoSettings = {
+  caution_auto_active: boolean;
+  caution_auto_jours_avant: number;
+  caution_relance_active: boolean;
+  caution_relance_jours_avant: number;
+};
+
+export async function updateCautionAutoSettings(
+  formData: FormData,
+): Promise<ActionResult> {
+  const { workspaceId, supabase } = await requireWorkspaceClient();
+
+  const caution_auto_active =
+    formData.get("caution_auto_active") === "on";
+  const caution_relance_active =
+    formData.get("caution_relance_active") === "on";
+
+  const autoJours = Number.parseInt(
+    String(formData.get("caution_auto_jours_avant") ?? "7"),
+    10,
+  );
+  const relanceJours = Number.parseInt(
+    String(formData.get("caution_relance_jours_avant") ?? "3"),
+    10,
+  );
+
+  if (!Number.isFinite(autoJours) || autoJours < 1 || autoJours > 90) {
+    return actionError(
+      "Le délai d'envoi doit être entre 1 et 90 jours avant l'arrivée.",
+    );
+  }
+
+  if (
+    !Number.isFinite(relanceJours) ||
+    relanceJours < 0 ||
+    relanceJours > 60
+  ) {
+    return actionError(
+      "Le délai de relance doit être entre 0 et 60 jours avant l'arrivée.",
+    );
+  }
+
+  if (caution_relance_active && relanceJours >= autoJours) {
+    return actionError(
+      "La relance doit partir après le premier envoi (moins de jours avant l'arrivée).",
+    );
+  }
+
+  const { error } = await supabase
+    .from("workspaces")
+    .update({
+      caution_auto_active,
+      caution_auto_jours_avant: autoJours,
+      caution_relance_active,
+      caution_relance_jours_avant: relanceJours,
+    })
+    .eq("id", workspaceId);
+
+  if (error) {
+    return actionError("Impossible d'enregistrer l'automatisation caution.");
+  }
+
+  revalidatePath("/caution/parametres");
+  revalidatePath("/caution");
+  return {};
+}
+
 export async function disconnectStripeConnectDemo(): Promise<ActionResult> {
   const { workspaceId, supabase } = await requireWorkspaceClient();
 

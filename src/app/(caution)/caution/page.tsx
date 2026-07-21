@@ -16,6 +16,8 @@ export default async function CautionPage() {
     <CautionDemoHub
       workspaceName={auth.workspaceName}
       defaultAmount={defaultAmount}
+      autoJoursAvant={workspace?.caution_auto_jours_avant ?? 7}
+      autoActive={workspace?.caution_auto_active ?? true}
     />
   );
 }

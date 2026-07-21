@@ -73,6 +73,10 @@ export interface Workspace {
   stripe_connect_charges_enabled: boolean;
   stripe_connect_payouts_enabled: boolean;
   caution_montant_defaut: number | null;
+  caution_auto_active: boolean;
+  caution_auto_jours_avant: number;
+  caution_relance_active: boolean;
+  caution_relance_jours_avant: number;
   automation_paiement_active: boolean;
   email_paiement_objet: string;
   email_paiement_intro: string;

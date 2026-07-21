@@ -57,9 +57,13 @@ function subtractDaysIso(dateStr: string, days: number): string {
 export function CautionDemoHub({
   workspaceName,
   defaultAmount,
+  autoJoursAvant = 7,
+  autoActive = true,
 }: {
   workspaceName: string;
   defaultAmount: number;
+  autoJoursAvant?: number;
+  autoActive?: boolean;
   /** conservés pour compat page serveur */
   stripeReady?: boolean;
   stripeIsDemo?: boolean;
@@ -373,7 +377,7 @@ export function CautionDemoHub({
           ? cautionAmount
           : defaultAmount,
       swiklyStatus: "a_envoyer",
-      j7Date: subtractDaysIso(dateArrivee, 7),
+      j7Date: subtractDaysIso(dateArrivee, autoJoursAvant),
       edlEntree: "manquant",
       edlSortie: "manquant",
       extras: [],
@@ -396,7 +400,8 @@ export function CautionDemoHub({
               Séjours
             </h1>
             <p className="mt-1 text-sm text-slate-500">
-              {workspaceName} — Caution Swikly à J-7 & états des lieux vidéo
+              {workspaceName} — Caution Swikly à J−{autoJoursAvant} & états des
+              lieux vidéo
             </p>
           </div>
           <Button className="gap-2" onClick={() => setCreateOpen(true)}>
@@ -434,7 +439,8 @@ export function CautionDemoHub({
             Séjours
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            {workspaceName} — Caution Swikly à J-7 & états des lieux vidéo
+            {workspaceName} — Caution Swikly à J−{autoJoursAvant} & états des
+            lieux vidéo
           </p>
         </div>
         <Button className="gap-2 shrink-0" onClick={() => setCreateOpen(true)}>
@@ -567,8 +573,21 @@ export function CautionDemoHub({
                       Caution Swikly — empreinte {formatCurrency(selected.cautionAmount)}
                     </p>
                     <p className="mt-1 text-sm text-slate-600">
-                      Envoi automatique prévu à J-7 (
-                      {formatDate(selected.j7Date)}). L&apos;argent n&apos;est{" "}
+                      {autoActive ? (
+                        <>
+                          Envoi automatique prévu à J−{autoJoursAvant} (
+                          {formatDate(
+                            subtractDaysIso(
+                              selected.dateArrivee,
+                              autoJoursAvant,
+                            ),
+                          )}
+                          ).{" "}
+                        </>
+                      ) : (
+                        <>Envoi manuel — automatisation désactivée. </>
+                      )}
+                      L&apos;argent n&apos;est{" "}
                       <strong>pas débité</strong> — juste bloqué pour
                       responsabiliser le couple. Plus de chèque papier, plus de
                       malaise au TPE le vendredi.
